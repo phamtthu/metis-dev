@@ -16,6 +16,7 @@ import {
 import { Controller, Get, Param } from '@nestjs/common'
 import { Types } from 'mongoose'
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto'
+import { throwError } from 'src/common/utils/error'
 import { AddResourceDTO } from './dto/add-resource.dto'
 import { UpdateResourceDTO } from './dto/update-resource.dto'
 import { ParseMongodbIdPipe } from './pipe/parse-mongoId.pipe'
@@ -44,12 +45,7 @@ export class ResourceController {
                 message: 'Create Resource successfully',
                 data: result
             })
-        } catch (error) {
-            throw new HttpException({
-                status: HttpStatus.BAD_REQUEST,
-                error: { message: error.message }
-            }, HttpStatus.BAD_REQUEST)
-        }
+        } catch (error) { throwError(error) }
     }
 
     @Get()
@@ -63,12 +59,7 @@ export class ResourceController {
             return res.status(HttpStatus.OK).json({
                 data: result
             })
-        } catch (error) {
-            throw new HttpException({
-                status: HttpStatus.BAD_REQUEST,
-                error: { message: error.message }
-            }, HttpStatus.BAD_REQUEST)
-        }
+        } catch (error) { throwError(error) }
     }
 
     @Get('/:resourceId')
@@ -84,12 +75,7 @@ export class ResourceController {
             return res.status(HttpStatus.OK).json({
                 data: result
             })
-        } catch (error) {
-            throw new HttpException({
-                status: HttpStatus.BAD_REQUEST,
-                error: { message: error.message }
-            }, HttpStatus.BAD_REQUEST)
-        }
+        } catch (error) { throwError(error) }
     }
 
     @Delete('/:resourceId')
@@ -105,12 +91,7 @@ export class ResourceController {
             return res.status(HttpStatus.OK).json({
                 message: 'Delete Resource successfully'
             })
-        } catch (error) {
-            throw new HttpException({
-                status: HttpStatus.BAD_REQUEST,
-                error: { message: error.message }
-            }, HttpStatus.BAD_REQUEST)
-        }
+        } catch (error) { throwError(error) }
     }
 
     @Put('/:resourceId')
@@ -121,7 +102,6 @@ export class ResourceController {
         @Request() req,
     ) {
         try {
-
             const result = await this.resoureService.update(
                 resourceId, resourceDTO)
             if (!result)
@@ -130,12 +110,7 @@ export class ResourceController {
                 message: 'Update Resource successfully',
                 data: result
             })
-        } catch (error) {
-            throw new HttpException({
-                status: HttpStatus.BAD_REQUEST,
-                error: { message: error.message }
-            }, HttpStatus.BAD_REQUEST)
-        }
+        } catch (error) { throwError(error) }
     }
 
 }

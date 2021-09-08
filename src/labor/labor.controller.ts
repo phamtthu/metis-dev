@@ -15,6 +15,7 @@ import {
 } from '@nestjs/common'
 import { Controller, Get, Param } from '@nestjs/common'
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto'
+import { throwError } from 'src/common/utils/error'
 import { AddLaborDTO } from './dto/add-labor.dto'
 import { UpdateLaborDTO } from './dto/update-labor'
 import { LaborService } from './labor.service'
@@ -42,12 +43,7 @@ export class LaborController {
                 message: 'Create Labor successfully',
                 data: result
             })
-        } catch (error) {
-            throw new HttpException({
-                status: HttpStatus.BAD_REQUEST,
-                error: { message: error.message }
-            }, HttpStatus.BAD_REQUEST)
-        }
+        } catch (error) { throwError(error) }
     }
 
     @Get()
@@ -61,12 +57,7 @@ export class LaborController {
             return res.status(HttpStatus.OK).json({
                 data: result
             })
-        } catch (error) {
-            throw new HttpException({
-                status: HttpStatus.BAD_REQUEST,
-                error: { message: error.message }
-            }, HttpStatus.BAD_REQUEST)
-        }
+        } catch (error) { throwError(error) }
     }
 
     @Get('/:laborId')
@@ -82,12 +73,7 @@ export class LaborController {
             return res.status(HttpStatus.OK).json({
                 data: result
             })
-        } catch (error) {
-            throw new HttpException({
-                status: HttpStatus.BAD_REQUEST,
-                error: { message: error.message }
-            }, HttpStatus.BAD_REQUEST)
-        }
+        } catch (error) { throwError(error) }
     }
 
     @Delete('/:laborId')
@@ -103,12 +89,7 @@ export class LaborController {
             return res.status(HttpStatus.OK).json({
                 message: 'Delete Labor successfully'
             })
-        } catch (error) {
-            throw new HttpException({
-                status: HttpStatus.BAD_REQUEST,
-                error: { message: error.message }
-            }, HttpStatus.BAD_REQUEST)
-        }
+        } catch (error) { throwError(error) }
     }
 
     @Put('/:laborId')
@@ -127,12 +108,7 @@ export class LaborController {
                 message: 'Update Labor successfully',
                 data: result
             })
-        } catch (error) {
-            throw new HttpException({
-                status: HttpStatus.BAD_REQUEST,
-                error: { message: error.message }
-            }, HttpStatus.BAD_REQUEST)
-        }
+        } catch (error) { throwError(error) }
     }
 
 }
