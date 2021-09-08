@@ -10,6 +10,8 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { ScheduleModule } from '@nestjs/schedule';
 import { CronService } from './cron/cron.service';
+import { LaborModule } from './labor/labor.module';
+import { ResourceModule } from './resource/resource.module';
 
 @Module({
   imports: [
@@ -22,6 +24,8 @@ import { CronService } from './cron/cron.service';
     UserModule, 
     AuthModule, 
     UploadModule, 
+    LaborModule,
+    ResourceModule
   ],
   controllers: [AppController],
   providers: [AppService, CronService],
