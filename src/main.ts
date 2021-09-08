@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe, HttpException, HttpStatus } from '@nestjs/common';
-import { ValidationError } from 'class-validator';
+import { useContainer, ValidationError } from 'class-validator';
 
 // Import firebase-admin
 import * as admin from 'firebase-admin';
@@ -9,6 +9,8 @@ import * as serviceAccount from './config/kavia-14bce-firebase-adminsdk.json';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
   // Set the config options
   const adminConfig = serviceAccount as unknown;
