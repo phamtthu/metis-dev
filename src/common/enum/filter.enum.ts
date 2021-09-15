@@ -6,3 +6,8 @@ export enum SortQuery {
     'Asc' = 1,
     'Desc' = -1
 }
+
+export enum Role {
+    'Admin' = 'admin',
+    'Employee' = 'employee',
+}

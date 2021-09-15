@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common"
 import { ValidatorConstraint, ValidatorConstraintInterface, ValidationArguments } from "class-validator"
 import { LaborService } from "../labor.service"
 
-@ValidatorConstraint({ name: "LaborIDsExistenceValidate", async: true })
+@ValidatorConstraint({ name: "LaborIDsExistenceValidator", async: true })
 @Injectable()
 export class LaborIDsExistenceValidator implements ValidatorConstraintInterface {
 
@@ -12,10 +12,11 @@ export class LaborIDsExistenceValidator implements ValidatorConstraintInterface 
 
     async validate(ids: string[], args: ValidationArguments) {
         try {
-            console.log(this.laborService)
             if (ids instanceof Array && ids.length === 0)
                 return true
             else if (ids instanceof Array) {
+                if (new Set(ids).size !== ids.length)
+                    return false
                 const laborIds = await this.laborService.findAllIds()
                 return ids.every(val => laborIds.includes(val))
             } else {
@@ -29,6 +30,6 @@ export class LaborIDsExistenceValidator implements ValidatorConstraintInterface 
     }
 
     defaultMessage(args: ValidationArguments) {
-        return "There is LaborID that does not exist."
+        return "LaborID must be exist and do not contain duplicate values"
     }
 }

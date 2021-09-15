@@ -1,6 +1,7 @@
 import {
     IsArray,
     IsEnum,
+    IsMongoId,
     IsNotEmpty,
     IsNumber,
     IsPositive,
@@ -10,7 +11,8 @@ import {
     Min,
     Validate,
 } from "class-validator"
-import { LaborIDsExistenceValidator } from "src/labor/custom-validator/laborIds.validation"
+import { LaborIDsExistenceValidator } from "src/labor/custom-validator/laborIds.validator"
+import { RCategoryIDExistenceValidator } from "src/resource-category/custom-validator/rcategoryId-existence.validator"
 
 enum Status {
     Ready = 1,
@@ -23,49 +25,31 @@ export class AddResourceDTO {
     @IsNotEmpty()
     equipment_name: string
 
-    @IsNumber()
     @IsNotEmpty()
     @IsEnum(Status)
     status: number
 
     @IsString()
     @IsNotEmpty()
-    number: string
+    resource_no: string
 
-    @IsString()
-    @IsNotEmpty()
+    @IsMongoId()
+    @Validate(RCategoryIDExistenceValidator)
     category: string
-
-    @IsPositive()
-    @Max(100)
-    @Min(0)
-    @IsNotEmpty()
-    capacity: number
 
     @IsString()
     @IsNotEmpty()
     description: string
-
+    
     @IsUrl({ require_tld: false }, { each: true })
     images: string[]
-
-    @IsString()
-    @IsNotEmpty()
-    serial_no: string
-
-    @IsString()
-    @IsNotEmpty()
-    supplier_vendor: string
-
-    @IsString()
-    @IsNotEmpty()
-    specification: string
 
     @IsPositive()
     @Min(0)
     @IsNotEmpty()
-    work_instruction: number
+    work_hours: number
 
+    /* TODO: Validate workcenter ID here */
     @IsString()
     @IsNotEmpty()
     work_center: string
@@ -75,19 +59,8 @@ export class AddResourceDTO {
     @IsNotEmpty()
     unit_cost: number
 
-    @IsPositive()
-    @Min(0)
-    @IsNotEmpty()
-    output: number
-
-    @IsPositive()
-    @Min(0)
-    @Max(100)
-    @IsNotEmpty()
-    efficiency: number
-
     @IsArray()
     @Validate(LaborIDsExistenceValidator)
-    labors: any
+    labors: string[]
 
 }
