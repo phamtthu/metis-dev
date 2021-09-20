@@ -20,7 +20,7 @@ import { ResourceCategoryID } from 'src/shared/pipe/resourcecategoryId.pipe'
 import { getOriginURL } from 'src/shared/helper'
 import { UpdateRCategoryRDTO } from './dto/update-rcategory.dto'
 
-@Controller('api/r-category')
+@Controller('api/resource-category')
 @UsePipes(new ValidationPipe({
     skipMissingProperties: true,
     forbidNonWhitelisted: true,
@@ -62,45 +62,45 @@ export class ResourceCategoryController {
         } catch (error) { throwCntrllrErr(error) }
     }
 
-    @Get('/:rCategoryId')
+    @Get('/:categoryId')
     async getDetail(
         @Request() req: ERequest,
         @Response() res: EResponse,
-        @Param('rCategoryId', ResourceCategoryID) rCategoryId: string
+        @Param('categoryId', ResourceCategoryID) categoryId: string
     ) {
         try {
-            const result = await this.rcategoryService.getDetail(rCategoryId)
+            const result = await this.rcategoryService.getDetail(categoryId)
             return res.status(HttpStatus.OK).json({
                 data: result
             })
         } catch (error) { throwCntrllrErr(error) }
     }
 
-    @Delete('/:rCategoryId')
+    @Delete('/:categoryId')
     async delete(
         @Request() req: ERequest,
         @Response() res: EResponse,
-        @Param('rCategoryId', ResourceCategoryID) rCategoryId: string
+        @Param('categoryId', ResourceCategoryID) categoryId: string
     ) {
         try {
-            await this.rcategoryService.delete(rCategoryId)
+            await this.rcategoryService.delete(categoryId)
             return res.status(HttpStatus.OK).json({
                 message: 'Delete Resource Category successfully'
             })
         } catch (error) { throwCntrllrErr(error) }
     }
 
-    @Put('/:rCategoryId')
+    @Put('/:categoryId')
     async update(
         @Request() req: ERequest,
         @Response() res: EResponse,
         @Body() rCategoryDTO: UpdateRCategoryRDTO,
-        @Param('rCategoryId', ResourceCategoryID) rCategoryId: string
+        @Param('categoryId', ResourceCategoryID) categoryId: string
     ) {
         try {
             const originURL = getOriginURL(req)
             const result = await this.rcategoryService.update(
-                rCategoryId, rCategoryDTO, originURL)
+                categoryId, rCategoryDTO, originURL)
             return res.status(HttpStatus.OK).json({
                 message: 'Update Resource Category successfully',
                 data: result
@@ -109,14 +109,14 @@ export class ResourceCategoryController {
     }
 
     // Get all Resource From this Category
-    @Get('resource/:rCategoryId')
+    @Get('resource/:categoryId')
     async getProductFromGivenPCategory(
         @Request() req: ERequest,
         @Response() res: EResponse,
-        @Param('rCategoryId', ResourceCategoryID) rCategoryId: string
+        @Param('categoryId', ResourceCategoryID) categoryId: string
     ) {
         try {
-            const result = await this.rcategoryService.getResourceFromGivenPCategory(rCategoryId)
+            const result = await this.rcategoryService.getResourceFromGivenPCategory(categoryId)
             return res.status(HttpStatus.OK).json({
                 data: result
             })

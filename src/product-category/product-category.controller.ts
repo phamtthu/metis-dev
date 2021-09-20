@@ -20,7 +20,7 @@ import { getOriginURL } from 'src/shared/helper'
 import { UpdatePCategoryRDTO } from './dto/update-pcategory.dto'
 import { ProductCategoryID } from 'src/shared/pipe/productcategoryId.pipe'
 
-@Controller('api/p-category')
+@Controller('api/product-category')
 @UsePipes(new ValidationPipe({
     skipMissingProperties: true,
     forbidNonWhitelisted: true,
@@ -62,45 +62,45 @@ export class ProductCategoryController {
         } catch (error) { throwCntrllrErr(error) }
     }
 
-    @Get('/:pCategoryId')
+    @Get('/:categoryId')
     async getDetail(
         @Request() req: ERequest,
         @Response() res: EResponse,
-        @Param('pCategoryId', ProductCategoryID) pCategoryId: string
+        @Param('categoryId', ProductCategoryID) categoryId: string
     ) {
         try {
-            const result = await this.pcategoryService.getDetail(pCategoryId)
+            const result = await this.pcategoryService.getDetail(categoryId)
             return res.status(HttpStatus.OK).json({
                 data: result
             })
         } catch (error) { throwCntrllrErr(error) }
     }
 
-    @Delete('/:pCategoryId')
+    @Delete('/:categoryId')
     async delete(
         @Request() req: ERequest,
         @Response() res: EResponse,
-        @Param('pCategoryId', ProductCategoryID) pCategoryId: string
+        @Param('categoryId', ProductCategoryID) categoryId: string
     ) {
         try {
-            await this.pcategoryService.delete(pCategoryId)
+            await this.pcategoryService.delete(categoryId)
             return res.status(HttpStatus.OK).json({
                 message: 'Delete Product Category successfully'
             })
         } catch (error) { throwCntrllrErr(error) }
     }
 
-    @Put('/:pCategoryId')
+    @Put('/:categoryId')
     async update(
         @Request() req: ERequest,
         @Response() res: EResponse,
         @Body() pCategoryDTO: UpdatePCategoryRDTO,
-        @Param('pCategoryId', ProductCategoryID) pCategoryId: string
+        @Param('categoryId', ProductCategoryID) categoryId: string
     ) {
         try {
             const originURL = getOriginURL(req)
             const result = await this.pcategoryService.update(
-                pCategoryId, pCategoryDTO, originURL)
+                categoryId, pCategoryDTO, originURL)
             return res.status(HttpStatus.OK).json({
                 message: 'Update Product Category successfully',
                 data: result
@@ -108,14 +108,14 @@ export class ProductCategoryController {
         } catch (error) { throwCntrllrErr(error) }
     }
 
-    @Get('product/:pCategoryId')
+    @Get('product/:categoryId')
     async getProductFromGivenPCategory(
         @Request() req: ERequest,
         @Response() res: EResponse,
-        @Param('pCategoryId', ProductCategoryID) pCategoryId: string
+        @Param('categoryId', ProductCategoryID) categoryId: string
     ) {
         try {
-            const result = await this.pcategoryService.getProductFromGivenPCategory(pCategoryId)
+            const result = await this.pcategoryService.getProductFromGivenPCategory(categoryId)
             return res.status(HttpStatus.OK).json({
                 data: result
             })
