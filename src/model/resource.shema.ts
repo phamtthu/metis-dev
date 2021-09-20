@@ -32,44 +32,13 @@ export class Resource extends Document {
     work_hours: number
 
     @Prop({ required: true, type: Types.ObjectId, ref: 'WorkCenter', default: null })
-    work_center: string /* | WorkCenter */
+    work_center: string
 
     @Prop({ default: 0, min: 0, require: true })
     unit_cost: number
 
     @Prop({ type: [{ type: Types.ObjectId, ref: 'Labor' }] })
     labors: string[]
-
-    // @Prop({ default: 0 })
-    // number_of_rating: number
-
-    //   @Prop({ required: true, default: null })
-    // deal_link: string
-
-    //   @Prop({ required: true, default: null })
-    // shipping_infor: string
-
-    // @Prop({ type: Types.ObjectId, ref: 'Brand' })
-    // brand: string
-    // // 1 Product : 1 Brand
-
-    // @Prop({ type: [{ type: Types.ObjectId, ref: 'Category' }] })
-    // categories: string[]
-    // //categories: Category[]
-    // // 1 Product : Many Category[]
-
-    // @Prop({ type: Types.ObjectId, ref: 'Store' })
-    // store: string
-    // // 1 Product: 1 Store
-
-    // @Prop({ type: Types.ObjectId, ref: 'User' })
-    // created_by: string
-
-    // @Prop({ type: Number, default: 0 })
-    // view: number
-
-    // @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }] })
-    // like: string[]
 
 }
 

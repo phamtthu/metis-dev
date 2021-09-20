@@ -14,7 +14,7 @@ export class Labor extends Document {
     @Prop({ required: true, default: null, trim: true })
     email: string
 
-    @Prop({ required: true, default: null, unique: true })
+    @Prop({ required: true, unique: true })
     labor_no: string
 
     @Prop({ required: true, default: null })
@@ -39,7 +39,7 @@ export class Labor extends Document {
         required: true,
         type: [{
             _id: false,
-            skill: { type: Types.ObjectId },
+            skill: { type: Types.ObjectId, ref: "Skill" },
             level: { type: Number, enum: [1, 2, 3, 4, 5] },
         }]
     })
@@ -48,52 +48,19 @@ export class Labor extends Document {
     @Prop({ required: true, type: Types.ObjectId, ref: 'Position', default: null })
     position: string
 
-    @Prop({ required: true, type: Types.ObjectId, ref: 'WorkCenter', default: null })
-    work_center: string /* | WorkCenter */
-
     @Prop({ type: [String], enum: Role, default: [Role.Employee] })
     roles: string[]
 
     // Set by Other
 
+    @Prop({ type: [{ type: Types.ObjectId, ref: 'WorkCenter' }] })
+    work_centers: string[]
+
     @Prop({ type: [{ type: Types.ObjectId, ref: 'Resource' }] })
-    resources: string[]/* Resource[] */
+    resources: string[]
 
     @Prop({ type: [{ type: Types.ObjectId, ref: 'Task' }] })
-    tasks: string[] /* | Tasks[] */
-
-    //----------------------------------------------------------------
-
-    // @Prop({ default: 0 })
-    // number_of_rating: number
-
-    //   @Prop({ required: true, default: null })
-    // deal_link: string
-
-    //   @Prop({ required: true, default: null })
-    // shipping_infor: string
-
-    // @Prop({ type: Types.ObjectId, ref: 'Brand' })
-    // brand: string
-    // // 1 Product : 1 Brand
-
-    // @Prop({ type: [{ type: Types.ObjectId, ref: 'Category' }] })
-    // categories: string[]
-    // //categories: Category[]
-    // // 1 Product : Many Category[]
-
-    // @Prop({ type: Types.ObjectId, ref: 'Store' })
-    // store: string
-    // // 1 Product: 1 Store
-
-    // @Prop({ type: Types.ObjectId, ref: 'User' })
-    // created_by: string
-
-    // @Prop({ type: Number, default: 0 })
-    // view: number
-
-    // @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }] })
-    // like: string[]
+    tasks: string[]
 
 }
 

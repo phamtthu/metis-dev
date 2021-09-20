@@ -9,6 +9,7 @@ import {
     IsPositive,
     IsString,
     IsUrl,
+    Matches,
     Max,
     MaxLength,
     Min,
@@ -43,6 +44,9 @@ export class AddLaborDTO {
 
     @IsString()
     @IsNotEmpty()
+    @Matches(/\b[a-zA-Z]{2}[0-9]{3}\b/, {
+        message: 'Labor_no must follow 2 Numbers and 3 Letters, Ex: 00AAA'
+    })
     labor_no: string
 
     @IsUrl({ require_tld: false })
@@ -65,7 +69,7 @@ export class AddLaborDTO {
     note: string
 
     @IsEnum(Status)
-    is_active:number
+    is_active: number
 
     @IsPositive()
     @Max(100)
@@ -78,10 +82,6 @@ export class AddLaborDTO {
     @Type(() => Skill)
     @ValidateNested({ each: true })
     skills: Skill[]
-
-    //  TODO: validate WorkCenterID here
-    @IsMongoId()
-    work_center: string
 
     @IsMongoId()
     @Validate(PositionIDExistenceValidator)
