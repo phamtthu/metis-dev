@@ -1,0 +1,126 @@
+import {
+    Body,
+    Delete,
+    HttpStatus,
+    Post,
+    Put,
+    Query,
+    Request,
+    Response,
+    UsePipes,
+    ValidationPipe
+} from '@nestjs/common'
+import { Controller, Get, Param } from '@nestjs/common'
+import { throwCntrllrErr } from 'src/common/utils/error'
+import { Request as ERequest } from 'express'
+import { Response as EResponse } from 'express'
+import { AddRCategoryDTO } from './dto/add-rcategory.dto'
+import { ResourceCategoryService } from './resource-category.service'
+import { ResourceCategoryID } from 'src/shared/pipe/resourcecategoryId.pipe'
+import { getOriginURL } from 'src/shared/helper'
+import { UpdateRCategoryRDTO } from './dto/update-rcategory.dto'
+
+@Controller('api/r-category')
+@UsePipes(new ValidationPipe({
+    skipMissingProperties: true,
+    forbidNonWhitelisted: true,
+    whitelist: true
+}))
+export class ResourceCategoryController {
+
+    constructor(
+        private rcategoryService: ResourceCategoryService
+    ) { }
+
+    @Post()
+    async create(
+        @Request() req: ERequest,
+        @Response() res: EResponse,
+        @Body() rCategoryDTO: AddRCategoryDTO
+    ) {
+        try {
+            const originURL = getOriginURL(req)
+            const result = await this.rcategoryService.create(rCategoryDTO, originURL)
+            return res.status(HttpStatus.CREATED).json({
+                message: 'Create Resouce Category successfully',
+                data: result
+            })
+        } catch (error) { throwCntrllrErr(error) }
+    }
+
+    @Get()
+    async getList(
+        @Request() req: ERequest,
+        @Response() res: EResponse,
+        @Query('search') search: string
+    ) {
+        try {
+            const result = await this.rcategoryService.getList(search)
+            return res.status(HttpStatus.OK).json({
+                data: result
+            })
+        } catch (error) { throwCntrllrErr(error) }
+    }
+
+    @Get('/:rCategoryId')
+    async getDetail(
+        @Request() req: ERequest,
+        @Response() res: EResponse,
+        @Param('rCategoryId', ResourceCategoryID) rCategoryId: string
+    ) {
+        try {
+            const result = await this.rcategoryService.getDetail(rCategoryId)
+            return res.status(HttpStatus.OK).json({
+                data: result
+            })
+        } catch (error) { throwCntrllrErr(error) }
+    }
+
+    @Delete('/:rCategoryId')
+    async delete(
+        @Request() req: ERequest,
+        @Response() res: EResponse,
+        @Param('rCategoryId', ResourceCategoryID) rCategoryId: string
+    ) {
+        try {
+            await this.rcategoryService.delete(rCategoryId)
+            return res.status(HttpStatus.OK).json({
+                message: 'Delete Resource Category successfully'
+            })
+        } catch (error) { throwCntrllrErr(error) }
+    }
+
+    @Put('/:rCategoryId')
+    async update(
+        @Request() req: ERequest,
+        @Response() res: EResponse,
+        @Body() rCategoryDTO: UpdateRCategoryRDTO,
+        @Param('rCategoryId', ResourceCategoryID) rCategoryId: string
+    ) {
+        try {
+            const originURL = getOriginURL(req)
+            const result = await this.rcategoryService.update(
+                rCategoryId, rCategoryDTO, originURL)
+            return res.status(HttpStatus.OK).json({
+                message: 'Update Resource Category successfully',
+                data: result
+            })
+        } catch (error) { throwCntrllrErr(error) }
+    }
+
+    // Get all Resource From this Category
+    @Get('resource/:rCategoryId')
+    async getProductFromGivenPCategory(
+        @Request() req: ERequest,
+        @Response() res: EResponse,
+        @Param('rCategoryId', ResourceCategoryID) rCategoryId: string
+    ) {
+        try {
+            const result = await this.rcategoryService.getResourceFromGivenPCategory(rCategoryId)
+            return res.status(HttpStatus.OK).json({
+                data: result
+            })
+        } catch (error) { throwCntrllrErr(error) }
+    }
+
+}
