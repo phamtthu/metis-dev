@@ -53,9 +53,11 @@ export class ProductCategoryController {
         @Request() req: ERequest,
         @Response() res: EResponse,
         @Query('search') search: string,
+        @Query('offset') offset: number,
+        @Query('limit') limit: number
     ) {
         try {
-            const result = await this.pcategoryService.getList(search?.trim())
+            const result = await this.pcategoryService.getList({ offset, limit }, search?.trim())
             return res.status(HttpStatus.OK).json({
                 data: result
             })

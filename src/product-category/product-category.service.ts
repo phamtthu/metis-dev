@@ -1,17 +1,21 @@
 import { Injectable, NotFoundException } from "@nestjs/common"
 import { InjectModel } from "@nestjs/mongoose"
 import { Model, PaginateModel } from "mongoose"
+import { PaginationQueryDto } from "src/common/dto/pagination-query.dto"
+import { SortQuery } from "src/common/enum/filter.enum"
 import { throwSrvErr } from "src/common/utils/error"
 import { deleteImgPath, getNewImgLink } from "src/common/utils/image-handler"
 import { ProductCategory } from "src/model/productcategory.schema"
 import { Product } from "src/order/dto/add-order.dto"
+import { getNestedList, paginator } from "src/shared/helper"
 import { AddPCategoryDTO } from "./dto/add-pcategory.dto"
 import { UpdatePCategoryRDTO } from "./dto/update-pcategory.dto"
+
 @Injectable()
 export class ProductCategoryService {
 
     constructor(
-        @InjectModel('ProductCategory') private pCategoryModel: Model<ProductCategory>,
+        @InjectModel('ProductCategory') private pCategoryModel: PaginateModel<ProductCategory>,
         @InjectModel('Product') private productModel: Model<Product>
     ) { }
 
@@ -25,80 +29,106 @@ export class ProductCategoryService {
         } catch (error) { throwSrvErr(error) }
     }
 
-    async getList(search: string) {
-        if (search) {
+    async getList(paginateQuery: PaginationQueryDto, search: string) {
+        try {
             const searchRegex = new RegExp(search, 'i')
-            return await this.pCategoryModel.find({
+            const query = {
                 $or: [
                     { name: { $regex: searchRegex } },
                     { description: { $regex: searchRegex } }
                 ]
-            })
-        }
-        else
-            return await this.getNestedList()
-    }
-
-    async getNestedList(pCategoryId = null) {
-        let allRCategories = await this.pCategoryModel
-            .find()
-            .lean()
-        const nest = (items, _id = pCategoryId, link = 'parent') => items
-            .filter(item => item[link]?.toString() === _id?.toString())
-            .map(item => ({ ...item, children: nest(items, item._id) }))
-        return nest(allRCategories)
+            }
+            if (search) {
+                const paginationOptions = {
+                    offset: paginateQuery.offset,
+                    limit: paginateQuery.limit,
+                    sort: { created_at: SortQuery.Desc },
+                    customLabels: {
+                        page: 'page',
+                        limit: 'per_page',
+                        totalDocs: 'total',
+                        totalPages: 'total_pages',
+                        docs: 'data'
+                    }
+                }
+                if (paginateQuery.offset >= 0 && paginateQuery.limit >= 0) {
+                    return await this.pCategoryModel.paginate(query, paginationOptions)
+                } else {
+                    return await this.pCategoryModel.find(query)
+                        .sort({ 'created_at': SortQuery.Desc })
+                }
+            } else {
+                const categories = await this.pCategoryModel.find()
+                    .sort({ 'created_at': SortQuery.Desc })
+                    .lean()
+                const nestedCategories = getNestedList(null, categories)
+                if (paginateQuery.offset >= 0 && paginateQuery.limit >= 0) {
+                    return paginator(
+                        nestedCategories,
+                        paginateQuery.offset,
+                        paginateQuery.limit)
+                } else {
+                    return nestedCategories
+                }
+            }
+        } catch (error) { throwSrvErr(error) }
     }
 
     async getDetail(pCategoryId: string) {
         try {
-            const theCategory = await this.pCategoryModel.findById(pCategoryId).lean()
-            let rootAndsubCategories = await this.getAllSubCategoriesFromRootCategory(pCategoryId)
-            rootAndsubCategories = rootAndsubCategories.map((e) => e._id)
-            theCategory['sub_categoriesID'] = rootAndsubCategories
-            theCategory['children'] = await this.getNestedList(pCategoryId)
+            const theCategory: any = await this.pCategoryModel.findById(pCategoryId).lean()
+            const categories: any = await this.pCategoryModel.find()
+                .sort({ 'created_at': SortQuery.Desc })
+                .lean()
+            let rootAndsubCategories = await this.getAllSubCategoriesFromRootCategory(theCategory, categories)
+            theCategory['sub_categoriesID'] = rootAndsubCategories.map((e) => e._id)
+            theCategory['children'] = getNestedList(pCategoryId, categories)
             return theCategory
-        } catch (e) { throw new Error(e.message) }
+        } catch (error) { throwSrvErr(error) }
     }
 
-    async getAllSubCategoriesFromRootCategory(pCategoryId: string) {
-        const theCategory = await this.pCategoryModel
-            .findById(pCategoryId)
-            .lean()
-        if (!theCategory)
-            throw new NotFoundException('CATEGORY ID NOT FOUND')
-        theCategory['children'] = await this.getNestedList(pCategoryId)
-        // Flat Nested array and return Products[]
-        const flatten = arr => arr.flatMap(({ children, ...o }) => [o, ...flatten(children)])
-        return flatten([theCategory])
+    async getAllSubCategoriesFromRootCategory(theCategory: ProductCategory, categories: ProductCategory[]) {
+        try {
+            theCategory['children'] = getNestedList(theCategory._id, categories)
+            // Flat Nested array and return Products[]
+            const flatten = arr => arr.flatMap(({ children, ...o }) => [o, ...flatten(children)])
+            return flatten([theCategory])
+        } catch (error) { throwSrvErr(error) }
     }
 
     async delete(pCategoryId: string) {
-        const deletedRCategory = await this.pCategoryModel.findByIdAndDelete(pCategoryId)
-        await this.productModel.updateMany({ category: pCategoryId }, { category: null })
-        // Change parent_id of its Sub Category to null 
-        await this.pCategoryModel.updateMany({ parent: pCategoryId }, { parent: null })
-        if (deletedRCategory.image)
-            await deleteImgPath(deletedRCategory.image)
-        return deletedRCategory
+        try {
+            const deletedRCategory = await this.pCategoryModel.findByIdAndDelete(pCategoryId)
+            await this.productModel.updateMany({ category: pCategoryId }, { category: null })
+            // Change parent_id of its Sub Category to null 
+            await this.pCategoryModel.updateMany({ parent: pCategoryId }, { parent: null })
+            if (deletedRCategory.image)
+                await deleteImgPath(deletedRCategory.image)
+            return deletedRCategory
+        } catch (error) { throwSrvErr(error) }
     }
 
     async update(pCategoryId: string, pCategoryDTO: UpdatePCategoryRDTO, originURL: string) {
-        pCategoryDTO.image = await getNewImgLink(
-            pCategoryDTO.image,
-            'product-category',
-            originURL)
-        const beforeUpdate = await this.pCategoryModel.findByIdAndUpdate(
-            pCategoryId,
-            pCategoryDTO)
-        // Delete old Image 
-        await deleteImgPath(beforeUpdate.image)
-        return await this.pCategoryModel.findById(pCategoryId)
+        try {
+            pCategoryDTO.image = await getNewImgLink(
+                pCategoryDTO.image,
+                'product-category',
+                originURL)
+            const beforeUpdate = await this.pCategoryModel.findByIdAndUpdate(
+                pCategoryId,
+                pCategoryDTO)
+            // Delete old Image 
+            await deleteImgPath(beforeUpdate.image)
+            return await this.pCategoryModel.findById(pCategoryId)
+        } catch (error) { throwSrvErr(error) }
     }
 
     async getProductFromGivenPCategory(pCategoryId: string) {
-        let { sub_categoriesID }: any = await this.getDetail(pCategoryId)
-        sub_categoriesID = sub_categoriesID.map((e) => String(e))
-        return await this.productModel.find({ category: { "$in": sub_categoriesID } })
+        try {
+            let { sub_categoriesID }: any = await this.getDetail(pCategoryId)
+            sub_categoriesID = sub_categoriesID.map((e) => String(e))
+            return await this.productModel.find({ category: { "$in": sub_categoriesID } })
+        } catch (error) { throwSrvErr(error) }
     }
 
 }

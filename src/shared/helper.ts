@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require('path');
 
-export const moveTmpToMain = async (data = [], dir='') => {
+export const moveTmpToMain = async (data = [], dir = '') => {
 
     return data.map(item => {
         if (item && item.includes("upload/tmp")) {
@@ -42,10 +42,10 @@ export const moveSingleTmpToMain = async (item, dir = '') => {
     }
 }
 
-export const moveTmpToMainObject = async (data = [], dir='') => {
+export const moveTmpToMainObject = async (data = [], dir = '') => {
 
-    return data.map(itemObj=> {
-        if(itemObj && itemObj.url) {
+    return data.map(itemObj => {
+        if (itemObj && itemObj.url) {
             let item = itemObj.url;
             if (item && item.includes("upload/tmp")) {
                 if (fs.existsSync('./public/upload/tmp/' + path.basename(item))) {
@@ -60,8 +60,8 @@ export const moveTmpToMainObject = async (data = [], dir='') => {
                 }
             }
             itemObj.url = item;
-        } 
-        
+        }
+
         return itemObj;
     })
 }
@@ -93,4 +93,40 @@ export const removeVietnameseTones = (str) => {
     // Bỏ dấu câu, kí tự đặc biệt
     str = str.replace(/!|@|%|\^|\*|\(|\)|\+|\=|\<|\>|\?|\/|,|\.|\:|\;|\'|\"|\&|\#|\[|\]|~|\$|_|`|-|{|}|\||\\/g, " ");
     return str;
+}
+
+export const getOriginURL = (req) => {
+    return req.protocol + "://" + req.headers.host
+}
+
+export const IsTwoArrayEqual = (arr1, arr2) => {
+    return (
+        arr1.length === arr2.length
+        &&
+        arr1.some((e) => arr2.includes(e))
+        &&
+        arr2.some((e) => arr1.includes(e))
+    )
+}
+
+export const getNestedList = (parent = null, flatArray = []) => {
+    const nest = (items, _id = parent, link = 'parent') => items
+        .filter(item => item[link]?.toString() === _id?.toString())
+        .map(item => ({ ...item, children: nest(items, item._id) }))
+    return nest(flatArray)
+}
+
+export const paginator = (items, offset = 0, limit = 10) => {
+    let page = (offset / limit) + 1
+    let total_pages = Math.ceil(items.length / limit)
+    return {
+        data: items.slice(offset, (offset + limit)),
+        total: items.length,
+        offset: offset,
+        per_page: limit,
+        total_pages: total_pages,
+        page: Math.floor(page),
+        pre_page: page - 1 > 1 ? Math.floor(page - 1) : null,
+        next_page: (page >= total_pages) ? null : Math.floor(page + 1)
+    }
 }
