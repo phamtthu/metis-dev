@@ -8,6 +8,6 @@ export enum SortQuery {
 }
 
 export enum Role {
-    'Admin' = 'admin',
-    'Employee' = 'employee',
+    Employee = 'employee',
+    Admin = 'admin',
 }

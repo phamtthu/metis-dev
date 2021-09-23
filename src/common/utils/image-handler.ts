@@ -2,6 +2,7 @@ import * as fs from 'fs-extra'
 import * as  fetch from 'node-fetch'
 import { nanoid } from 'nanoid'
 import { readdirSync } from 'fs'
+import { NotFoundException } from '@nestjs/common'
 
 // - Create 
 export const getNewImgLink = async (imgLink, folderName, serverURL) => {
@@ -26,7 +27,7 @@ export const getNewImgLink = async (imgLink, folderName, serverURL) => {
                 const newLink = `${new URL(imgLink).origin}${newPath.slice(8)}`
                 return newLink
             } else {
-                throw new Error('Image is not exist.')
+                throw new NotFoundException('File is not exist.')
             }
 
         } else if (imgLink.includes(`${serverURL}/upload/`)) {
@@ -49,14 +50,15 @@ export const getNewImgLink = async (imgLink, folderName, serverURL) => {
                 // return newLink
                 return `${serverURL}/${newPath.slice(8)}`
             } else {
-                throw new Error('Image is not exist.')
+                throw new NotFoundException('File is not exist.')
             }
         } else {
             // Belong to other server
             // Download and create file
             const response = await fetch(imgLink);
             const buffer = await response.buffer();
-            const fileName = (imgLink.split('/'))[imgLink.split('/').length - 1]
+            let fileName = (imgLink.split('/'))[imgLink.split('/').length - 1]
+            fileName = fileName.trim().replace(/[^a-z0-9]+/gi, '-')
             const path = `./public/upload/${folderName}/${nanoid(10)}-${fileName}`
             await fs.ensureFile(path)
             await fs.writeFile(path, buffer)
