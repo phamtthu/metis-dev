@@ -4,7 +4,7 @@ import { Model, PaginateModel } from "mongoose"
 import { PaginationQueryDto } from "src/common/dto/pagination-query.dto"
 import { SortQuery } from "src/common/enum/filter.enum"
 import { throwSrvErr } from "src/common/utils/error"
-import { Labor } from "src/model/labor.shema"
+import { User } from "src/model/user.shema"
 import { Resource } from "src/model/resource.shema"
 import { WorkCenter } from "src/model/workcenter.schema"
 import { isTwoArrayEqual } from "src/shared/helper"
@@ -16,7 +16,7 @@ export class WorkCenterService {
 
     constructor(
         @InjectModel('WorkCenter') private workCenterModel: PaginateModel<WorkCenter>,
-        @InjectModel('Labor') private laborModel: PaginateModel<Labor>,
+        @InjectModel('User') private userModel: PaginateModel<User>,
         @InjectModel('Resource') private resourceModel: PaginateModel<Resource>
     ) { }
 
@@ -25,9 +25,15 @@ export class WorkCenterService {
             const result = await this.workCenterModel.findOne({ work_center_no: workCenterDTO.work_center_no })
             if (result)
                 throw new ConflictException('work_center_no is already exist')
+
             const workcenter = await (new this.workCenterModel(workCenterDTO)).save()
-            await this.laborModel.updateMany(
-                { _id: { "$in": workCenterDTO.labors } },
+            // User
+            await this.userModel.updateMany(
+                { _id: { "$in": workCenterDTO.users } },
+                { $push: { work_centers: workcenter._id } })
+            // Resource
+            await this.resourceModel.updateMany(
+                { _id: { "$in": workCenterDTO.resources } },
                 { $push: { work_centers: workcenter._id } })
 
             return workcenter
@@ -45,7 +51,7 @@ export class WorkCenterService {
                 ]
             }
             const populateOption = [
-                { path: 'labors', model: 'Labor', select: 'name' },
+                { path: 'users', model: 'User', select: 'name' },
                 { path: 'resources', model: 'Resource', select: 'equipment_name' }
             ]
             if (paginateQuery.offset >= 0 && paginateQuery.limit >= 0) {
@@ -73,7 +79,7 @@ export class WorkCenterService {
     async getDetail(workCenterId: string) {
         try {
             return await this.workCenterModel.findById(workCenterId)
-                .populate('labors')
+                .populate('users')
                 .populate('resources')
         } catch (error) { throwSrvErr(error) }
     }
@@ -81,12 +87,12 @@ export class WorkCenterService {
     async delete(workCenterId: string) {
         try {
             const deletedWC = await this.workCenterModel.findByIdAndDelete(workCenterId)
-            await this.laborModel.updateMany(
-                { work_centers: workCenterId },
+            await this.userModel.updateMany(
+                { _id: { "$in": deletedWC.users } },
                 { $pull: { 'work_centers': workCenterId } })
             await this.resourceModel.updateMany(
-                { work_center: workCenterId },
-                { work_center: null })
+                { _id: { "$in": deletedWC.resources } },
+                { $pull: { 'work_centers': workCenterId } })
             return deletedWC
 
         } catch (error) { throwSrvErr(error) }
@@ -100,25 +106,28 @@ export class WorkCenterService {
                 workCenterDTO,
                 { new: true })
 
-            if (!isTwoArrayEqual(workCenterDTO.labors, oldWCenter.labors.map((e) => String(e)))) {
-                const removedLabors = oldWCenter.labors.filter((labordId) =>
-                    !workCenterDTO.labors.includes(String(labordId)))
-
-                const incomingLabors = workCenterDTO.labors.filter((laborId) =>
-                    !oldWCenter.labors.map((laborId) => String(laborId))
-                        .includes(laborId))
-
-                for await (const laborId of removedLabors) {
-                    await this.laborModel.findByIdAndUpdate(
-                        laborId,
-                        { $pull: { 'work_centers': workCenterId } })
-                }
-
-                for await (const laborId of incomingLabors) {
-                    await this.laborModel.findByIdAndUpdate(laborId,
-                        { $push: { 'work_centers': workCenterId } })
-                }
+            if (!isTwoArrayEqual(workCenterDTO.users, oldWCenter.users.map((e) => String(e)))) {
+                await this.userModel.updateMany(
+                    { _id: { "$in": oldWCenter.users } },
+                    { $pull: { work_centers: workCenterId } }
+                )
+                await this.userModel.updateMany(
+                    { _id: { "$in": workCenterDTO.users } },
+                    { $push: { work_centers: workCenterId } }
+                )
             }
+            if (!isTwoArrayEqual(workCenterDTO.resources, oldWCenter.resources.map((e) => String(e)))) {
+                await this.resourceModel.updateMany(
+                    { _id: { "$in": oldWCenter.resources } },
+                    { $pull: { work_centers: workCenterId } }
+                )
+                await this.resourceModel.updateMany(
+                    { _id: { "$in": workCenterDTO.resources } },
+                    { $push: { work_centers: workCenterId } }
+                )
+            }
+
+
             return newWCenter
         } catch (error) { throwSrvErr(error) }
     }

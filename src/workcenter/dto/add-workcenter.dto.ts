@@ -1,4 +1,5 @@
 import {
+    ArrayNotEmpty,
     IsArray,
     IsEnum,
     IsMongoId,
@@ -14,6 +15,8 @@ import {
     Validate,
 } from "class-validator"
 import { LaborIDsExistenceValidator } from "src/labor/custom-validator/laborIds.validator"
+import { ResourceIDsExistenceValidator } from "src/resource/custom-validator/resourceIds-existence-validator"
+import { UserIDsExistenceValidator } from "src/user/custom-validator/userIds.validator"
 
 export class AddWorkCenterDTO {
 
@@ -29,38 +32,82 @@ export class AddWorkCenterDTO {
     })
     work_center_no: string
 
+    @IsNumber()
+    @Min(0)
+    @IsNotEmpty()
+    avg_working_hours: number
+
+    @IsNumber()
+    @Min(0)
+    @IsNotEmpty()
+    avg_labor_cost: number
+
+    @IsNumber()
+    @Min(0)
+    @IsNotEmpty()
+    avg_output: number
+
+    @IsNumber()
+    @Min(0)
+    @IsNotEmpty()
+    time_before_production: number
+
     @IsString()
     @IsNotEmpty()
     @MaxLength(200)
     description: string
 
-    @IsPositive()
+    @IsNumber()
     @Min(0)
     @IsNotEmpty()
     estimated_mhs: number
 
-    @IsPositive()
+    @IsNumber()
     @Min(0)
     @IsNotEmpty()
     avg_mhs: number
 
-    @IsPositive()
+    @IsNumber()
     @Min(0)
     @IsNotEmpty()
     total_mhs: number
 
-    @IsPositive()
+    @IsNumber()
+    @Min(0)
+    @IsNotEmpty()
+    out_mtd: number
+
+    @IsNumber()
+    @Min(0)
+    @IsNotEmpty()
+    eff_mtd: number
+
+    @IsNumber()
+    @Min(0)
+    @IsNotEmpty()
+    o_target: number
+
+    @IsNumber()
     @Min(0)
     @IsNotEmpty()
     output: number
 
-    @IsPositive()
+    @IsNumber()
+    @Min(0)
+    @IsNotEmpty()
+    target: number
+
+    @IsNumber()
     @Min(0)
     @IsNotEmpty()
     actual: number
 
     @IsArray()
-    @Validate(LaborIDsExistenceValidator)
-    labors: string[]
+    @Validate(UserIDsExistenceValidator)
+    users: string[]
+
+    @IsArray()
+    @Validate(ResourceIDsExistenceValidator)
+    resources: string[]
 
 }
