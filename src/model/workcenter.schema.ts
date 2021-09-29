@@ -12,6 +12,18 @@ export class WorkCenter extends Document {
     @Prop({ required: true, unique: true })
     work_center_no: string
 
+    @Prop({ required: true, default: null, min: 0 })
+    avg_working_hours: number
+
+    @Prop({ required: true, default: null, min: 0 })
+    avg_labor_cost: number
+
+    @Prop({ required: true, default: null, min: 0 })
+    avg_output: number
+
+    @Prop({ required: true, default: null, min: 0 })
+    time_before_production: number
+
     @Prop({ required: true, default: null })
     description: string
 
@@ -25,18 +37,29 @@ export class WorkCenter extends Document {
     total_mhs: number
 
     @Prop({ required: true, default: null, min: 0 })
+    out_mtd: number
+
+    @Prop({ required: true, default: null, min: 0 })
+    eff_mtd: number
+
+    @Prop({ required: true, default: null, min: 0 })
+    o_target: number
+
+    @Prop({ required: true, default: null, min: 0 })
     output: number
+
+    @Prop({ required: true, default: null, min: 0 })
+    target: number
 
     @Prop({ required: true, default: null, min: 0 })
     actual: number
 
-    @Prop({ type: [{ type: Types.ObjectId, ref: 'Labor' }] })
-    labors: string[]
-
-    // -- Other
+    @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }] })
+    users: string[]
 
     @Prop({ type: [{ type: Types.ObjectId, ref: 'Resource' }] })
     resources: string[]
+    
 }
 
 export const WorkCenterSchema = SchemaFactory.createForClass(WorkCenter)
