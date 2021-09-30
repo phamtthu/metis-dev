@@ -1,5 +1,6 @@
 import {
     Body,
+    ClassSerializerInterceptor,
     Delete,
     HttpException,
     HttpStatus,
@@ -10,6 +11,7 @@ import {
     Request,
     Response,
     UseGuards,
+    UseInterceptors,
     UsePipes,
     ValidationPipe
 } from '@nestjs/common'
@@ -29,6 +31,7 @@ import { UserID } from 'src/shared/pipe/userId.pipe'
     forbidNonWhitelisted: true,
     whitelist: true
 }))
+@UseInterceptors(ClassSerializerInterceptor)
 export class UserController {
 
     constructor(
@@ -38,46 +41,43 @@ export class UserController {
     @Post()
     async create(
         @Request() req: ERequest,
-        @Response() res: EResponse,
         @Body() userDTO: AddUserDTO
     ) {
         try {
             const originURL = getOriginURL(req)
             const result = await this.userService.create(userDTO, originURL)
-            return res.status(HttpStatus.CREATED).json({
-                message: 'Create User successfully',
+            return {
+                message: "Create User successfully",
                 data: result
-            })
+            }
         } catch (error) { throwCntrllrErr(error) }
     }
 
     @Get()
     async getList(
         @Request() req: ERequest,
-        @Response() res: EResponse,
         @Query('search') search: string,
         @Query('offset') offset: number,
         @Query('limit') limit: number
     ) {
         try {
             const result = await this.userService.getList({ offset, limit }, search?.trim())
-            return res.status(HttpStatus.OK).json({
+            return {
                 data: result
-            })
+            }
         } catch (error) { throwCntrllrErr(error) }
     }
 
     @Get('/:userId')
     async getDetail(
         @Request() req: ERequest,
-        @Response() res: EResponse,
         @Param('userId', UserID) userId: string
     ) {
         try {
             const result = await this.userService.getDetail(userId)
-            return res.status(HttpStatus.OK).json({
+            return {
                 data: result
-            })
+            }
         } catch (error) { throwCntrllrErr(error) }
     }
 
@@ -89,27 +89,27 @@ export class UserController {
     ) {
         try {
             await this.userService.delete(userId)
-            return res.status(HttpStatus.OK).json({
+            return {
                 message: 'Delete User successfully'
-            })
+            }
         } catch (error) { throwCntrllrErr(error) }
     }
 
     @Put('/:userId')
     async update(
         @Request() req: ERequest,
-        @Response() res: EResponse,
         @Param('userId', UserID) userId: string,
         @Body() userDTO: UpdateUserDTO
     ) {
         try {
             const originURL = getOriginURL(req)
             const result = await this.userService.update(
-                userId, userDTO, originURL)
-            return res.status(HttpStatus.OK).json({
+                userId, userDTO, originURL
+            )
+            return {
                 message: 'Update User successfully',
                 data: result
-            })
+            }
         } catch (error) { throwCntrllrErr(error) }
     }
 

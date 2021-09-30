@@ -11,6 +11,7 @@ import { UpdateUserDTO } from './dto/update-user'
 import { ResourceUser } from 'src/model/resource-user.schema'
 import { Resource } from 'src/model/resource.shema'
 import { WorkCenterUser } from 'src/model/workcenter-user.schema'
+import { UserResponse } from './response/user-response'
 
 @Injectable()
 export class UserService {
@@ -79,7 +80,8 @@ export class UserService {
             userDTO.image = await getNewImgLink(
                 userDTO.image, 'user', originURL)
             const user = await (new this.userModel(userDTO)).save()
-            return user
+            return new UserResponse(user.toJSON())
+            // return user
         } catch (e) { throwSrvErr(e) }
     }
 
@@ -117,13 +119,14 @@ export class UserService {
     async getDetail(userId: string) {
         try {
             const user = await this.userModel.findById(userId).lean()
-            // Resource
-            const resourceUsers = await this.resourceUserModel.find({ user: userId }).populate('resource')
-            user['resources'] = resourceUsers.map((e) => e.resource)
-            // WorkCenter
-            const wcUsers = await this.wcUserModel.find({ user: userId }).populate('workcenter')
-            user['workcenters'] = wcUsers.map((e) => e.workcenter)
-            return user
+            // // Resource
+            // const resourceUsers = await this.resourceUserModel.find({ user: userId }).populate('resource')
+            // user['resources'] = resourceUsers.map((e) => e.resource)
+            // // WorkCenter
+            // const wcUsers = await this.wcUserModel.find({ user: userId }).populate('workcenter')
+            // user['workcenters'] = wcUsers.map((e) => e.workcenter)
+            // return user
+            return new UserResponse(user)
         } catch (e) { throwSrvErr(e) }
     }
 
@@ -152,8 +155,9 @@ export class UserService {
                 userDTO.image = await getNewImgLink(
                     userDTO.image, 'user', originURL)
             const newUser = await this.userModel.findByIdAndUpdate(
-                userId, userDTO, { new: true })
+                userId, userDTO, { new: true }).lean()
             return newUser
+            // return new UserResponse(newUser)
         } catch (e) { throwSrvErr(e) }
     }
 
@@ -163,4 +167,5 @@ export class UserService {
             return users.map(user => String(user._id))
         } catch (e) { throwSrvErr(e) }
     }
+
 }
