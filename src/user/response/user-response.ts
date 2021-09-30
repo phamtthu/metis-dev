@@ -1,13 +1,11 @@
-import { Exclude, Transform, Expose } from 'class-transformer'
-import { ObjectId } from "mongoose"
+import { Exclude, Transform, Expose } from 'class-transformer';
+import { ObjectId } from 'mongoose';
 
 export class UserResponse {
+  @Exclude()
+  __v: any;
 
-    @Exclude()
-    __v: any;
-
-    constructor(partial: Partial<UserResponse>) {
-        Object.assign(this, partial);
-    }
-
+  constructor(partial: Partial<UserResponse>) {
+    Object.assign(this, partial);
+  }
 }

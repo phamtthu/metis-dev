@@ -4,13 +4,15 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { PushNotificationAllEmployeeDto, PushNotificationDto } from './dto/send-notification.dto';
+import {
+  PushNotificationAllEmployeeDto,
+  PushNotificationDto,
+} from './dto/send-notification.dto';
 import * as admin from 'firebase-admin';
 
 @Injectable()
 export class FcmPushService {
-  constructor() {
-  }
+  constructor() {}
 
   async sendToOneUser(sendNotificationDto: PushNotificationDto): Promise<any> {
     try {
@@ -23,7 +25,14 @@ export class FcmPushService {
       ) {
         // Check field device token not null || undefined
         if (user.device_token && user.device_token.length > 0) {
-          console.log('PREPARE_CALL_PUSH_FCM', 'user', user.name, user._id, 'device_token', user.device_token);
+          console.log(
+            'PREPARE_CALL_PUSH_FCM',
+            'user',
+            user.name,
+            user._id,
+            'device_token',
+            user.device_token,
+          );
           // Remove all device token not vaild
           const arrayDeviceToken = [];
           for (let i = 0; i < user.device_token.length; i++) {
@@ -60,13 +69,36 @@ export class FcmPushService {
               }
             }
           } else {
-            console.log('NO_CALL_PUSH_FCM_TO_DEVICES', 'user', user.name, user._id, 'device_token', user.device_token, 'arrayDeviceToken', arrayDeviceToken);
+            console.log(
+              'NO_CALL_PUSH_FCM_TO_DEVICES',
+              'user',
+              user.name,
+              user._id,
+              'device_token',
+              user.device_token,
+              'arrayDeviceToken',
+              arrayDeviceToken,
+            );
           }
         } else {
-          console.log('NO_CALL_PUSH_FCM_TO_DEVICES', 'user', user.name, user._id, 'device_token', user.device_token);
+          console.log(
+            'NO_CALL_PUSH_FCM_TO_DEVICES',
+            'user',
+            user.name,
+            user._id,
+            'device_token',
+            user.device_token,
+          );
         }
       } else {
-        console.log('NO_CALL_PUSH_FCM_TO_DEVICES', 'user', user.name, user._id, 'device_token', user.device_token);
+        console.log(
+          'NO_CALL_PUSH_FCM_TO_DEVICES',
+          'user',
+          user.name,
+          user._id,
+          'device_token',
+          user.device_token,
+        );
       }
       return pushResult;
     } catch (error) {

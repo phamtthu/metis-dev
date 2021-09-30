@@ -5,8 +5,9 @@ import { MongooseModule, MongooseModuleOptions } from '@nestjs/mongoose';
 
 @Module({})
 export class DatabaseModule {
-
-  public static getNoSqlConnectionOptions(config: ConfigService): MongooseModuleOptions {
+  public static getNoSqlConnectionOptions(
+    config: ConfigService,
+  ): MongooseModuleOptions {
     const dbdata = config.get().mongo;
 
     if (!dbdata) {
@@ -17,7 +18,7 @@ export class DatabaseModule {
       useNewUrlParser: true,
       useCreateIndex: true,
       useUnifiedTopology: true,
-      useFindAndModify: false
+      useFindAndModify: false,
     };
   }
   public static forRoot(): DynamicModule {
@@ -26,7 +27,8 @@ export class DatabaseModule {
       imports: [
         MongooseModule.forRootAsync({
           imports: [ConfigModule],
-          useFactory: (configService: ConfigService) => DatabaseModule.getNoSqlConnectionOptions(configService),
+          useFactory: (configService: ConfigService) =>
+            DatabaseModule.getNoSqlConnectionOptions(configService),
           inject: [ConfigService],
         }),
       ],

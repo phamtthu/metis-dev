@@ -1,10 +1,11 @@
-import { Module } from "@nestjs/common"
-import { MongooseModule } from "@nestjs/mongoose"
-import { ProcessSchema } from "./process.schema"
+import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import { ProcessSchema } from './process.schema';
 
 @Module({
-    imports: [MongooseModule.forFeature([{ name: 'Process', schema: ProcessSchema }])],
-    exports: [MongooseModule]
+  imports: [
+    MongooseModule.forFeature([{ name: 'Process', schema: ProcessSchema }]),
+  ],
+  exports: [MongooseModule],
 })
-
-export class ProcessDatabaseModule { }
+export class ProcessDatabaseModule {}

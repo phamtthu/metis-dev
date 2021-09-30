@@ -35,7 +35,8 @@ import { TaskStatusModule } from './task-status/task-status.module';
       exclude: ['/api*'],
     }),
     ScheduleModule.forRoot(),
-    ConfigModule, DatabaseModule.forRoot(),
+    ConfigModule,
+    DatabaseModule.forRoot(),
     UserModule,
     AuthModule,
     UploadModule,
@@ -59,4 +60,4 @@ import { TaskStatusModule } from './task-status/task-status.module';
   controllers: [AppController],
   providers: [AppService, CronService],
 })
-export class AppModule { }
+export class AppModule {}

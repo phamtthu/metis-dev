@@ -4,11 +4,7 @@ import { Cron } from '@nestjs/schedule';
 
 @Injectable()
 export class CronService {
-
-  constructor(
-    private readonly userService: UserService,
-  ) {
-  }
+  constructor(private readonly userService: UserService) {}
 
   private readonly logger = new Logger(CronService.name);
 

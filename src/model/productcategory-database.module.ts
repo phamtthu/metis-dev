@@ -1,10 +1,13 @@
-import { Module } from "@nestjs/common"
-import { MongooseModule } from "@nestjs/mongoose"
-import { ProductCategorySchema } from "./productcategory.schema"
+import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import { ProductCategorySchema } from './productcategory.schema';
 
 @Module({
-    imports: [MongooseModule.forFeature([{ name: 'ProductCategory', schema: ProductCategorySchema }])],
-    exports: [MongooseModule]
+  imports: [
+    MongooseModule.forFeature([
+      { name: 'ProductCategory', schema: ProductCategorySchema },
+    ]),
+  ],
+  exports: [MongooseModule],
 })
-
-export class ProductCategoryDatabaseModule { }
+export class ProductCategoryDatabaseModule {}

@@ -19,14 +19,11 @@ export class PushNotificationDto {
   notification_body: string;
 
   data: any;
-
 }
 
 export class PushNotificationAllEmployeeDto {
-
   notification_title: string;
   notification_body: string;
 
   data: any;
-
 }

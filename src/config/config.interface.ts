@@ -2,8 +2,6 @@
  * Configuration data for the app.
  */
 export interface ConfigData {
-  
-
   /** Database connection details. */
   mongo?: string;
 

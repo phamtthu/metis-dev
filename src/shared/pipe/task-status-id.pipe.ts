@@ -9,16 +9,14 @@ import {
 import { SharedService } from '../shared.service';
 
 @Injectable()
-export class ProductPartID implements PipeTransform {
+export class TaskStatusId implements PipeTransform {
   constructor(private sharedService: SharedService) {}
 
-  async transform(productPartId: any, metadata: ArgumentMetadata) {
+  async transform(taskStatusId: any, metadata: ArgumentMetadata) {
     try {
-      const result = await this.sharedService.findProductPartById(
-        productPartId,
-      );
-      if (!result) throw new NotFoundException('ProductPart is not exist');
-      return productPartId;
+      const result = await this.sharedService.findTaskStatusById(taskStatusId);
+      if (!result) throw new NotFoundException('TaskStatus is not exist');
+      return taskStatusId;
     } catch (error) {
       throw new HttpException(
         {

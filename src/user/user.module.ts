@@ -9,16 +9,15 @@ import { UserController } from './user.controller';
 import { UserService } from './user.service';
 
 @Module({
-    imports: [
-        UserDatabaseModule,
-        ResourceUserDatabaseModule,
-        ResourceDatabaseModule,
-        WorkCenterUserDatabaseModule,
-        SharedModule
-    ],
-    providers: [UserService, UserIDsExistenceValidator],
-    controllers: [UserController],
-    exports: [UserService],
+  imports: [
+    UserDatabaseModule,
+    ResourceUserDatabaseModule,
+    ResourceDatabaseModule,
+    WorkCenterUserDatabaseModule,
+    SharedModule,
+  ],
+  providers: [UserService, UserIDsExistenceValidator],
+  controllers: [UserController],
+  exports: [UserService],
 })
-
-export class UserModule { }
+export class UserModule {}

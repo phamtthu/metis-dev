@@ -5,9 +5,10 @@ import { UploadService } from './upload.service';
 @Module({
   imports: [
     MulterModule.register({
-    dest: './upload',
-  })],
+      dest: './upload',
+    }),
+  ],
   controllers: [UploadController],
-  providers: [UploadService]
+  providers: [UploadService],
 })
-export class UploadModule { }
+export class UploadModule {}
