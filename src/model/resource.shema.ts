@@ -2,7 +2,7 @@ import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose'
 import { Document, Types } from 'mongoose'
 import * as mongoosePaginate from 'mongoose-paginate-v2'
 
-enum Status {
+export enum ResourceStatus {
     Ready = 1,
     Waiting = 0
 }
@@ -13,14 +13,17 @@ export class Resource extends Document {
     @Prop({ required: true, default: null })
     equipment_name: string
 
-    @Prop({ required: true, default: Status.Waiting, enum: Status })
+    @Prop({ unique: true, required: true })
+    equipment_no: string
+
+    @Prop({ required: true, default: ResourceStatus.Ready, enum: ResourceStatus })
     status: number
 
-    @Prop({ unique: true, required: true })
-    resource_no: string
-
-    @Prop({ required: true, type: Types.ObjectId, ref: 'ResourceCategory', default: null})
+    @Prop({ required: true, type: Types.ObjectId, ref: 'Resource_Category', default: null })
     category: string
+
+    @Prop({ default: 0, min: 0, require: true })
+    capacity: number
 
     @Prop({ required: true, default: null })
     description: string
@@ -28,18 +31,21 @@ export class Resource extends Document {
     @Prop({ type: [String], required: true })
     images: string[]
 
-    @Prop({ default: 0, min: 0, require: true })
-    work_hours: number
+    @Prop({ required: true, default: null })
+    serial_no: string
 
-    @Prop({ required: true, type: Types.ObjectId, ref: 'WorkCenter', default: null })
-    work_center: string
+    @Prop({ required: true, default: null })
+    supplier_vendor: string
 
-    @Prop({ default: 0, min: 0, require: true })
+    @Prop({ required: true, default: null })
+    specification: string
+
+    @Prop({ required: true, default: null })
+    work_instruction: string
+
+    @Prop({ required: true, default: null })
     unit_cost: number
-
-    @Prop({ type: [{ type: Types.ObjectId, ref: 'Labor' }] })
-    labors: string[]
-
+    
 }
 
 export const ResourceSchema = SchemaFactory.createForClass(Resource)

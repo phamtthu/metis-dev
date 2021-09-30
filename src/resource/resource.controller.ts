@@ -94,12 +94,14 @@ export class ResourceController {
         } catch (error) { throwCntrllrErr(error) }
     }
 
+    //  Add User to Resource
     @Put('/:resourceId')
     async update(
         @Request() req: ERequest,
         @Response() res: EResponse,
         @Body() resourceDTO: UpdateResourceDTO,
         @Param('resourceId', ResourceID) resourceId: string,
+
     ) {
         try {
             const originURL = getOriginURL(req)
