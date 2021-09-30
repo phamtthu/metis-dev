@@ -26,6 +26,7 @@ export class CustomerService {
     async getList(paginateQuery: PaginationQueryDto, search: string) {
         try {
             const searchRegex = new RegExp(search, 'i')
+            
             const query = {
                 $or: [
                     { name: { $regex: searchRegex } },

@@ -1,10 +1,10 @@
 import { Module } from "@nestjs/common"
 import { MongooseModule } from "@nestjs/mongoose"
-import { LaborSchema } from "./labor.shema"
+import { UserSchema } from "./user.shema"
 
 @Module({
-    imports: [MongooseModule.forFeature([{ name: 'Labor', schema: LaborSchema }])],
+    imports: [MongooseModule.forFeature([{ name: 'User', schema: UserSchema }])],
     exports: [MongooseModule]
 })
 
-export class LaborDatabaseModule { }
+export class UserDatabaseModule { }

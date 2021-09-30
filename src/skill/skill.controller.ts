@@ -63,15 +63,15 @@ export class SkillController {
         } catch (error) { throwCntrllrErr(error) }
     }
 
-    @Get('labor/:skillId')
-    async getLaborsWithGivenSkill(
+    @Get('user/:skillId')
+    async getUsersWithGivenSkill(
         @Request() req: ERequest,
         @Response() res: EResponse,
         @Param('skillId', SkillID) skillId: string,
         @Query() paginateQuery: PaginationQueryDto
     ) {
         try {
-            const result = await this.skillService.getLaborsWithGivenSkill(
+            const result = await this.skillService.getUsersWithGivenSkill(
                 skillId, paginateQuery)
             return res.status(HttpStatus.OK).json({
                 data: result

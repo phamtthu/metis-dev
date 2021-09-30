@@ -2,16 +2,17 @@ import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose'
 import { Document, Types } from 'mongoose'
 import * as mongoosePaginate from 'mongoose-paginate-v2'
 import { Role, Status } from 'src/common/enum/filter.enum'
-import { Skill } from 'src/labor/dto/add-labor.dto'
+import { Skill } from './skill.schema'
+// import { Skill } from 'src/user/dto/add-user.dto'
 
 @Schema({ timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } })
 
-export class Labor extends Document {
+export class User extends Document {
 
     @Prop({ required: true, default: null, trim: true, maxLength: 50 })
     name: string
 
-    @Prop({ required: true, default: null, trim: true })
+    @Prop({ required: true, trim: true, unique: true })
     email: string
 
     @Prop({ required: true, unique: true })
@@ -29,7 +30,7 @@ export class Labor extends Document {
     @Prop({ default: 0, min: 0, max: 100, require: true })
     efficiency: number
 
-    @Prop({ required: true, default: null, maxLength: 200 })
+    @Prop({ required: true, default: null, maxLength: 100 })
     note: string
 
     @Prop({ type: Number, enum: Status, default: Status.InActive })
@@ -62,10 +63,13 @@ export class Labor extends Document {
     @Prop({ type: [{ type: Types.ObjectId, ref: 'Task' }] })
     tasks: string[]
 
+    @Prop({ type: [{ type: Types.ObjectId, ref: 'Sequence' }] })
+    sequences: string[]
+
 }
 
-export const LaborSchema = SchemaFactory.createForClass(Labor)
-LaborSchema.plugin(mongoosePaginate)
+export const UserSchema = SchemaFactory.createForClass(User)
+UserSchema.plugin(mongoosePaginate)
 
 
 

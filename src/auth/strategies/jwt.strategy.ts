@@ -1,26 +1,33 @@
-import { TestingModule } from '@nestjs/testing';
-import { AuthService } from './../auth.service';
-import { Injectable } from '@nestjs/common';
-import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy } from 'passport-jwt';
-import { jwtConstants } from '../constants';
-import { UserStatus } from '../../user/model/user';
+import { ExtractJwt, Strategy } from 'passport-jwt'
+import { PassportStrategy } from '@nestjs/passport'
+import { ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common'
+import { Status } from 'src/common/enum/filter.enum'
+import { AuthService } from '../auth.service'
+import { throwCntrllrErr } from 'src/common/utils/error'
+
+require('dotenv').config();
+
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
-    constructor(private readonly authService: AuthService) {
+
+    constructor(private authService: AuthService) {
         super({
+            // decode JWT
             jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
             ignoreExpiration: false,
-            secretOrKey: jwtConstants.secret,
+            secretOrKey: process.env.JWT_SECRET,
         });
     }
 
     async validate(payload: any) {
-        const user = await this.authService.findById(payload.id);
-        if(user.status == UserStatus.INACTIVE) return false;
-        if(payload.user_type == 'ADMIN' || user?.time_change_pass && user?.time_change_pass.getTime() > new Date(payload.login_date).getTime()){
-            return false;
-        }
-        return payload;
+        try {
+            const user = await this.authService.findUserById(payload.userId)
+            if (!user)
+                throw new UnauthorizedException('User is not exist')
+            else if (user && user.is_active === Status.Active)
+                return user // => req.user
+            else
+                throw new ForbiddenException('Request denied. User is not active')
+        } catch (error) { throwCntrllrErr(error) }
     }
 }

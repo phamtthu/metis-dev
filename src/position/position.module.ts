@@ -1,5 +1,5 @@
 import { Module } from "@nestjs/common"
-import { LaborDatabaseModule } from "src/model/labor-database.module"
+import { UserDatabaseModule } from "src/model/user-database.module"
 import { PositionDatabaseModule } from "src/model/position-database.module"
 import { SharedModule } from "src/shared/shared.module"
 import { PositionIDExistenceValidator } from "./custom-validator/positionId-existence.validator"
@@ -9,7 +9,7 @@ import { PositionService } from "./position.service"
 @Module({
     imports: [
         PositionDatabaseModule,
-        LaborDatabaseModule,
+        UserDatabaseModule,
         SharedModule
     ],
     controllers: [PositionController],

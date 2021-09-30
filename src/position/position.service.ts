@@ -4,7 +4,7 @@ import { Model, PaginateModel } from "mongoose"
 import { PaginationQueryDto } from "src/common/dto/pagination-query.dto"
 import { SortQuery } from "src/common/enum/filter.enum"
 import { throwSrvErr } from "src/common/utils/error"
-import { Labor } from "src/model/labor.shema"
+import { User } from "src/model/user.shema"
 import { Position } from "src/model/position.schema"
 import { AddPositionDTO } from "./dto/add-position.dto"
 import { UpdatePositionDTO } from "./dto/update-position.dto"
@@ -14,7 +14,7 @@ export class PositionService {
 
     constructor(
         @InjectModel('Position') private positionModel: PaginateModel<Position>,
-        @InjectModel('Labor') private laborModel: PaginateModel<Labor>
+        @InjectModel('User') private userModel: PaginateModel<User>
     ) { }
 
     async create(positionDTO: AddPositionDTO) {
@@ -27,7 +27,7 @@ export class PositionService {
         try {
             const searchRegex = new RegExp(search, 'i')
             const query = { name: { $regex: searchRegex } }
-            if (paginateQuery.offset && paginateQuery.limit) {
+            if (paginateQuery.offset >= 0 && paginateQuery.limit >= 0) {
                 const options = {
                     offset: paginateQuery.offset,
                     limit: paginateQuery.limit,
@@ -56,8 +56,8 @@ export class PositionService {
     async delete(positionId: string) {
         try {
             const deletedPosition = await this.positionModel.findByIdAndDelete(positionId)
-            // Delete Position ref in Labor
-            await this.laborModel.updateMany(
+            // Delete Position ref in User
+            await this.userModel.updateMany(
                 { position: positionId },
                 { position: null })
             return deletedPosition
@@ -74,7 +74,7 @@ export class PositionService {
         } catch (error) { throwSrvErr(error) }
     }
 
-    async getLaborsWithGivenPosition(positionId: string, paginateQuery: PaginationQueryDto) {
+    async getUsersWithGivenPosition(positionId: string, paginateQuery: PaginationQueryDto) {
         try {
             const query = {
                 position: positionId
@@ -101,9 +101,9 @@ export class PositionService {
                         docs: 'data'
                     }
                 }
-                return await this.laborModel.paginate(query, options)
+                return await this.userModel.paginate(query, options)
             } else
-                return await this.laborModel.find(query)
+                return await this.userModel.find(query)
                     .populate(populateOption)
                     .sort({ 'created_at': SortQuery.Desc })
 

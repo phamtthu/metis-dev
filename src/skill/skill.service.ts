@@ -4,7 +4,7 @@ import { Model, PaginateModel } from "mongoose";
 import { PaginationQueryDto } from "src/common/dto/pagination-query.dto";
 import { SortQuery } from "src/common/enum/filter.enum";
 import { throwSrvErr } from "src/common/utils/error";
-import { Labor } from "src/model/labor.shema";
+import { User } from "src/model/user.shema";
 import { Skill } from "src/model/skill.schema";
 import { AddSkillDTO } from "./dto/add-skill.dto";
 import { UpdateSkillDTO } from "./dto/update-skill.dto";
@@ -14,7 +14,7 @@ export class SkillService {
 
     constructor(
         @InjectModel('Skill') private skillModel: PaginateModel<Skill>,
-        @InjectModel('Labor') private laborModel: PaginateModel<Labor>
+        @InjectModel('User') private userModel: PaginateModel<User>
     ) { }
 
     async create(skillDTO: AddSkillDTO) {
@@ -28,7 +28,7 @@ export class SkillService {
             const searchRegex = new RegExp(search, 'i')
             const query = { name: { $regex: searchRegex } }
 
-            if (paginateQuery.offset && paginateQuery.limit) {
+            if (paginateQuery.offset >= 0 && paginateQuery.limit >= 0) {
                 const options = {
                     offset: paginateQuery.offset,
                     limit: paginateQuery.limit,
@@ -57,8 +57,8 @@ export class SkillService {
     async delete(skillId: string) {
         try {
             const deletedSkill = await this.skillModel.findByIdAndDelete(skillId)
-            // Delete Skill ref In Labor
-            await this.laborModel.updateMany(
+            // Delete Skill ref In User
+            await this.userModel.updateMany(
                 { "skills.skill": skillId },
                 { "$pull": { "skills": { "skill": skillId } } }
             )
@@ -75,7 +75,7 @@ export class SkillService {
         } catch (error) { throwSrvErr(error) }
     }
 
-    async getLaborsWithGivenSkill(skillId: string, paginateQuery: PaginationQueryDto) {
+    async getUsersWithGivenSkill(skillId: string, paginateQuery: PaginationQueryDto) {
         try {
             const query = {
                 'skills.skill': skillId
@@ -102,9 +102,9 @@ export class SkillService {
                         docs: 'data'
                     }
                 }
-                return await this.laborModel.paginate(query, options)
+                return await this.userModel.paginate(query, options)
             } else
-                return await this.laborModel.find(query)
+                return await this.userModel.find(query)
                     .populate(populateOption)
                     .sort({ 'created_at': SortQuery.Desc })
 

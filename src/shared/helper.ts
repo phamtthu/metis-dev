@@ -99,7 +99,7 @@ export const getOriginURL = (req) => {
     return req.protocol + "://" + req.headers.host
 }
 
-export const IsTwoArrayEqual = (arr1, arr2) => {
+export const isTwoArrayEqual = (arr1, arr2) => {
     return (
         arr1.length === arr2.length
         &&

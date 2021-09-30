@@ -4,12 +4,12 @@ import { SkillDatabaseModule } from "src/model/skill-database.module"
 import { SkillController } from "./skill.controller"
 import { SharedModule } from "src/shared/shared.module"
 import { SkillIDExistenceValidator } from "./custom-validator/skillId-existence.validator"
-import { LaborDatabaseModule } from "src/model/labor-database.module"
+import { UserDatabaseModule } from "src/model/user-database.module"
 
 @Module({
     imports: [
         SkillDatabaseModule,
-        LaborDatabaseModule,
+        UserDatabaseModule,
         SharedModule
     ],
     controllers: [SkillController],

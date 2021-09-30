@@ -10,8 +10,8 @@ export class ProductCategory extends Document {
     @Prop({ required: true, default: null })
     name: string
 
-    @Prop({ type: Number, enum: Status, default: Status.InActive })
-    is_active: number
+    // @Prop({ type: Number, enum: Status, default: Status.InActive })
+    // is_active: number
 
     @Prop({ type: Types.ObjectId, ref: 'ProductCategory', default: null })
     parent: string

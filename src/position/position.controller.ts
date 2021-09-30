@@ -63,15 +63,15 @@ export class PositionController {
         } catch (error) { throwCntrllrErr(error) }
     }
 
-    @Get('labor/:positionId')
-    async getLaborsWithGivenPosition(
+    @Get('user/:positionId')
+    async getUsersWithGivenPosition(
         @Request() req: ERequest,
         @Response() res: EResponse,
         @Param('positionId', PositionID) positionId: string,
         @Query() paginateQuery: PaginationQueryDto
     ) {
         try {
-            const result = await this.positionService.getLaborsWithGivenPosition(
+            const result = await this.positionService.getUsersWithGivenPosition(
                 positionId, paginateQuery)
             return res.status(HttpStatus.OK).json({
                 data: result

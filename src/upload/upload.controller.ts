@@ -8,12 +8,19 @@ import {
     Res,
     Param,
     Body,
-    Request
+    Request,
+    Response,
+    NotFoundException
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { editFileName, imageFileFilter } from './utils/file-upload.utils';
+import { editFileName, imageFileFilter, keepExtensionFileName } from './utils/file-upload.utils';
 import { ImageDto } from './dto/image-dto';
+import { Request as ERequest } from 'express'
+import { Response as EResponse } from 'express'
+import { throwCntrllrErr } from 'src/common/utils/error';
+import * as fs from 'fs-extra'
+
 @Controller()
 export class UploadController {
     @Post('/api/upload-image')
@@ -69,5 +76,61 @@ export class UploadController {
         let proto = req.connection.encrypted ? 'https' : 'http';
         proto = req.headers['x-forwarded-proto'] || proto;
         return proto.split(/\s*,\s*/)[0] + "://" + req.headers.host;;
+    }
+
+    @Post('api/upload-multi-file')
+    @UseInterceptors(
+        FilesInterceptor('files', 20, {
+            storage: diskStorage({
+                destination: './public/upload/tmp',
+                filename: keepExtensionFileName
+            })
+        }),
+    )
+    uploadFile(@UploadedFiles() files, @Request() req) {
+        const baseUrl = this.getBaseUrl(req);
+        const response = [];
+        files.forEach(file => {
+            const fileReponse = {
+                originalname: file.originalname,
+                filename: file.filename,
+                path: baseUrl + '/upload/tmp/' + file.filename
+            };
+            response.push(fileReponse);
+        });
+        return response;
+    }
+
+    @Post('api/upload-file')
+    @UseInterceptors(
+        FileInterceptor('file', {
+            storage: diskStorage({
+                destination: './public/upload/tmp',
+                filename: keepExtensionFileName
+            })
+        }),
+    )
+    uploadFiles(@UploadedFile() file, @Request() req) {
+        const baseUrl = this.getBaseUrl(req);
+        const fileReponse = {
+            originalname: file.originalname,
+            filename: file.filename,
+            path: baseUrl + '/upload/tmp/' + file.filename
+        };
+        return fileReponse;
+    }
+
+    @Get('/api/download/:encodePath')
+    async download(
+        @Request() req: ERequest,
+        @Response() res: EResponse,
+        @Param('encodePath') encodePath: string
+    ) {
+        try {
+            const path = (decodeURIComponent(encodePath))
+            if (!await fs.pathExists(`./public/${path}`))
+                throw new NotFoundException('File is not found')
+            res.download(`./public/${path}`)
+        } catch (error) { throwCntrllrErr(error) }
     }
 }
