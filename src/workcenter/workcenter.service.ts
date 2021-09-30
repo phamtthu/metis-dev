@@ -67,7 +67,7 @@ export class WorkCenterService {
     async getDetail(workCenterId: string) {
         try {
             const workCenter = await this.workCenterModel.findById(workCenterId).lean()
-            
+
             const wcResources = await this.wcResourceModel.find({ workcenter: workCenterId }).populate('resource')
             workCenter['resources'] = wcResources.map((e) => e.resource)
             const wcUsers = await this.wcUserModel.find({ workcenter: workCenterId }).populate('user')
@@ -106,7 +106,7 @@ export class WorkCenterService {
                 const workCenterUsers = workCenterDTO.users.map((userId) => (
                     { workcenter: workCenterId, user: userId }
                 ))
-                return await this.wcResourceModel.insertMany(workCenterUsers)
+                return await this.wcUserModel.insertMany(workCenterUsers)
             }
             else {
                 const newWCenter = await this.workCenterModel.findByIdAndUpdate(
