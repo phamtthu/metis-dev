@@ -10,7 +10,7 @@ export class WorkCenter extends Document {
     name: string
 
     @Prop({ required: true, unique: true })
-    work_center_no: string
+    workcenter_no: string
 
     @Prop({ required: true, default: null, min: 0 })
     avg_working_hours: number
@@ -53,12 +53,6 @@ export class WorkCenter extends Document {
 
     @Prop({ required: true, default: null, min: 0 })
     actual: number
-
-    @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }] })
-    users: string[]
-
-    @Prop({ type: [{ type: Types.ObjectId, ref: 'Resource' }] })
-    resources: string[]
     
 }
 

@@ -14,7 +14,6 @@ import {
     Min,
     Validate,
 } from "class-validator"
-import { LaborIDsExistenceValidator } from "src/labor/custom-validator/laborIds.validator"
 import { ResourceIDsExistenceValidator } from "src/resource/custom-validator/resourceIds-existence-validator"
 import { UserIDsExistenceValidator } from "src/user/custom-validator/userIds.validator"
 
@@ -28,9 +27,9 @@ export class AddWorkCenterDTO {
     @IsString()
     @IsNotEmpty()
     @Matches(/\b[a-zA-Z]{2}[0-9]{3}\b/, {
-        message: 'work_center_no must follow 2 Numbers and 3 Letters, Ex: 00AAA'
+        message: 'workcenter_no must follow 2 Letter and 3 Number, Ex: AA000'
     })
-    work_center_no: string
+    workcenter_no: string
 
     @IsNumber()
     @Min(0)
@@ -102,12 +101,6 @@ export class AddWorkCenterDTO {
     @IsNotEmpty()
     actual: number
 
-    @IsArray()
-    @Validate(UserIDsExistenceValidator)
-    users: string[]
-
-    @IsArray()
-    @Validate(ResourceIDsExistenceValidator)
-    resources: string[]
+  
 
 }

@@ -1,4 +1,4 @@
-import { ConflictException, Injectable } from "@nestjs/common"
+import { BadRequestException, ConflictException, Injectable } from "@nestjs/common"
 import { InjectModel } from "@nestjs/mongoose"
 import { Model, PaginateModel } from "mongoose"
 import { PaginationQueryDto } from "src/common/dto/pagination-query.dto"
@@ -7,36 +7,30 @@ import { throwSrvErr } from "src/common/utils/error"
 import { User } from "src/model/user.shema"
 import { Resource } from "src/model/resource.shema"
 import { WorkCenter } from "src/model/workcenter.schema"
-import { isTwoArrayEqual } from "src/shared/helper"
 import { AddWorkCenterDTO } from "./dto/add-workcenter.dto"
 import { UpdateWorkCenterDTO } from "./dto/update-workcenter.dto"
+import { WorkCenterResource } from "src/model/workcenter-resource.schema"
+import { WorkCenterUser } from "src/model/workcenter-user.schema"
 
 @Injectable()
 export class WorkCenterService {
 
     constructor(
         @InjectModel('WorkCenter') private workCenterModel: PaginateModel<WorkCenter>,
+        @InjectModel('Resource') private resourceModel: PaginateModel<Resource>,
+        @InjectModel('WorkCenter_Resource') private wcResourceModel: PaginateModel<WorkCenterResource>,
         @InjectModel('User') private userModel: PaginateModel<User>,
-        @InjectModel('Resource') private resourceModel: PaginateModel<Resource>
+        @InjectModel('WorkCenter_User') private wcUserModel: PaginateModel<WorkCenterUser>
     ) { }
 
     async create(workCenterDTO: AddWorkCenterDTO) {
         try {
-            const result = await this.workCenterModel.findOne({ work_center_no: workCenterDTO.work_center_no })
+            const result = await this.workCenterModel.findOne(
+                { workcenter_no: workCenterDTO.workcenter_no }
+            )
             if (result)
-                throw new ConflictException('work_center_no is already exist')
-
-            const workcenter = await (new this.workCenterModel(workCenterDTO)).save()
-            // User
-            await this.userModel.updateMany(
-                { _id: { "$in": workCenterDTO.users } },
-                { $push: { work_centers: workcenter._id } })
-            // Resource
-            await this.resourceModel.updateMany(
-                { _id: { "$in": workCenterDTO.resources } },
-                { $push: { work_centers: workcenter._id } })
-
-            return workcenter
+                throw new ConflictException('workcenter_no is already exist')
+            return await (new this.workCenterModel(workCenterDTO)).save()
         } catch (error) { throwSrvErr(error) }
     }
 
@@ -46,20 +40,15 @@ export class WorkCenterService {
             const query = {
                 $or: [
                     { name: { $regex: searchRegex } },
-                    { work_center_no: { $regex: searchRegex } },
+                    { workcenter_no: { $regex: searchRegex } },
                     { description: { $regex: searchRegex } }
                 ]
             }
-            const populateOption = [
-                { path: 'users', model: 'User', select: 'name' },
-                { path: 'resources', model: 'Resource', select: 'equipment_name' }
-            ]
             if (paginateQuery.offset >= 0 && paginateQuery.limit >= 0) {
                 const options = {
                     offset: paginateQuery.offset,
                     limit: paginateQuery.limit,
                     sort: { created_at: SortQuery.Desc },
-                    populate: populateOption,
                     customLabels: {
                         page: 'page',
                         limit: 'per_page',
@@ -71,64 +60,61 @@ export class WorkCenterService {
                 return await this.workCenterModel.paginate(query, options)
             } else
                 return await this.workCenterModel.find(query)
-                    .populate(populateOption)
                     .sort({ 'created_at': SortQuery.Desc })
         } catch (error) { throwSrvErr(error) }
     }
 
     async getDetail(workCenterId: string) {
         try {
-            return await this.workCenterModel.findById(workCenterId)
-                .populate('users')
-                .populate('resources')
+            const workCenter = await this.workCenterModel.findById(workCenterId).lean()
+            
+            const wcResources = await this.wcResourceModel.find({ workcenter: workCenterId }).populate('resource')
+            workCenter['resources'] = wcResources.map((e) => e.resource)
+            const wcUsers = await this.wcUserModel.find({ workcenter: workCenterId }).populate('user')
+            workCenter['users'] = wcUsers.map((e) => e.user)
+
+            return workCenter
         } catch (error) { throwSrvErr(error) }
     }
 
     async delete(workCenterId: string) {
         try {
-            const deletedWC = await this.workCenterModel.findByIdAndDelete(workCenterId)
-            await this.userModel.updateMany(
-                { _id: { "$in": deletedWC.users } },
-                { $pull: { 'work_centers': workCenterId } })
-            await this.resourceModel.updateMany(
-                { _id: { "$in": deletedWC.resources } },
-                { $pull: { 'work_centers': workCenterId } })
-            return deletedWC
+            const wcResources = await this.wcResourceModel.find({ workcenter: workCenterId })
+            if (wcResources.length > 0)
+                throw new BadRequestException('Can not delete WorkCenter. There are Resource link with this WorkCenter')
+            const wcUsers = await this.wcUserModel.find({ workcenter: workCenterId })
+            if (wcUsers.length > 0)
+                throw new BadRequestException('Can not delete WorkCenter. There are User link with this WorkCenter')
+
+            await this.workCenterModel.findByIdAndDelete(workCenterId)
 
         } catch (error) { throwSrvErr(error) }
     }
 
     async update(workCenterId: string, workCenterDTO: UpdateWorkCenterDTO) {
         try {
-            const oldWCenter = await this.workCenterModel.findById(workCenterId).lean()
-            const newWCenter = await this.workCenterModel.findByIdAndUpdate(
-                workCenterId,
-                workCenterDTO,
-                { new: true })
-
-            if (!isTwoArrayEqual(workCenterDTO.users, oldWCenter.users.map((e) => String(e)))) {
-                await this.userModel.updateMany(
-                    { _id: { "$in": oldWCenter.users } },
-                    { $pull: { work_centers: workCenterId } }
-                )
-                await this.userModel.updateMany(
-                    { _id: { "$in": workCenterDTO.users } },
-                    { $push: { work_centers: workCenterId } }
-                )
+            // Add Resource to Work Center
+            if (Array.isArray(workCenterDTO.resources)) {
+                await this.wcResourceModel.deleteMany({ workcenter: workCenterId })
+                const workCenterResources = workCenterDTO.resources.map((resourceId) => (
+                    { workcenter: workCenterId, resource: resourceId }
+                ))
+                return await this.wcResourceModel.insertMany(workCenterResources)
             }
-            if (!isTwoArrayEqual(workCenterDTO.resources, oldWCenter.resources.map((e) => String(e)))) {
-                await this.resourceModel.updateMany(
-                    { _id: { "$in": oldWCenter.resources } },
-                    { $pull: { work_centers: workCenterId } }
+            else if (Array.isArray(workCenterDTO.users)) {
+                await this.wcUserModel.deleteMany({ workcenter: workCenterId })
+                const workCenterUsers = workCenterDTO.users.map((userId) => (
+                    { workcenter: workCenterId, user: userId }
+                ))
+                return await this.wcResourceModel.insertMany(workCenterUsers)
+            }
+            else {
+                const newWCenter = await this.workCenterModel.findByIdAndUpdate(
+                    workCenterId, workCenterDTO, { new: true }
                 )
-                await this.resourceModel.updateMany(
-                    { _id: { "$in": workCenterDTO.resources } },
-                    { $push: { work_centers: workCenterId } }
-                )
+                return newWCenter
             }
 
-
-            return newWCenter
         } catch (error) { throwSrvErr(error) }
     }
 

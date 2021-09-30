@@ -91,6 +91,7 @@ export class WorkCenterController {
         } catch (error) { throwCntrllrErr(error) }
     }
 
+    // Add Resource, User to WC
     @Put('/:workCenterId')
     async update(
         @Request() req: ERequest,

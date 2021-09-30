@@ -6,13 +6,16 @@ import { SharedModule } from "src/shared/shared.module"
 import { WorkCenterIDExistenceValidator } from "./custom-validator/workcenterId.validator"
 import { WorkCenterController } from "./workcenter.controller"
 import { WorkCenterService } from "./workcenter.service"
+import { WorkCenterUserDatabaseModule } from "src/model/workcenter-user-database.module"
+import { WorkCenterResourceDatabaseModule } from "src/model/workcenter-resource-database.module"
 
 @Module({
     imports: [
-        /* sadasdadadad */
         WorkCenterDatabaseModule,
         UserDatabaseModule,
         ResourceDatabaseModule,
+        WorkCenterUserDatabaseModule,
+        WorkCenterResourceDatabaseModule,
         SharedModule
     ],
     controllers: [WorkCenterController],
