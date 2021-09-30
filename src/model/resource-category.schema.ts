@@ -10,9 +10,6 @@ export class ResourceCategory extends Document {
     @Prop({ required: true, default: null })
     name: string
 
-    // @Prop({ type: Number, enum: Status, default: Status.InActive })
-    // is_active: number
-
     @Prop({ type: Types.ObjectId, ref: 'ResourceCategory', default: null })
     parent: string
 

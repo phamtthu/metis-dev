@@ -17,9 +17,6 @@ export class AddRCategoryDTO {
     @MaxLength(50)
     name: string
 
-    @IsEnum(Status)
-    is_active: number
-
     @IsMongoId()
     @ValidateIf((object, value) => value !== null)
     @Validate(RCategoryIDExistenceValidator)

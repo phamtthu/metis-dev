@@ -6,7 +6,7 @@ import { SortQuery } from "src/common/enum/filter.enum"
 import { throwSrvErr } from "src/common/utils/error"
 import { deleteImgPath, getNewImgLink } from "src/common/utils/image-handler"
 import { Resource } from "src/model/resource.shema"
-import { ResourceCategory } from "src/model/resourcecategory.schema"
+import { ResourceCategory } from "src/model/resource-category.schema"
 import { getNestedList, paginator } from "src/shared/helper"
 import { AddRCategoryDTO } from "./dto/add-rcategory.dto"
 import { UpdateRCategoryRDTO } from "./dto/update-rcategory.dto"
@@ -15,7 +15,7 @@ import { UpdateRCategoryRDTO } from "./dto/update-rcategory.dto"
 export class ResourceCategoryService {
 
     constructor(
-        @InjectModel('ResourceCategory') private rCategoryModel: PaginateModel<ResourceCategory>,
+        @InjectModel('Resource_Category') private rCategoryModel: PaginateModel<ResourceCategory>,
         @InjectModel('Resource') private resourceModel: Model<Resource>
     ) { }
 
