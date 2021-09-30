@@ -1,190 +1,117 @@
-import { CheckUserDto } from './dto/check-user.dto';
 import {
-  Controller,
-  Get,
-  UseInterceptors,
-  ClassSerializerInterceptor,
-  Body,
-  Post,
-  UseGuards,
-  Request,
-  HttpException,
-  HttpStatus,
-  HttpCode,
-  Req,
-  Param, Query,
-} from '@nestjs/common';
-import { UserService } from './user.service';
-import { UserResponse } from './response/user-reponse';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.gaurd';
-import { ChangePassDto } from './dto/change-pass.dto';
-import { SmsVerifyDto } from './dto/sms-verify.dto';
-@Controller()
+    Body,
+    Delete,
+    HttpException,
+    HttpStatus,
+    NotFoundException,
+    Post,
+    Put,
+    Query,
+    Request,
+    Response,
+    UseGuards,
+    UsePipes,
+    ValidationPipe
+} from '@nestjs/common'
+import { Controller, Get, Param } from '@nestjs/common'
+import { throwCntrllrErr } from 'src/common/utils/error'
+import { AddUserDTO } from './dto/add-user.dto'
+import { UpdateUserDTO } from './dto/update-user'
+import { UserService } from './user.service'
+import { Request as ERequest } from 'express'
+import { Response as EResponse } from 'express'
+import { getOriginURL } from 'src/shared/helper'
+import { UserID } from 'src/shared/pipe/userId.pipe'
+
+@Controller('api/user')
+@UsePipes(new ValidationPipe({
+    skipMissingProperties: true,
+    forbidNonWhitelisted: true,
+    whitelist: true
+}))
 export class UserController {
-  constructor(private readonly userService: UserService) {}
 
-  @UseInterceptors(ClassSerializerInterceptor)
-  @UseGuards(JwtAuthGuard)
-  @Post('/api/user/update')
-  @HttpCode(HttpStatus.OK)
-  public async update(
-    @Request() req,
-    @Body() updateUserData: UpdateUserDto,
-  ): Promise<any> {
-    try {
-      const currentUser = req.user;
-      // Check user exist
-      const check = await this.userService.checkUserExist(
-        currentUser.id,
-        updateUserData.phone,
-      );
-      if (check) {
-        throw new HttpException(
-          'Phone number is exists!',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-      const user = await this.userService.update(
-        currentUser.id,
-        updateUserData,
-      );
-      if (user) {
-        const userResponse = new UserResponse(user.toJSON());
-        return userResponse;
-      } else {
-        return {
-          status: HttpStatus.BAD_REQUEST,
-          message: 'UPDATE_USER_SUCCESS',
-        };
-      }
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    constructor(
+        private userService: UserService
+    ) { }
+
+    @Post()
+    async create(
+        @Request() req: ERequest,
+        @Response() res: EResponse,
+        @Body() userDTO: AddUserDTO
+    ) {
+        try {
+            const originURL = getOriginURL(req)
+            const result = await this.userService.create(userDTO, originURL)
+            return res.status(HttpStatus.CREATED).json({
+                message: 'Create User successfully',
+                data: result
+            })
+        } catch (error) { throwCntrllrErr(error) }
     }
-  }
 
-  @UseInterceptors(ClassSerializerInterceptor)
-  @UseGuards(JwtAuthGuard)
-  @Get('/api/user/profile')
-  public async profile(@Request() req): Promise<any> {
-    try {
-      const currentUser = req.user;
-
-      const user = await this.userService.findById(currentUser.id);
-      if (user) {
-        const userResponse = new UserResponse(user.toJSON());
-        return userResponse;
-      } else {
-        return {
-          status: HttpStatus.BAD_REQUEST,
-          message: 'USER_IS_NOT_EXIST',
-        };
-      }
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    @Get()
+    async getList(
+        @Request() req: ERequest,
+        @Response() res: EResponse,
+        @Query('search') search: string,
+        @Query('offset') offset: number,
+        @Query('limit') limit: number
+    ) {
+        try {
+            const result = await this.userService.getList({ offset, limit }, search?.trim())
+            return res.status(HttpStatus.OK).json({
+                data: result
+            })
+        } catch (error) { throwCntrllrErr(error) }
     }
-  }
 
-  @UseInterceptors(ClassSerializerInterceptor)
-  @UseGuards(JwtAuthGuard)
-  @Get('/api/user/verify-sms')
-  public async sendSMSVerify(@Request() req): Promise<any> {
-    try {
-      const currentUser = req.user;
-      const user = await this.userService.findById(currentUser.id);
-      if (user.verify_sms == true) {
-        return {
-          status: HttpStatus.BAD_REQUEST,
-          message: 'USER_WAS_VERIFIED',
-        };
-      } else {
-        const sms = await this.userService.sendSMSVerify(
-          user._id,
-          user.phone,
-          user.countryCode,
-          user.dialCode,
-        );
-        if (sms.error != 0) {
-          throw new HttpException(sms.log, HttpStatus.BAD_REQUEST);
-        }
-        return {
-          message: 'VERIFY_CODE_WAS_SEND',
-        };
-      }
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    @Get('/:userId')
+    async getDetail(
+        @Request() req: ERequest,
+        @Response() res: EResponse,
+        @Param('userId', UserID) userId: string
+    ) {
+        try {
+            const result = await this.userService.getDetail(userId)
+            return res.status(HttpStatus.OK).json({
+                data: result
+            })
+        } catch (error) { throwCntrllrErr(error) }
     }
-  }
 
-  @UseGuards(JwtAuthGuard)
-  @Post('/api/user/verify-sms')
-  public async checkSMSVerify(
-    @Body() smsVerifyDto: SmsVerifyDto,
-    @Request() req,
-  ): Promise<any> {
-    try {
-      const currentUser = req.user;
-      const user = await this.userService.findById(currentUser.id);
-      const result = await this.userService.checkSMSVerify(
-        currentUser.id,
-        smsVerifyDto.verify_code,
-      );
-      if (result) {
-        return {
-          message: 'VERIFY_SUCCESSED',
-        };
-      }
-      return {
-        status: HttpStatus.BAD_REQUEST,
-        message: 'VERIFY_FAILED',
-      };
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    @Delete('/:userId')
+    async delete(
+        @Request() req: ERequest,
+        @Response() res: EResponse,
+        @Param('userId', UserID) userId: string
+    ) {
+        try {
+            await this.userService.delete(userId)
+            return res.status(HttpStatus.OK).json({
+                message: 'Delete User successfully'
+            })
+        } catch (error) { throwCntrllrErr(error) }
     }
-  }
 
-  @UseGuards(JwtAuthGuard)
-  @Post('/api/user/change-password')
-  public async changePass(
-    @Body() changePassDto: ChangePassDto,
-    @Request() req,
-  ): Promise<any> {
-    try {
-      const currentUser = req.user;
-      await this.userService.updateChangePass(
-        currentUser.id,
-        changePassDto.password,
-      );
-      return {
-        message: 'CHANGEPASS_SUCCESS',
-        status: HttpStatus.OK,
-      };
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    @Put('/:userId')
+    async update(
+        @Request() req: ERequest,
+        @Response() res: EResponse,
+        @Param('userId', UserID) userId: string,
+        @Body() userDTO: UpdateUserDTO
+    ) {
+        try {
+            const originURL = getOriginURL(req)
+            const result = await this.userService.update(
+                userId, userDTO, originURL)
+            return res.status(HttpStatus.OK).json({
+                message: 'Update User successfully',
+                data: result
+            })
+        } catch (error) { throwCntrllrErr(error) }
     }
-  }
 
-  @Post('/api/user/check-user')
-  @HttpCode(HttpStatus.OK)
-  public async checkUser(@Body() checkUserDto: CheckUserDto): Promise<any> {
-    try {
-      const user = await this.userService.findByPhone(checkUserDto.phone);
-      if (user) {
-        return {
-          status: HttpStatus.OK,
-          message: 'USER_IS_EXIST',
-        };
-      }
-      throw new HttpException('USER_NOT_EXIST', HttpStatus.BAD_REQUEST);
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
-    }
-  }
 
-  @Get('/api/user/detail/:id')
-  @UseInterceptors(ClassSerializerInterceptor)
-  @UseGuards(JwtAuthGuard)
-  public async userDetail(@Param('id') userId: string) {
-    return this.userService.detail(userId);
-  }
 }

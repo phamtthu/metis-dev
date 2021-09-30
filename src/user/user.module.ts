@@ -1,21 +1,24 @@
-import { Module, HttpModule } from '@nestjs/common';
+import { Module } from '@nestjs/common';
+import { ResourceDatabaseModule } from 'src/model/resource-database.module';
+import { ResourceUserDatabaseModule } from 'src/model/resource-user-database.module';
+import { UserDatabaseModule } from 'src/model/user-database.module';
+import { WorkCenterUserDatabaseModule } from 'src/model/workcenter-user-database.module';
+import { SharedModule } from 'src/shared/shared.module';
+import { UserIDsExistenceValidator } from './custom-validator/userIds.validator';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
-import { UserSchema } from './model/user';
-import { MongooseModule } from '@nestjs/mongoose';
-import { LocationSchema } from './model/location';
-import { ConfigModule } from '../config/config.module';
-import { FcmPushModule } from '../fcm-push/fcm-push.module';
+
 @Module({
-  imports: [
-    MongooseModule.forFeature([{ name: 'user', schema: UserSchema }]),
-    MongooseModule.forFeature([{ name: 'location', schema: LocationSchema }]),
-    HttpModule,
-    ConfigModule,
-    FcmPushModule,
-  ],
-  controllers: [UserController],
-  providers: [UserService],
-  exports: [UserService]
+    imports: [
+        UserDatabaseModule,
+        ResourceUserDatabaseModule,
+        ResourceDatabaseModule,
+        WorkCenterUserDatabaseModule,
+        SharedModule
+    ],
+    providers: [UserService, UserIDsExistenceValidator],
+    controllers: [UserController],
+    exports: [UserService],
 })
+
 export class UserModule { }
