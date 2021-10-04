@@ -1,7 +1,8 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { IsArray, IsMongoId, IsOptional, Validate } from 'class-validator';
-import { ResourceIDsExistenceValidator } from 'src/resource/custom-validator/resourceIds-existence-validator';
-import { UserIDsExistenceValidator } from 'src/user/custom-validator/userIds.validator';
+import { ObjectId } from 'mongoose';
+import { ResourceIDsExistenceValidator } from 'src/resource/custom-validator/resource-ids-existence-validator';
+import { UserIDsExistenceValidator } from 'src/user/custom-validator/user-ids.validator';
 import { AddWorkCenterDTO } from './add-workcenter.dto';
 
 export class UpdateWorkCenterDTO extends PartialType(AddWorkCenterDTO) {

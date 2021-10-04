@@ -1,36 +1,35 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import * as mongoose from 'mongoose';
 import * as mongoosePaginate from 'mongoose-paginate-v2';
 
 @Schema({ timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } })
-export class ProductWorkCenter extends Document {
+export class ProductWorkCenter extends mongoose.Document {
   @Prop({
-    type: Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'Product',
-    required: true,
     default: null,
     unique: true,
   })
   product: string;
 
   @Prop({
-    type: Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'WorkCenter',
     required: true,
     default: null,
   })
-  work_center: string;
+  workcenter: string;
 
   @Prop({ default: null })
-  status: string;
+  status: number;
 
   @Prop({ default: null })
   percent: number;
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Resource' }] })
+  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Resource' }] })
   resources: string[];
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }] })
+  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }] })
   users: string[];
 }
 
