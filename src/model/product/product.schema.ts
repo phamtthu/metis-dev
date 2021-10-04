@@ -1,5 +1,5 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import * as mongoose from 'mongoose';
 import * as mongoosePaginate from 'mongoose-paginate-v2';
 
 export enum ProductStatus {
@@ -9,11 +9,15 @@ export enum ProductStatus {
 }
 
 @Schema({ timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } })
-export class Product extends Document {
+export class Product extends mongoose.Document {
   @Prop({ required: true, default: null })
   name: string;
 
-  @Prop({ required: true, default: ProductStatus.Pending, enum: ProductStatus })
+  @Prop({
+    required: true,
+    default: ProductStatus.Pending,
+    enum: ProductStatus,
+  })
   status: number;
 
   @Prop({ unique: true, required: true })
@@ -30,8 +34,8 @@ export class Product extends Document {
 
   @Prop({
     required: true,
-    type: Types.ObjectId,
-    ref: 'ProductCategory',
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Product_Category',
     default: null,
   })
   category: string;
@@ -57,22 +61,15 @@ export class Product extends Document {
   @Prop({ type: [String], required: true })
   attributes: string[];
 
-  @Prop({ default: null })
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null,
+  })
   creator: string;
 
   @Prop({ type: [String] })
   files: string[];
-
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Product_Part' }] })
-  parts: string[];
-
-  // Set By Other
-
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Task' }] })
-  tasks: string[];
-
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Order' }] })
-  orders: string[];
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);

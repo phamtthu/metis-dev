@@ -1,28 +1,40 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, PaginateModel } from 'mongoose';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { SortQuery } from 'src/common/enum/filter.enum';
-import { throwSrvErr } from 'src/common/utils/error';
+import { throwCanNotDeleteErr, throwSrvErr } from 'src/common/utils/error';
 import { deleteImgPath, getNewImgLink } from 'src/common/utils/image-handler';
-import { Order } from 'src/model/order.schema';
-import { Product } from 'src/model/product.schema';
-import { ProductPart } from 'src/model/productpart.schema';
-import { ProductWorkCenter } from 'src/model/productworkcenter.schema';
-import { Task } from 'src/model/task.schema';
-import { isTwoArrayEqual } from 'src/shared/helper';
+import { Order } from 'src/model/order/order.schema';
+import { Product } from 'src/model/product/product.schema';
+import { Part } from 'src/model/part/part.schema';
+import { ProductWorkCenter } from 'src/model/product-workcenter/product-workcenter.schema';
+import { Task } from 'src/model/task/task.schema';
 import { AddProductDTO } from './dto/add-product.dto';
 import { UpdateProductDTO } from './dto/update-product.dto';
+import { ProductPart } from 'src/model/product-part/product-part.schema';
+import { OrderProduct } from 'src/model/order-product/order-product.schema';
 
 @Injectable()
 export class ProductService {
   constructor(
-    @InjectModel('Product') private productModel: PaginateModel<Product>,
+    @InjectModel('Product')
+    private productModel: PaginateModel<Product>,
+    @InjectModel('Part')
+    private partModel: PaginateModel<Part>,
     @InjectModel('Product_Part')
-    private productPartModel: PaginateModel<ProductPart>,
-    @InjectModel('Task') private taskModel: Model<Task>,
-    @InjectModel('Order') private orderModel: Model<Order>,
-    @InjectModel('Product_Work_Center')
+    private productPartModel: Model<ProductPart>,
+    @InjectModel('Task')
+    private taskModel: Model<Task>,
+    @InjectModel('Order')
+    private orderModel: Model<Order>,
+    @InjectModel('Order_Product')
+    private orderProductModel: Model<OrderProduct>,
+    @InjectModel('Product_WorkCenter')
     private productWCModel: Model<ProductWorkCenter>,
   ) {}
 
@@ -36,38 +48,27 @@ export class ProductService {
       const resultSku = await this.productModel.findOne({
         sku: productDTO.sku,
       });
-
       if (resultSku) throw new ConflictException('sku is already exist');
-
       productDTO.files = await Promise.all(
         productDTO.files.map(
           async (img) => await getNewImgLink(img, 'product-file', originURL),
         ),
       );
-
       productDTO.images = await Promise.all(
         productDTO.images.map(
           async (img) => await getNewImgLink(img, 'product', originURL),
         ),
       );
-
       const product = await new this.productModel(productDTO).save();
-
-      // Part
-      await this.productPartModel.updateMany(
-        { _id: { $in: product.parts } },
-        { $push: { products: product._id } },
-      );
-
       return product;
     } catch (error) {
       throwSrvErr(error);
     }
   }
 
-  async getList(paginateQuery: PaginationQueryDto, search: string) {
+  async getList(queryDto: PaginationQueryDto) {
     try {
-      const searchRegex = new RegExp(search, 'i');
+      const searchRegex = new RegExp(queryDto.search, 'i');
       const query = {
         $or: [
           { name: { $regex: searchRegex } },
@@ -76,18 +77,11 @@ export class ProductService {
           { description: { $regex: searchRegex } },
         ],
       };
-      const populateOption = [
-        { path: 'parts', model: 'Product_Part', select: 'name' },
-        { path: 'category', model: 'ProductCategory', select: 'name' },
-        { path: 'tasks', model: 'Task', select: 'name' },
-        { path: 'orders', model: 'Order', select: ['customer', 'po_no'] },
-      ];
-      if (paginateQuery.offset >= 0 && paginateQuery.limit >= 0) {
+      if (queryDto.offset >= 0 && queryDto.limit >= 0) {
         const options = {
-          offset: paginateQuery.offset,
-          limit: paginateQuery.limit,
+          offset: queryDto.offset,
+          limit: queryDto.limit,
           sort: { created_at: SortQuery.Desc },
-          populate: populateOption,
           customLabels: {
             page: 'page',
             limit: 'per_page',
@@ -100,7 +94,6 @@ export class ProductService {
       } else
         return await this.productModel
           .find(query)
-          .populate(populateOption)
           .sort({ created_at: SortQuery.Desc });
     } catch (error) {
       throwSrvErr(error);
@@ -109,14 +102,25 @@ export class ProductService {
 
   async getDetail(productId: string) {
     try {
-      const productDetail = await this.productModel
-        .findById(productId)
-        .populate(['tasks', 'orders', 'category'])
-        .lean();
-      const { product, ...rest } = await this.productWCModel
-        .findOne({ product: productId })
-        .lean();
-      return { productDetail, ...rest };
+      const product = await this.checkIsProductExist(productId);
+      const parts = await this.productPartModel
+        .find({
+          product: productId,
+        })
+        .populate('part');
+      product['parts'] = parts.map((e) => ({
+        part: e.part,
+        quantity: e.quantity,
+      }));
+      const orders = await this.orderProductModel
+        .find({
+          product: productId,
+        })
+        .populate('order');
+      product['orders'] = orders;
+      const tasks = await this.taskModel.find({ product: productId });
+      product['tasks'] = tasks;
+      return product;
     } catch (error) {
       throwSrvErr(error);
     }
@@ -124,29 +128,29 @@ export class ProductService {
 
   async delete(productId: string) {
     try {
-      const deletedProduct = await this.productModel.findByIdAndDelete(
-        productId,
-      );
+      const deletedProduct = await this.checkIsProductExist(productId);
+      const relatedTasks = await this.taskModel.find({
+        product: productId,
+      });
+      if (relatedTasks.length > 0) throwCanNotDeleteErr('Product', 'Task');
+      const relatedOrders = await this.orderProductModel.find({
+        product: productId,
+      });
+      if (relatedOrders.length > 0) throwCanNotDeleteErr('Product', 'Order');
+      const relatedWorkCenters = await this.productWCModel.find({
+        product: productId,
+      });
+      if (relatedWorkCenters.length > 0)
+        throwCanNotDeleteErr('Product', 'WorkCenter');
+      await this.productModel.findByIdAndDelete(productId);
       deletedProduct.images.forEach(async (img) => {
         await deleteImgPath(img);
       });
-      // Tasks
-      await this.taskModel.updateMany(
-        { product: productId },
-        { product: null },
-      );
-      // Orders
-      await this.orderModel.updateMany(
-        { 'products.product': productId },
-        { $pull: { products: { product: productId } } },
-      );
-      // Parts
-      await this.productPartModel.updateMany(
-        { _id: { $in: deletedProduct.parts } },
-        { $pull: { products: productId } },
-      );
-
-      return deletedProduct;
+      deletedProduct.files.forEach(async (file) => {
+        await deleteImgPath(file);
+      });
+      await this.productPartModel.deleteMany({ product: productId });
+      await this.orderProductModel.deleteMany({ product: productId });
     } catch (error) {
       throwSrvErr(error);
     }
@@ -158,64 +162,49 @@ export class ProductService {
     originURL: string,
   ) {
     try {
-      const oldProduct = await this.productModel.findById(productId).lean();
-      const newProduct = await this.productModel
-        .findByIdAndUpdate(productId, productDTO, { new: true })
-        .lean();
-      // Image
-      productDTO.files = await Promise.all(
-        productDTO.files.map(
-          async (img) => await getNewImgLink(img, 'product-file', originURL),
-        ),
-      );
-      productDTO.images = await Promise.all(
-        productDTO.images.map(
-          async (img) => await getNewImgLink(img, 'product', originURL),
-        ),
-      );
-
-      oldProduct.images.forEach(async (img) => {
-        await deleteImgPath(img);
-      });
-      oldProduct.files.forEach(async (img) => {
-        await deleteImgPath(img);
-      });
-      // Part
-      if (
-        !isTwoArrayEqual(productDTO.parts, oldProduct.parts).map((e) =>
-          String(e),
-        )
-      ) {
-        await this.productPartModel.updateMany(
-          { _id: { $in: oldProduct.parts } },
-          { $pull: { products: productId } },
+      // Add Part to Product
+      await this.checkIsProductExist(productId);
+      if (Array.isArray(productDTO.parts)) {
+        const productParts = productDTO.parts.map((e) => ({
+          product: productId,
+          part: e.part,
+          quantity: e.quantity,
+        }));
+        await this.productPartModel.deleteMany({ product: productId });
+        return await this.productPartModel.insertMany(productParts);
+      } else {
+        const oldProduct = await this.checkIsProductExist(productId);
+        productDTO.images = await Promise.all(
+          productDTO.images.map(
+            async (img) => await getNewImgLink(img, 'product', originURL),
+          ),
         );
-        await this.productPartModel.updateMany(
-          { _id: { $in: productDTO.parts } },
-          { $push: { products: productId } },
+        productDTO.files = await Promise.all(
+          productDTO.files.map(
+            async (img) => await getNewImgLink(img, 'product-file', originURL),
+          ),
         );
+        oldProduct.images.forEach(async (img) => {
+          await deleteImgPath(img);
+        });
+        oldProduct.files.forEach(async (img) => {
+          await deleteImgPath(img);
+        });
+        const newProduct = await this.productModel
+          .findByIdAndUpdate(productId, productDTO, { new: true })
+          .lean();
+        return newProduct;
       }
-      let users = [];
-      let resources = [];
+    } catch (error) {
+      throwSrvErr(error);
+    }
+  }
 
-      if (productDTO.users.length > 0) {
-        const productWC = await this.productWCModel
-          .findOneAndUpdate({ product: productId }, { users: productDTO.users })
-          .lean();
-        users = productWC.users;
-      }
-      if (productDTO.resources.length > 0) {
-        const productWC = await this.productWCModel
-          .findOneAndUpdate(
-            { product: productId },
-            { resources: productDTO.resources },
-          )
-          .lean();
-        resources = productWC.resources;
-      }
-      newProduct['users'] = users;
-      newProduct['users'] = resources;
-      return newProduct;
+  async checkIsProductExist(productId: string) {
+    try {
+      const product = await this.productModel.findById(productId).lean();
+      if (!product) throw new NotFoundException('Product is not exist');
+      return product;
     } catch (error) {
       throwSrvErr(error);
     }
