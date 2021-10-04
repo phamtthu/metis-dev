@@ -4,24 +4,22 @@ import {
   ValidatorConstraintInterface,
   ValidationArguments,
 } from 'class-validator';
-import { ProductPartService } from '../product-part.service';
+import { PartService } from '../part.service';
 
-@ValidatorConstraint({ name: 'ProductPartIDsExistenceValidator', async: true })
+@ValidatorConstraint({ name: 'PartIDsExistenceValidator', async: true })
 @Injectable()
-export class ProductPartIDsExistenceValidator
-  implements ValidatorConstraintInterface
-{
-  constructor(private productPartService: ProductPartService) {}
+export class PartIDsExistenceValidator implements ValidatorConstraintInterface {
+  constructor(private partService: PartService) {}
 
   async validate(ids: string[], args: ValidationArguments) {
     try {
       if (ids instanceof Array && ids.length === 0) return true;
       else if (ids instanceof Array) {
         if (new Set(ids).size !== ids.length) return false;
-        const productPartIds = await this.productPartService.findAllIds();
-        return ids.every((val) => productPartIds.includes(val));
+        const partIds = await this.partService.findAllIds();
+        return ids.every((val) => partIds.includes(val));
       } else {
-        const result = await this.productPartService.getDetail(ids);
+        const result = await this.partService.getDetail(ids);
         if (result) return true;
         else return false;
       }
@@ -31,6 +29,6 @@ export class ProductPartIDsExistenceValidator
   }
 
   defaultMessage(args: ValidationArguments) {
-    return 'ProductPartID must be exist and do not contain duplicate values';
+    return 'PartID must be exist and do not contain duplicate values';
   }
 }

@@ -17,16 +17,16 @@ import {
   Validate,
   ValidateNested,
 } from 'class-validator';
-import { ProductPartStatus } from 'src/model/productpart.schema';
-import { PartCategoryIDExistenceValidator } from 'src/part-category/custom-validator/part-categoryId-existence.validator';
+import { PartStatus } from 'src/model/part/part.schema';
+import { PartCategoryIDExistenceValidator } from 'src/part-category/custom-validator/part-category-id-existence.validator';
 
-export class AddProductPartDTO {
+export class AddPartDTO {
   @IsString()
   @MaxLength(50)
   @IsNotEmpty()
   name: string;
 
-  @IsEnum(ProductPartStatus)
+  @IsEnum(PartStatus)
   @IsNotEmpty()
   status: number;
 

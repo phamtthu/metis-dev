@@ -1,19 +1,19 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import * as mongoose from 'mongoose';
 import * as mongoosePaginate from 'mongoose-paginate-v2';
 
-export enum ProductPartStatus {
+export enum PartStatus {
   Broken = 2,
   Ready = 1,
   Fixing = 0,
 }
 
 @Schema({ timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } })
-export class ProductPart extends Document {
+export class Part extends mongoose.Document {
   @Prop({ required: true, default: null })
   name: string;
 
-  @Prop({ required: true, enum: ProductPartStatus })
+  @Prop({ required: true, enum: PartStatus })
   status: number;
 
   @Prop({ unique: true, required: true })
@@ -21,7 +21,7 @@ export class ProductPart extends Document {
 
   @Prop({
     required: true,
-    type: Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'Part_Category',
     default: null,
   })
@@ -41,12 +41,7 @@ export class ProductPart extends Document {
 
   @Prop({ required: true, default: null })
   description: string;
-
-  // Set By Other
-
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Task' }] })
-  products: string[];
 }
 
-export const ProductPartSchema = SchemaFactory.createForClass(ProductPart);
-ProductPartSchema.plugin(mongoosePaginate);
+export const PartSchema = SchemaFactory.createForClass(Part);
+PartSchema.plugin(mongoosePaginate);
