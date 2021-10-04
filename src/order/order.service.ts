@@ -1,78 +1,110 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, PaginateModel } from 'mongoose';
+import { Model, mongo, PaginateModel, Types } from 'mongoose';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { SortQuery } from 'src/common/enum/filter.enum';
 import { throwSrvErr } from 'src/common/utils/error';
-import { Customer } from 'src/model/customer.schema';
-import { Order } from 'src/model/order.schema';
-import { Product } from 'src/model/product.schema';
-import { isTwoArrayEqual } from 'src/shared/helper';
+import { Customer } from 'src/model/customer/customer.schema';
+import { OrderProduct } from 'src/model/order-product/order-product.schema';
+import { Order } from 'src/model/order/order.schema';
+import { Product } from 'src/model/product/product.schema';
+import { paginator } from 'src/shared/helper';
+import { Product as MultiProduct } from './dto/add-order.dto';
 import { AddOrderDTO } from './dto/add-order.dto';
 import { UpdateOrderDTO } from './dto/update-product.dto';
 
 @Injectable()
 export class OrderService {
   constructor(
-    @InjectModel('Order') private orderModel: PaginateModel<Order>,
-    @InjectModel('Customer') private customerModel: Model<Customer>,
-    @InjectModel('Product') private productModel: Model<Product>,
+    @InjectModel('Order')
+    private orderModel: PaginateModel<Order>,
+    @InjectModel('Product')
+    private productModel: Model<Product>,
+    @InjectModel('Order_Product')
+    private orderProductModel: Model<OrderProduct>,
+    @InjectModel('Customer')
+    private customerModel: Model<Customer>,
   ) {}
 
   async create(orderDTO: AddOrderDTO) {
     try {
-      const result = await this.orderModel.findOne({ po_no: orderDTO.po_no });
-      if (result) throw new ConflictException('po_no is already exist');
       const order = await new this.orderModel(orderDTO).save();
-      // Customer
-      await this.customerModel.findByIdAndUpdate(orderDTO.customer, {
-        $push: { orders: order._id },
-      });
-      // Product
-      await this.productModel.updateMany(
-        { _id: { $in: order.products.map((e) => e.product) } },
-        { $push: { orders: order._id } },
-      );
+      await this.addOrderProduct(order._id, orderDTO.products);
       return order;
     } catch (error) {
       throwSrvErr(error);
     }
   }
 
-  async getList(paginateQuery: PaginationQueryDto, search: string) {
+  async getList(queryDto: PaginationQueryDto) {
     try {
-      const searchRegex = new RegExp(search, 'i');
-      const query = {
-        $or: [
-          { customer: { $regex: searchRegex } },
-          { po_no: { $regex: searchRegex } },
-        ],
-      };
-      const populateOption = {
-        path: 'products.product',
-        model: 'Product',
-        select: 'name',
-      };
-      if (paginateQuery.offset >= 0 && paginateQuery.limit >= 0) {
-        const options = {
-          offset: paginateQuery.offset,
-          limit: paginateQuery.limit,
-          sort: { created_at: SortQuery.Desc },
-          populate: populateOption,
-          customLabels: {
-            page: 'page',
-            limit: 'per_page',
-            totalDocs: 'total',
-            totalPages: 'total_pages',
-            docs: 'data',
+      const searchRegex = new RegExp(queryDto.search, 'i');
+      const query = [
+        {
+          $match: {
+            $or: [
+              { customer: { $regex: searchRegex } },
+              { po_no: { $regex: searchRegex } },
+            ],
           },
-        };
-        return await this.orderModel.paginate(query, options);
-      } else
-        return await this.orderModel
-          .find(query)
-          .populate(populateOption)
-          .sort({ created_at: SortQuery.Desc });
+        },
+        {
+          $lookup: {
+            from: 'customers',
+            localField: 'customer',
+            foreignField: '_id',
+            as: 'customer',
+          },
+        },
+        {
+          $unwind: '$customer',
+        },
+        {
+          $lookup: {
+            from: 'order_products',
+            localField: '_id',
+            foreignField: 'order',
+            as: 'products',
+          },
+        },
+        {
+          $unwind: '$products',
+        },
+        {
+          $lookup: {
+            from: 'products',
+            localField: 'products.product',
+            foreignField: '_id',
+            as: 'products.product',
+          },
+        },
+        {
+          $unwind: '$products.product',
+        },
+        {
+          $group: {
+            _id: '$_id',
+            description: {
+              $first: '$description',
+            },
+            customer: {
+              $first: '$customer',
+            },
+            products: {
+              $push: '$products',
+            },
+            // Push More here
+          },
+        },
+      ];
+      const orders = await this.orderModel.aggregate(query);
+      if (queryDto.offset >= 0 && queryDto.limit >= 0) {
+        return paginator(orders, queryDto.offset, queryDto.limit);
+      } else return orders;
     } catch (error) {
       throwSrvErr(error);
     }
@@ -80,9 +112,18 @@ export class OrderService {
 
   async getDetail(orderId: string) {
     try {
-      return await this.orderModel
+      const order = await this.orderModel
         .findById(orderId)
-        .populate('products.product');
+        .populate('customer')
+        .lean();
+      const orderProducts = await this.orderProductModel
+        .find({ order: orderId })
+        .populate('product');
+      order['products'] = orderProducts.map((e) => ({
+        product: e.product,
+        quantity: e.quantity,
+      }));
+      return order;
     } catch (error) {
       throwSrvErr(error);
     }
@@ -91,21 +132,8 @@ export class OrderService {
   async delete(orderId: string) {
     try {
       const deletedOrder = await this.orderModel.findByIdAndDelete(orderId);
-      // Customer
-      await this.customerModel.findByIdAndUpdate(deletedOrder.customer, {
-        $pull: { orders: orderId },
-      });
-      // Product
-      // for await (const e of deletedOrder.products) {
-      //     await this.productModel.findByIdAndUpdate(
-      //         e.product,
-      //         { $pull: { orders: orderId } })
-      // }
-      await this.productModel.updateMany(
-        { orders: orderId },
-        { $pull: { orders: orderId } },
-      );
-      return deletedOrder;
+      if (!deletedOrder) throw new NotFoundException('Order is not exist');
+      await this.orderProductModel.deleteMany({ order: orderId });
     } catch (error) {
       throwSrvErr(error);
     }
@@ -113,46 +141,28 @@ export class OrderService {
 
   async update(orderId: string, orderDTO: UpdateOrderDTO) {
     try {
-      const oldOrder = await this.orderModel.findById(orderId);
       const newOrder = await this.orderModel.findByIdAndUpdate(
         orderId,
         orderDTO,
         { new: true },
       );
-      // Customer
-      if (String(orderDTO.customer) !== String(oldOrder.customer)) {
-        await this.customerModel.findByIdAndUpdate(oldOrder.customer, {
-          $pull: { orders: orderId },
-        });
-        await this.customerModel.findByIdAndUpdate(orderDTO.customer, {
-          $push: { orders: orderId },
-        });
-      }
-      // Product
-      const oldProductIds = oldOrder.products.map((e) => String(e.product));
-      const newProductIds = orderDTO.products.map((e) => String(e.product));
-      if (!isTwoArrayEqual(oldProductIds, newProductIds)) {
-        const removedProducts = oldProductIds.filter(
-          (productId) => !newProductIds.includes(String(productId)),
-        );
-
-        const incomingProducts = newProductIds.filter(
-          (productId) => !oldProductIds.includes(String(productId)),
-        );
-
-        for await (const productId of removedProducts) {
-          await this.productModel.findByIdAndUpdate(productId, {
-            $pull: { orders: orderId },
-          });
-        }
-
-        for await (const productId of incomingProducts) {
-          await this.productModel.findByIdAndUpdate(productId, {
-            $push: { orders: orderId },
-          });
-        }
-      }
+      if (!newOrder) throw new NotFoundException('Order is not exist');
+      await this.orderProductModel.deleteMany({ order: orderId });
+      await this.addOrderProduct(orderId, orderDTO.products);
       return newOrder;
+    } catch (error) {
+      throwSrvErr(error);
+    }
+  }
+
+  async addOrderProduct(orderId: string, products: MultiProduct[]) {
+    try {
+      const orderProducts = products.map((e) => ({
+        order: orderId,
+        product: e.product,
+        quantity: e.quantity,
+      }));
+      await this.orderProductModel.insertMany(orderProducts);
     } catch (error) {
       throwSrvErr(error);
     }

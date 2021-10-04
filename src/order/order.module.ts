@@ -1,17 +1,17 @@
 import { Module } from '@nestjs/common';
-import { SharedModule } from 'src/shared/shared.module';
-import { ProductDatabaseModule } from 'src/model/product-database.module';
+import { ProductDatabaseModule } from 'src/model/product/product-database.module';
 import { OrderService } from './order.service';
 import { OrderController } from './order.controller';
-import { OrderDatabaseModule } from 'src/model/order-database.module';
-import { CustomerDatabaseModule } from 'src/model/customer-database.module';
+import { OrderDatabaseModule } from 'src/model/order/order-database.module';
+import { CustomerDatabaseModule } from 'src/model/customer/customer-database.module';
+import { OrderProductDatabaseModule } from 'src/model/order-product/order-product.database.module';
 
 @Module({
   imports: [
     OrderDatabaseModule,
     ProductDatabaseModule,
     CustomerDatabaseModule,
-    SharedModule,
+    OrderProductDatabaseModule,
   ],
   controllers: [OrderController],
   providers: [OrderService],
