@@ -1,10 +1,8 @@
 import { Module } from '@nestjs/common';
-import { CustomerDatabaseModule } from 'src/model/customer-database.module';
-import { OrderDatabaseModule } from 'src/model/order-database.module';
-import { ProductDatabaseModule } from 'src/model/product-database.module';
-import { TaskDatabaseModule } from 'src/model/task-database.module';
-import { SharedModule } from 'src/shared/shared.module';
-import { CustomerIDExistenceValidator } from './custom-validator/customerId.validator';
+import { CustomerDatabaseModule } from 'src/model/customer/customer-database.module';
+import { OrderDatabaseModule } from 'src/model/order/order-database.module';
+import { OrderProductDatabaseModule } from 'src/model/order-product/order-product.database.module';
+import { CustomerIdExistenceValidator } from './custom-validator/customer-id.validator';
 import { CustomerController } from './customer.controller';
 import { CustomerService } from './customer.service';
 
@@ -12,12 +10,10 @@ import { CustomerService } from './customer.service';
   imports: [
     CustomerDatabaseModule,
     OrderDatabaseModule,
-    ProductDatabaseModule,
-    TaskDatabaseModule,
-    SharedModule,
+    OrderProductDatabaseModule,
   ],
   controllers: [CustomerController],
-  providers: [CustomerService, CustomerIDExistenceValidator],
+  providers: [CustomerService, CustomerIdExistenceValidator],
   exports: [CustomerService],
 })
 export class CustomerModule {}

@@ -1,23 +1,18 @@
 import {
   Body,
   Delete,
-  HttpStatus,
   Post,
   Put,
   Query,
   Request,
-  Response,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
 import { Controller, Get, Param } from '@nestjs/common';
 import { throwCntrllrErr } from 'src/common/utils/error';
-import { Request as ERequest } from 'express';
-import { Response as EResponse } from 'express';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { CustomerService } from './customer.service';
 import { AddCustomerDTO } from './dto/add-customer.dto';
-import { CustomerID } from 'src/shared/pipe/customerId.pipe';
 import { UpdateCustomerDTO } from './dto/update-customer.dto';
 
 @Controller('api/customer')
@@ -32,70 +27,45 @@ export class CustomerController {
   constructor(private customerService: CustomerService) {}
 
   @Post()
-  async create(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Body() customerDTO: AddCustomerDTO,
-  ) {
+  async create(@Request() req, @Body() customerDTO: AddCustomerDTO) {
     try {
       const result = await this.customerService.create(customerDTO);
-      return res.status(HttpStatus.CREATED).json({
+      return {
         message: 'Create Customer successfully',
         data: result,
-      });
+      };
     } catch (error) {
       throwCntrllrErr(error);
     }
   }
 
   @Get()
-  async getList(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Query('search') search: string,
-    @Query('offset') offset: number,
-    @Query('limit') limit: number,
-  ) {
+  async getList(@Request() req, @Query() queryDto: PaginationQueryDto) {
     try {
-      const result = await this.customerService.getList(
-        { offset, limit },
-        search?.trim(),
-      );
-      return res.status(HttpStatus.OK).json({
-        data: result,
-      });
+      const result = await this.customerService.getList(queryDto);
+      return { data: result };
     } catch (error) {
       throwCntrllrErr(error);
     }
   }
 
   @Get('/:customerId')
-  async getDetail(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Param('customerId', CustomerID) customerId: string,
-  ) {
+  async getDetail(@Request() req, @Param('customerId') customerId: string) {
     try {
       const result = await this.customerService.getDetail(customerId);
-      return res.status(HttpStatus.OK).json({
-        data: result,
-      });
+      return { data: result };
     } catch (error) {
       throwCntrllrErr(error);
     }
   }
 
   @Delete('/:customerId')
-  async delete(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Param('customerId', CustomerID) customerId: string,
-  ) {
+  async delete(@Request() req, @Param('customerId') customerId: string) {
     try {
       await this.customerService.delete(customerId);
-      return res.status(HttpStatus.OK).json({
+      return {
         message: 'Delete Customer successfully',
-      });
+      };
     } catch (error) {
       throwCntrllrErr(error);
     }
@@ -103,17 +73,16 @@ export class CustomerController {
 
   @Put('/:customerId')
   async update(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
+    @Request() req,
     @Body() customerDTO: UpdateCustomerDTO,
-    @Param('customerId', CustomerID) customerId: string,
+    @Param('customerId') customerId: string,
   ) {
     try {
       const result = await this.customerService.update(customerId, customerDTO);
-      return res.status(HttpStatus.OK).json({
+      return {
         message: 'Update Customer successfully',
         data: result,
-      });
+      };
     } catch (error) {
       throwCntrllrErr(error);
     }

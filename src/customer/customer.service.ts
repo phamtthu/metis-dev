@@ -1,11 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, PaginateModel } from 'mongoose';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { SortQuery } from 'src/common/enum/filter.enum';
 import { throwSrvErr } from 'src/common/utils/error';
-import { Customer } from 'src/model/customer.schema';
-import { Order } from 'src/model/order.schema';
+import { Customer } from 'src/model/customer/customer.schema';
+import { OrderProduct } from 'src/model/order-product/order-product.schema';
+import { Order } from 'src/model/order/order.schema';
 import { AddCustomerDTO } from './dto/add-customer.dto';
 import { UpdateCustomerDTO } from './dto/update-customer.dto';
 
@@ -14,6 +15,8 @@ export class CustomerService {
   constructor(
     @InjectModel('Customer') private customerModel: PaginateModel<Customer>,
     @InjectModel('Order') private orderModel: Model<Order>,
+    @InjectModel('Order_Product')
+    private orderProductModel: Model<OrderProduct>,
   ) {}
 
   async create(customerDTO: AddCustomerDTO) {
@@ -24,9 +27,9 @@ export class CustomerService {
     }
   }
 
-  async getList(paginateQuery: PaginationQueryDto, search: string) {
+  async getList(queryDto: PaginationQueryDto) {
     try {
-      const searchRegex = new RegExp(search, 'i');
+      const searchRegex = new RegExp(queryDto.search, 'i');
 
       const query = {
         $or: [
@@ -34,10 +37,10 @@ export class CustomerService {
           { customer_no: { $regex: searchRegex } },
         ],
       };
-      if (paginateQuery.offset >= 0 && paginateQuery.limit >= 0) {
+      if (queryDto.offset >= 0 && queryDto.limit >= 0) {
         const options = {
-          offset: paginateQuery.offset,
-          limit: paginateQuery.limit,
+          offset: queryDto.offset,
+          limit: queryDto.limit,
           sort: { created_at: SortQuery.Desc },
           customLabels: {
             page: 'page',
@@ -59,7 +62,10 @@ export class CustomerService {
 
   async getDetail(customerId: string) {
     try {
-      return await this.customerModel.findById(customerId).populate('orders');
+      const customer = await this.checkCustomerIsExist(customerId);
+      const orders = await this.orderModel.find({ customer: customerId });
+      customer['orders'] = orders;
+      return customer;
     } catch (error) {
       throwSrvErr(error);
     }
@@ -70,12 +76,13 @@ export class CustomerService {
       const deletedCustomer = await this.customerModel.findByIdAndDelete(
         customerId,
       );
-      // Order
-      await this.orderModel.updateMany(
-        { customer: customerId },
-        { customer: null },
-      );
-      return deletedCustomer;
+      if (!deletedCustomer) throw new NotFoundException('User is not exist');
+      const orders = await this.orderModel.find({ customer: customerId });
+      await this.orderModel.deleteMany({ customer: customerId });
+      const orderIds = orders.map((e) => String(e._id));
+      await this.orderProductModel.deleteMany({
+        order: { $in: orderIds },
+      });
     } catch (error) {
       throwSrvErr(error);
     }
@@ -83,11 +90,23 @@ export class CustomerService {
 
   async update(customerId: string, customerDTO: UpdateCustomerDTO) {
     try {
-      return await this.customerModel.findByIdAndUpdate(
+      const newCustomer = await this.customerModel.findByIdAndUpdate(
         customerId,
         customerDTO,
         { new: true },
       );
+      if (!newCustomer) throw new NotFoundException('User is not exist');
+      return newCustomer;
+    } catch (error) {
+      throwSrvErr(error);
+    }
+  }
+
+  async checkCustomerIsExist(customerId: string) {
+    try {
+      const customer = await this.customerModel.findById(customerId).lean();
+      if (!customer) throw new NotFoundException('User is not exist');
+      return customer;
     } catch (error) {
       throwSrvErr(error);
     }

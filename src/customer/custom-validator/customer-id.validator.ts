@@ -6,9 +6,9 @@ import {
 } from 'class-validator';
 import { CustomerService } from '../customer.service';
 
-@ValidatorConstraint({ name: 'CustomerIDExistenceValidator', async: true })
+@ValidatorConstraint({ name: 'CustomerIdExistenceValidator', async: true })
 @Injectable()
-export class CustomerIDExistenceValidator
+export class CustomerIdExistenceValidator
   implements ValidatorConstraintInterface
 {
   constructor(private customerService: CustomerService) {}
@@ -24,6 +24,6 @@ export class CustomerIDExistenceValidator
   }
 
   defaultMessage(args: ValidationArguments) {
-    return 'CustomerID is not exist';
+    return 'CustomerId is not exist';
   }
 }
