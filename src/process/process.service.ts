@@ -1,11 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, PaginateModel } from 'mongoose';
+import process from 'process';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { SortQuery } from 'src/common/enum/filter.enum';
-import { throwSrvErr } from 'src/common/utils/error';
-import { Process } from 'src/model/process.schema';
-import { Sequence } from 'src/model/sequence.schema';
+import { throwCanNotDeleteErr, throwSrvErr } from 'src/common/utils/error';
+import { Process } from 'src/model/process/process.schema';
+import { Sequence } from 'src/model/sequence/sequence.schema';
 import { getNestedList } from 'src/shared/helper';
 import { AddProcessDTO } from './dto/add-process.dto';
 import { UpdateProcessDTO } from './dto/update-process.dto';
@@ -25,9 +30,9 @@ export class ProcessService {
     }
   }
 
-  async getList(paginateQuery: PaginationQueryDto, search: string) {
+  async getList(queryDto: PaginationQueryDto) {
     try {
-      const searchRegex = new RegExp(search, 'i');
+      const searchRegex = new RegExp(queryDto.search, 'i');
       const query = {
         $or: [
           { name: { $regex: searchRegex } },
@@ -36,10 +41,10 @@ export class ProcessService {
           { attributes: { $regex: searchRegex } },
         ],
       };
-      if (paginateQuery.offset >= 0 && paginateQuery.limit >= 0) {
+      if (queryDto.offset >= 0 && queryDto.limit >= 0) {
         const options = {
-          offset: paginateQuery.offset,
-          limit: paginateQuery.limit,
+          offset: queryDto.offset,
+          limit: queryDto.limit,
           sort: { created_at: SortQuery.Desc },
           customLabels: {
             page: 'page',
@@ -53,8 +58,7 @@ export class ProcessService {
       } else
         return await this.processModel
           .find(query)
-          .sort({ created_at: SortQuery.Desc })
-          .select('username');
+          .sort({ created_at: SortQuery.Desc });
     } catch (error) {
       throwSrvErr(error);
     }
@@ -65,15 +69,9 @@ export class ProcessService {
       // Flat Sequence
       // const process = await this.processModel.findById(processId).populate('sequences')
       // Nested Sequence
-      const sequencePopulateOption = [
-        { path: 'users', model: 'User', select: 'name' },
-        { path: 'resources', model: 'Resource', select: 'name' },
-        { path: 'process', model: 'Process', select: 'name' },
-      ];
-      const process = await this.processModel.findById(processId).lean();
+      const process = await this.checkIsProcessIsExiss(processId);
       const sequences = await this.sequenceModel
         .find({ process: processId })
-        .populate(sequencePopulateOption)
         .lean();
       process['sequences'] = getNestedList(null, sequences);
       return process;
@@ -84,15 +82,13 @@ export class ProcessService {
 
   async delete(processId: string) {
     try {
-      const deletedProcess = await this.processModel.findByIdAndDelete(
-        processId,
-      );
-      // Sequence
-      await this.sequenceModel.updateMany(
-        { process: processId },
-        { process: null },
-      );
-      return deletedProcess;
+      await this.checkIsProcessIsExiss(processId);
+      const relatedSequences = await this.sequenceModel.find({
+        process: processId,
+      });
+      if (relatedSequences.length > 0)
+        throwCanNotDeleteErr('Process', 'Sequence');
+      await this.processModel.findByIdAndDelete(processId);
     } catch (error) {
       throwSrvErr(error);
     }
@@ -100,9 +96,23 @@ export class ProcessService {
 
   async update(processId: string, processDTO: UpdateProcessDTO) {
     try {
-      return await this.processModel.findByIdAndUpdate(processId, processDTO, {
-        new: true,
-      });
+      const process = await this.processModel.findByIdAndUpdate(
+        processId,
+        processDTO,
+        { new: true },
+      );
+      if (!process) throw new NotFoundException('Process is not exist');
+      return process;
+    } catch (error) {
+      throwSrvErr(error);
+    }
+  }
+
+  async checkIsProcessIsExiss(processId: string) {
+    try {
+      const process = await this.processModel.findById(processId).lean();
+      if (!process) throw new NotFoundException('Process is not exist');
+      return process;
     } catch (error) {
       throwSrvErr(error);
     }
