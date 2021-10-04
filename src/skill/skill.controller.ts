@@ -1,12 +1,10 @@
 import {
   Body,
   Delete,
-  HttpStatus,
   Post,
   Put,
   Query,
   Request,
-  Response,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -14,11 +12,9 @@ import { Controller, Get, Param } from '@nestjs/common';
 import { throwCntrllrErr } from 'src/common/utils/error';
 import { AddSkillDTO } from './dto/add-skill.dto';
 import { SkillService } from './skill.service';
-import { Request as ERequest } from 'express';
-import { Response as EResponse } from 'express';
+
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { UpdateSkillDTO } from './dto/update-skill.dto';
-import { SkillID } from 'src/shared/pipe/skillId.pipe';
 
 @Controller('api/skill')
 @UsePipes(
@@ -32,90 +28,45 @@ export class SkillController {
   constructor(private skillService: SkillService) {}
 
   @Post()
-  async create(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Body() skillDTO: AddSkillDTO,
-  ) {
+  async create(@Request() req, @Body() skillDTO: AddSkillDTO) {
     try {
       const result = await this.skillService.create(skillDTO);
-      return res.status(HttpStatus.CREATED).json({
+      return {
         message: 'Create Skill successfully',
         data: result,
-      });
+      };
     } catch (error) {
       throwCntrllrErr(error);
     }
   }
 
   @Get()
-  async getList(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Query('search') search: string,
-    @Query('offset') offset: number,
-    @Query('limit') limit: number,
-  ) {
+  async getList(@Request() req, @Query() queryDto: PaginationQueryDto) {
     try {
-      const result = await this.skillService.getList(
-        { offset, limit },
-        search?.trim(),
-      );
-      return res.status(HttpStatus.OK).json({
-        data: result,
-      });
-    } catch (error) {
-      throwCntrllrErr(error);
-    }
-  }
-
-  @Get('user/:skillId')
-  async getUsersWithGivenSkill(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Param('skillId', SkillID) skillId: string,
-    @Query() paginateQuery: PaginationQueryDto,
-  ) {
-    try {
-      const result = await this.skillService.getUsersWithGivenSkill(
-        skillId,
-        paginateQuery,
-      );
-      return res.status(HttpStatus.OK).json({
-        data: result,
-      });
+      const result = await this.skillService.getList(queryDto);
+      return { data: result };
     } catch (error) {
       throwCntrllrErr(error);
     }
   }
 
   @Get('/:skillId')
-  async getDetail(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Param('skillId', SkillID) skillId: string,
-  ) {
+  async getDetail(@Request() req, @Param('skillId') skillId: string) {
     try {
       const result = await this.skillService.getDetail(skillId);
-      return res.status(HttpStatus.OK).json({
-        data: result,
-      });
+      return { data: result };
     } catch (error) {
       throwCntrllrErr(error);
     }
   }
 
   @Delete('/:skillId')
-  async delete(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Param('skillId', SkillID) skillId: string,
-  ) {
+  async delete(@Request() req, @Param('skillId') skillId: string) {
     try {
       await this.skillService.delete(skillId);
-      return res.status(HttpStatus.OK).json({
+      return {
         message: 'Delete Skill successfully',
-      });
+      };
     } catch (error) {
       throwCntrllrErr(error);
     }
@@ -123,17 +74,16 @@ export class SkillController {
 
   @Put('/:skillId')
   async update(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
+    @Request() req,
     @Body() skillDTO: UpdateSkillDTO,
-    @Param('skillId', SkillID) skillId: string,
+    @Param('skillId') skillId: string,
   ) {
     try {
       const result = await this.skillService.update(skillId, skillDTO);
-      return res.status(HttpStatus.OK).json({
+      return {
         message: 'Update Skill successfully',
         data: result,
-      });
+      };
     } catch (error) {
       throwCntrllrErr(error);
     }

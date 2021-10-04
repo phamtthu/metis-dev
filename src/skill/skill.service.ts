@@ -1,19 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, PaginateModel } from 'mongoose';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { SortQuery } from 'src/common/enum/filter.enum';
-import { throwSrvErr } from 'src/common/utils/error';
-import { User } from 'src/model/user.shema';
-import { Skill } from 'src/model/skill.schema';
+import { throwCanNotDeleteErr, throwSrvErr } from 'src/common/utils/error';
+import { Skill } from 'src/model/skill/skill.schema';
 import { AddSkillDTO } from './dto/add-skill.dto';
 import { UpdateSkillDTO } from './dto/update-skill.dto';
+import { Task } from 'src/model/task/task.schema';
 
 @Injectable()
 export class SkillService {
   constructor(
     @InjectModel('Skill') private skillModel: PaginateModel<Skill>,
-    @InjectModel('User') private userModel: PaginateModel<User>,
+    @InjectModel('Task') private taskModel: Model<Task>,
   ) {}
 
   async create(skillDTO: AddSkillDTO) {
@@ -24,15 +24,14 @@ export class SkillService {
     }
   }
 
-  async getList(paginateQuery: PaginationQueryDto, search: string) {
+  async getList(queryDto: PaginationQueryDto) {
     try {
-      const searchRegex = new RegExp(search, 'i');
+      const searchRegex = new RegExp(queryDto.search, 'i');
       const query = { name: { $regex: searchRegex } };
-
-      if (paginateQuery.offset >= 0 && paginateQuery.limit >= 0) {
+      if (queryDto.offset >= 0 && queryDto.limit >= 0) {
         const options = {
-          offset: paginateQuery.offset,
-          limit: paginateQuery.limit,
+          offset: queryDto.offset,
+          limit: queryDto.limit,
           sort: { created_at: SortQuery.Desc },
           customLabels: {
             page: 'page',
@@ -54,7 +53,9 @@ export class SkillService {
 
   async getDetail(skillId: string) {
     try {
-      return await this.skillModel.findById(skillId);
+      const skill = await this.checkIsSkillExist(skillId);
+      skill['tasks'] = await this.taskModel.find({ skill: skillId });
+      return skill;
     } catch (error) {
       throwSrvErr(error);
     }
@@ -62,13 +63,10 @@ export class SkillService {
 
   async delete(skillId: string) {
     try {
-      const deletedSkill = await this.skillModel.findByIdAndDelete(skillId);
-      // Delete Skill ref In User
-      await this.userModel.updateMany(
-        { 'skills.skill': skillId },
-        { $pull: { skills: { skill: skillId } } },
-      );
-      return deletedSkill;
+      await this.checkIsSkillExist(skillId);
+      const relatedTasks = await this.taskModel.find({ skill: skillId });
+      if (relatedTasks.length > 0) throwCanNotDeleteErr('Skill', 'Task');
+      await this.skillModel.findByIdAndDelete(skillId);
     } catch (error) {
       throwSrvErr(error);
     }
@@ -76,52 +74,25 @@ export class SkillService {
 
   async update(skillId: string, skillDTO: UpdateSkillDTO) {
     try {
-      return await this.skillModel.findByIdAndUpdate(skillId, skillDTO, {
-        new: true,
-      });
+      const newSkill = await this.skillModel.findByIdAndUpdate(
+        skillId,
+        skillDTO,
+        {
+          new: true,
+        },
+      );
+      if (!newSkill) throw new NotFoundException('Skill is not exist');
+      return newSkill;
     } catch (error) {
       throwSrvErr(error);
     }
   }
 
-  async getUsersWithGivenSkill(
-    skillId: string,
-    paginateQuery: PaginationQueryDto,
-  ) {
+  async checkIsSkillExist(skillId: string) {
     try {
-      const query = {
-        'skills.skill': skillId,
-      };
-      const populateOption = [
-        { path: 'position', model: 'Position', select: 'name' },
-        { path: 'skills.skill', model: 'Skill', select: 'name' },
-        { path: 'work_centers', model: 'Skill', select: 'name' },
-        { path: 'resources', model: 'Resource', select: 'equipment_name' },
-        { path: 'tasks', model: 'Task', select: 'name' },
-      ];
-      if (
-        paginateQuery.hasOwnProperty('offset') &&
-        paginateQuery.hasOwnProperty('limit')
-      ) {
-        const options = {
-          offset: paginateQuery.offset,
-          limit: paginateQuery.limit,
-          sort: { created_at: SortQuery.Desc },
-          populate: populateOption,
-          customLabels: {
-            page: 'page',
-            limit: 'per_page',
-            totalDocs: 'total',
-            totalPages: 'total_pages',
-            docs: 'data',
-          },
-        };
-        return await this.userModel.paginate(query, options);
-      } else
-        return await this.userModel
-          .find(query)
-          .populate(populateOption)
-          .sort({ created_at: SortQuery.Desc });
+      const skill = await this.skillModel.findById(skillId).lean();
+      if (!skill) throw new NotFoundException('Skill is not exist');
+      return skill;
     } catch (error) {
       throwSrvErr(error);
     }

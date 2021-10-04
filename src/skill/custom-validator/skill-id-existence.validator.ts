@@ -22,6 +22,6 @@ export class SkillIDExistenceValidator implements ValidatorConstraintInterface {
   }
 
   defaultMessage(args: ValidationArguments) {
-    return 'There is Skill that does not exist.';
+    return 'Skill ID is not exist.';
   }
 }
