@@ -12,12 +12,10 @@ import {
 } from '@nestjs/common';
 import { Controller, Get, Param } from '@nestjs/common';
 import { throwCntrllrErr } from 'src/common/utils/error';
-import { Request as ERequest } from 'express';
-import { Response as EResponse } from 'express';
 import { SequenceService } from './sequence.service';
 import { AddSequenceDTO } from './dto/add-sequence.dto';
-import { SequenceID } from 'src/shared/pipe/sequenceId.pipe';
 import { UpdateSequenceDTO } from './dto/update-sequence.dto';
+import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 
 @Controller('api/sequence')
 @UsePipes(
@@ -31,70 +29,47 @@ export class SequenceController {
   constructor(private sequenceService: SequenceService) {}
 
   @Post()
-  async create(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Body() sequenceDTO: AddSequenceDTO,
-  ) {
+  async create(@Request() req, @Body() sequenceDTO: AddSequenceDTO) {
     try {
       const result = await this.sequenceService.create(sequenceDTO);
-      return res.status(HttpStatus.CREATED).json({
+      return {
         message: 'Create Sequence successfully',
         data: result,
-      });
+      };
     } catch (error) {
       throwCntrllrErr(error);
     }
   }
 
   @Get()
-  async getList(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Query('search') search: string,
-    @Query('offset') offset: number,
-    @Query('limit') limit: number,
-  ) {
+  async getList(@Request() req, @Query() queryDto: PaginationQueryDto) {
     try {
-      const result = await this.sequenceService.getList(
-        { offset, limit },
-        search?.trim(),
-      );
-      return res.status(HttpStatus.OK).json({
+      const result = await this.sequenceService.getList(queryDto);
+      return {
         data: result,
-      });
+      };
     } catch (error) {
       throwCntrllrErr(error);
     }
   }
 
   @Get('/:sequenceId')
-  async getDetail(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Param('sequenceId', SequenceID) sequenceId: string,
-  ) {
+  async getDetail(@Request() req, @Param('sequenceId') sequenceId: string) {
     try {
       const result = await this.sequenceService.getDetail(sequenceId);
-      return res.status(HttpStatus.OK).json({
-        data: result,
-      });
+      return { data: result };
     } catch (error) {
       throwCntrllrErr(error);
     }
   }
 
   @Delete('/:sequenceId')
-  async delete(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Param('sequenceId', SequenceID) sequenceId: string,
-  ) {
+  async delete(@Request() req, @Param('sequenceId') sequenceId: string) {
     try {
       await this.sequenceService.delete(sequenceId);
-      return res.status(HttpStatus.OK).json({
+      return {
         message: 'Delete Sequence successfully',
-      });
+      };
     } catch (error) {
       throwCntrllrErr(error);
     }
@@ -102,17 +77,16 @@ export class SequenceController {
 
   @Put('/:sequenceId')
   async update(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
+    @Request() req,
     @Body() sequenceDTO: UpdateSequenceDTO,
-    @Param('sequenceId', SequenceID) sequenceId: string,
+    @Param('sequenceId') sequenceId: string,
   ) {
     try {
       const result = await this.sequenceService.update(sequenceId, sequenceDTO);
-      return res.status(HttpStatus.OK).json({
+      return {
         message: 'Update Sequence successfully',
-        data: result,
-      });
+        dta: result,
+      };
     } catch (error) {
       throwCntrllrErr(error);
     }

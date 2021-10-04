@@ -14,11 +14,10 @@ import {
   Validate,
   ValidateIf,
 } from 'class-validator';
-import { SequenceConstraint } from 'src/model/sequence.schema';
-import { ProcessIDExistenceValidator } from 'src/process/custom-validator/processId-existence.validator';
-import { ResourceIDsExistenceValidator } from 'src/resource/custom-validator/resourceIds-existence-validator';
-import { UserIDsExistenceValidator } from 'src/user/custom-validator/userIds.validator';
-import { SequenceIDExistenceValidator } from '../custom-validator/sequenceId-existence.validator';
+import { ObjectId } from 'mongoose';
+import { SequenceConstraint } from 'src/model/sequence/sequence.schema';
+import { ProcessIDExistenceValidator } from 'src/process/custom-validator/process-id-existence.validator';
+import { SequenceIDExistenceValidator } from '../custom-validator/sequence-id-existence.validator';
 
 export class AddSequenceDTO {
   @IsString()
@@ -57,18 +56,6 @@ export class AddSequenceDTO {
   @IsNotEmpty()
   @Validate(ProcessIDExistenceValidator)
   process: string;
-
-  @IsArray()
-  @ArrayNotEmpty()
-  @IsMongoId({ each: true })
-  @Validate(ResourceIDsExistenceValidator)
-  resources: string[];
-
-  @IsArray()
-  @ArrayNotEmpty()
-  @IsMongoId({ each: true })
-  @Validate(UserIDsExistenceValidator)
-  users: string[];
 
   @IsMongoId()
   @ValidateIf((object, value) => value !== null)

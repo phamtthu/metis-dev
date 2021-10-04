@@ -1,16 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, PaginateModel } from 'mongoose';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { SortQuery } from 'src/common/enum/filter.enum';
-import { throwSrvErr } from 'src/common/utils/error';
-import { User } from 'src/model/user.shema';
-import { Process } from 'src/model/process.schema';
-import { Resource } from 'src/model/resource.shema';
-import { Sequence } from 'src/model/sequence.schema';
-import { isTwoArrayEqual } from 'src/shared/helper';
+import { throwCanNotDeleteErr, throwSrvErr } from 'src/common/utils/error';
+import { User } from 'src/model/user/user.shema';
+import { Process } from 'src/model/process/process.schema';
+import { Resource } from 'src/model/resource/resource.shema';
+import { Sequence } from 'src/model/sequence/sequence.schema';
 import { AddSequenceDTO } from './dto/add-sequence.dto';
 import { UpdateSequenceDTO } from './dto/update-sequence.dto';
+import { SequenceResource } from 'src/model/sequence-resource/sequence-resource.schema';
+import { SequenceUser } from 'src/model/sequence-user/sequence-user.schema';
+import { getNestedList } from 'src/shared/helper';
 
 @Injectable()
 export class SequenceService {
@@ -18,40 +20,29 @@ export class SequenceService {
     @InjectModel('Process') private processModel: Model<Process>,
     @InjectModel('Sequence') private sequenceModel: PaginateModel<Sequence>,
     @InjectModel('Resource') private resourceModel: Model<Resource>,
+    @InjectModel('Sequence_Resource')
+    private sequenceResourceModel: Model<SequenceResource>,
     @InjectModel('User') private userModel: Model<User>,
+    @InjectModel('Sequence_User')
+    private sequenceUserModel: Model<SequenceUser>,
   ) {}
 
   async create(sequenceDTO: AddSequenceDTO) {
     try {
-      const sequence = await new this.sequenceModel(sequenceDTO).save();
-      // Process
-      await this.processModel.findByIdAndUpdate(sequenceDTO.process, {
-        $push: { sequences: sequence._id },
-      });
-      // Resource
-      await this.resourceModel.updateMany(
-        { _id: { $in: sequenceDTO.resources } },
-        { $push: { sequences: sequence._id } },
-      );
-      // User
-      await this.userModel.updateMany(
-        { _id: { $in: sequenceDTO.users } },
-        { $push: { sequences: sequence._id } },
-      );
-      return sequence;
+      return await new this.sequenceModel(sequenceDTO).save();
     } catch (error) {
       throwSrvErr(error);
     }
   }
 
-  async getList(paginateQuery: PaginationQueryDto, search: string) {
+  async getList(queryDto: PaginationQueryDto) {
     try {
-      const searchRegex = new RegExp(search, 'i');
+      const searchRegex = new RegExp(queryDto.search, 'i');
       const query = { name: { $regex: searchRegex } };
-      if (paginateQuery.offset >= 0 && paginateQuery.limit >= 0) {
+      if (queryDto.offset >= 0 && queryDto.limit >= 0) {
         const options = {
-          offset: paginateQuery.offset,
-          limit: paginateQuery.limit,
+          offset: queryDto.offset,
+          limit: queryDto.limit,
           sort: { created_at: SortQuery.Desc },
           customLabels: {
             page: 'page',
@@ -73,9 +64,20 @@ export class SequenceService {
 
   async getDetail(sequenceId: string) {
     try {
-      return await this.sequenceModel
-        .findById(sequenceId)
-        .populate(['process', 'resources', 'users', 'parent']);
+      const sequence = await this.checkIsSequenceExist(sequenceId);
+      const sequenceResources = await this.sequenceResourceModel
+        .find({ sequence: sequenceId })
+        .populate('resource');
+      const subSequences = await this.sequenceModel
+        .find({ parent: sequenceId })
+        .lean();
+      sequence['sub_sequences'] = getNestedList(sequenceId, subSequences);
+      sequence['resources'] = sequenceResources.map((e) => e.resource);
+      const sequenceUsers = await this.sequenceUserModel
+        .find({ sequence: sequenceId })
+        .populate('user');
+      sequence['users'] = sequenceUsers.map((e) => e.user);
+      return sequence;
     } catch (error) {
       throwSrvErr(error);
     }
@@ -86,27 +88,12 @@ export class SequenceService {
       const deletedSequence = await this.sequenceModel.findByIdAndDelete(
         sequenceId,
       );
-      // Change parent of sub sequen to null
-      await this.sequenceModel.updateMany(
-        { parent: sequenceId, process: deletedSequence.process },
-        { parent: null },
-      );
-      // Process
-      await this.processModel.updateOne(
-        { sequences: sequenceId },
-        { $pull: { sequences: sequenceId } },
-      );
-      // Resource
-      await this.resourceModel.updateMany(
-        { sequences: sequenceId },
-        { $pull: { sequences: sequenceId } },
-      );
-      // User
-      await this.userModel.updateMany(
-        { sequences: sequenceId },
-        { $pull: { sequences: sequenceId } },
-      );
-      return deletedSequence;
+      if (!deletedSequence)
+        throw new NotFoundException('Sequence is not exist');
+      await this.sequenceResourceModel.deleteMany({
+        sequence: sequenceId,
+      });
+      await this.sequenceUserModel.deleteMany({ sequence: sequenceId });
     } catch (error) {
       throwSrvErr(error);
     }
@@ -114,53 +101,47 @@ export class SequenceService {
 
   async update(sequenceId: string, sequenceDTO: UpdateSequenceDTO) {
     try {
-      const oldSequence = await this.sequenceModel.findById(sequenceId).lean();
-      // Process
-      if (String(oldSequence.process) !== sequenceDTO.process) {
-        await this.processModel.findByIdAndUpdate(oldSequence.process, {
-          $pull: { sequences: sequenceId },
+      await this.checkIsSequenceExist(sequenceId);
+      // Add Resource to Sequence
+      if (Array.isArray(sequenceDTO.resources)) {
+        await this.sequenceResourceModel.deleteMany({
+          sequence: sequenceId,
         });
-        await this.processModel.findByIdAndUpdate(sequenceDTO.process, {
-          $push: { sequences: sequenceId },
+        const sequenceResources = sequenceDTO.resources.map((resourceId) => ({
+          sequence: sequenceId,
+          resource: resourceId,
+        }));
+        return await this.sequenceResourceModel.insertMany(sequenceResources);
+        // Add User to Sequence
+      } else if (Array.isArray(sequenceDTO.users)) {
+        await this.sequenceUserModel.deleteMany({
+          sequence: sequenceId,
         });
-      }
-      // Resource
-      if (
-        !isTwoArrayEqual(
-          sequenceDTO.resources,
-          oldSequence.resources.map((e) => String(e)),
-        )
-      ) {
-        await this.resourceModel.updateMany(
-          { _id: { $in: oldSequence.resources } },
-          { $pull: { sequences: sequenceId } },
-        );
-        await this.resourceModel.updateMany(
-          { _id: { $in: sequenceDTO.resources } },
-          { $push: { sequences: sequenceId } },
+        const sequenceUsers = sequenceDTO.users.map((userId) => ({
+          sequence: sequenceId,
+          user: userId,
+        }));
+        return await this.sequenceUserModel.insertMany(sequenceUsers);
+      } else {
+        return await this.sequenceModel.findByIdAndUpdate(
+          sequenceId,
+          sequenceDTO,
+          { new: true },
         );
       }
-      // User
-      if (
-        !isTwoArrayEqual(
-          sequenceDTO.users,
-          oldSequence.users.map((e) => String(e)),
-        )
-      ) {
-        await this.userModel.updateMany(
-          { _id: { $in: oldSequence.users } },
-          { $pull: { sequences: sequenceId } },
-        );
-        await this.userModel.updateMany(
-          { _id: { $in: sequenceDTO.users } },
-          { $push: { sequences: sequenceId } },
-        );
-      }
-      return await this.sequenceModel.findByIdAndUpdate(
-        sequenceId,
-        sequenceDTO,
-        { new: true },
-      );
+    } catch (error) {
+      throwSrvErr(error);
+    }
+  }
+
+  async checkIsSequenceExist(sequenceId: string) {
+    try {
+      const sequence = await this.sequenceModel
+        .findById(sequenceId)
+        .populate('process')
+        .lean();
+      if (!sequence) throw new NotFoundException('Sequence is not exist');
+      return sequence;
     } catch (error) {
       throwSrvErr(error);
     }
