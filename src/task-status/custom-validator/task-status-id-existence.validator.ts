@@ -24,6 +24,6 @@ export class TaskStatusIDExistenceValidator
   }
 
   defaultMessage(args: ValidationArguments) {
-    return 'TaskStatusID that does not exist';
+    return 'Task Status ID is not exist';
   }
 }
