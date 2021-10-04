@@ -1,17 +1,21 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, PaginateModel } from 'mongoose';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { SortQuery } from 'src/common/enum/filter.enum';
 import { throwSrvErr } from 'src/common/utils/error';
 import { deleteImgPath, getNewImgLink } from 'src/common/utils/image-handler';
-import { User } from 'src/model/user.shema';
-import { Product } from 'src/model/product.schema';
-import { Task } from 'src/model/task.schema';
+import { User } from 'src/model/user/user.shema';
+import { Product } from 'src/model/product/product.schema';
+import { Task } from 'src/model/task/task.schema';
 import { getNestedList, isTwoArrayEqual, paginator } from 'src/shared/helper';
 import { AddTaskDTO } from './dto/add-task.dto';
 import { UpdateTaskDTO } from './dto/update-task.dto';
-import { TaskUser } from 'src/model/taskuser.schema';
+import { TaskUser } from 'src/model/task-user/taskuser.schema';
 
 @Injectable()
 export class TaskService {
@@ -24,37 +28,26 @@ export class TaskService {
 
   async create(taskDTO: AddTaskDTO, originURL: string) {
     try {
-      const result = await this.taskModel.findOne({ task_no: taskDTO.task_no });
+      const result = await this.taskModel.findOne({
+        task_no: taskDTO.task_no,
+      });
       if (result) throw new ConflictException('task_no is already exist');
-
       taskDTO.images = await Promise.all(
         taskDTO.images.map(
           async (img) => await getNewImgLink(img, 'task', originURL),
         ),
       );
-
       const task = await new this.taskModel(taskDTO).save();
-
-      // Product
-      await this.productModel.findByIdAndUpdate(taskDTO.product, {
-        $push: { tasks: task._id },
-      });
-      // User
-      for await (const userId of taskDTO.users) {
-        await new this.taskUserModel({
-          user: userId,
-          task: task._id,
-        }).save();
-      }
+      await this.addTaskUsers(task.id, taskDTO.users);
       return task;
     } catch (error) {
       throwSrvErr(error);
     }
   }
 
-  async getList(paginateQuery: PaginationQueryDto, search: string) {
+  async getList(queryDto: PaginationQueryDto) {
     try {
-      const searchRegex = new RegExp(search, 'i');
+      const searchRegex = new RegExp(queryDto.search, 'i');
       const query = {
         $or: [
           { name: { $regex: searchRegex } },
@@ -66,12 +59,16 @@ export class TaskService {
         { path: 'status', model: 'TaskStatus', select: 'name' },
         { path: 'skill', model: 'Skill', select: 'name' },
         { path: 'labels', model: 'Label', select: 'name' },
-        { path: 'product', model: 'Product', select: ['name', 'product_no'] },
+        {
+          path: 'product',
+          model: 'Product',
+          select: ['name', 'product_no'],
+        },
       ];
-      if (search) {
+      if (queryDto.search) {
         const paginationOptions = {
-          offset: paginateQuery.offset,
-          limit: paginateQuery.limit,
+          offset: queryDto.offset,
+          limit: queryDto.limit,
           sort: { created_at: SortQuery.Desc },
           populate: populateOption,
           customLabels: {
@@ -82,7 +79,7 @@ export class TaskService {
             docs: 'data',
           },
         };
-        if (paginateQuery.offset >= 0 && paginateQuery.limit >= 0) {
+        if (queryDto.offset >= 0 && queryDto.limit >= 0) {
           const tasks = await this.taskModel.paginate(query, paginationOptions);
           return tasks;
         } else {
@@ -98,12 +95,8 @@ export class TaskService {
           .sort({ created_at: SortQuery.Desc })
           .lean();
         const nestedTasks = getNestedList(null, tasks);
-        if (paginateQuery.offset >= 0 && paginateQuery.limit >= 0) {
-          return paginator(
-            nestedTasks,
-            paginateQuery.offset,
-            paginateQuery.limit,
-          );
+        if (queryDto.offset >= 0 && queryDto.limit >= 0) {
+          return paginator(nestedTasks, queryDto.offset, queryDto.limit);
         } else {
           return nestedTasks;
         }
@@ -115,9 +108,11 @@ export class TaskService {
 
   async getDetail(taskId: string) {
     try {
-      const task = await this.taskModel
-        .findById(taskId)
-        .populate(['product', 'skill', 'labels', 'users', 'status']);
+      const task = await this.checkIsTaskExist(taskId);
+      const users = await this.taskUserModel
+        .find({ task: taskId })
+        .populate('users');
+      task['users'] = users.map((e) => e.user);
       return task;
     } catch (error) {
       throwSrvErr(error);
@@ -127,20 +122,14 @@ export class TaskService {
   async delete(taskId: string) {
     try {
       const deletedTask = await this.taskModel.findByIdAndDelete(taskId);
+      if (!deletedTask) throw new NotFoundException('Task is not exist');
       deletedTask.images.forEach(async (img) => {
         await deleteImgPath(img);
       });
-      // Product
-      await this.productModel.findByIdAndUpdate(deletedTask.product, {
-        $pull: { tasks: taskId },
-      });
-      // Task User
       await this.taskUserModel.deleteMany({ task: taskId });
-      // Task
       await this.taskModel.updateMany({ parent: taskId }, { parent: null });
       await this.taskModel.updateMany({ pre_task: taskId }, { parent: null });
       await this.taskModel.updateMany({ after_task: taskId }, { parent: null });
-      return deletedTask;
     } catch (error) {
       throwSrvErr(error);
     }
@@ -148,38 +137,53 @@ export class TaskService {
 
   async update(taskId: string, taskDTO: UpdateTaskDTO, originURL: string) {
     try {
-      const oldTask = await this.taskModel.findById(taskId).lean();
+      const oldTask = await this.checkIsTaskExist(taskId);
       oldTask.images.forEach(async (img) => {
         await deleteImgPath(img);
       });
+      await this.taskUserModel.deleteMany({ task: taskId });
+      await this.addTaskUsers(taskId, taskDTO.users);
       taskDTO.images = await Promise.all(
         taskDTO.images.map(
           async (img) => await getNewImgLink(img, 'task', originURL),
         ),
       );
-      // Product
-      if (String(oldTask.product) !== taskDTO.product) {
-        await this.productModel.findByIdAndUpdate(oldTask.product, {
-          $pull: { tasks: taskId },
-        });
-        await this.productModel.findByIdAndUpdate(taskDTO.product, {
-          $push: { tasks: taskId },
-        });
-      }
-      // Users
-      // if (!isTwoArrayEqual(taskDTO.users, oldTask.users.map(e => String(e)))) {
-      //     await this.userModel.updateMany(
-      //         { _id: { "$in": oldTask.users } },
-      //         { $pull: { tasks: taskId } }
-      //     )
-      //     await this.userModel.updateMany(
-      //         { _id: { "$in": taskDTO.users } },
-      //         { $push: { tasks: taskId } }
-      //     )
-      // }
+      oldTask.images.forEach(async (img) => {
+        await deleteImgPath(img);
+      });
       return await this.taskModel.findByIdAndUpdate(taskId, taskDTO, {
         new: true,
       });
+    } catch (error) {
+      throwSrvErr(error);
+    }
+  }
+
+  async checkIsTaskExist(taskId: string) {
+    try {
+      const task = await this.taskModel
+        .findById(taskId)
+        .populate([
+          'product',
+          'skill',
+          'labels',
+          'status',
+          'product_workcenter',
+        ]);
+      if (!task) throw new NotFoundException('Task is not exist');
+      return task;
+    } catch (error) {
+      throwSrvErr(error);
+    }
+  }
+
+  async addTaskUsers(taskId: string, userIds: string[]) {
+    try {
+      const taskUsers = userIds.map((userId) => ({
+        task: taskId,
+        user: userId,
+      }));
+      await this.taskUserModel.insertMany(taskUsers);
     } catch (error) {
       throwSrvErr(error);
     }

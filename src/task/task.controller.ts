@@ -13,13 +13,11 @@ import {
 } from '@nestjs/common';
 import { Controller, Get, Param } from '@nestjs/common';
 import { throwCntrllrErr } from 'src/common/utils/error';
-import { Request as ERequest } from 'express';
-import { Response as EResponse } from 'express';
+
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { TaskService } from './task.service';
 import { AddTaskDTO } from './dto/add-task.dto';
 import { getOriginURL } from 'src/shared/helper';
-import { TaskID } from 'src/shared/pipe/taskId.pipe';
 import { UpdateTaskDTO } from './dto/update-task.dto';
 
 @Controller('api/task')
@@ -34,71 +32,46 @@ export class TaskController {
   constructor(private taskService: TaskService) {}
 
   @Post()
-  async create(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Body() taskDTO: AddTaskDTO,
-  ) {
+  async create(@Request() req, @Body() taskDTO: AddTaskDTO) {
     try {
       const originURL = getOriginURL(req);
       const result = await this.taskService.create(taskDTO, originURL);
-      return res.status(HttpStatus.CREATED).json({
+      return {
         message: 'Create Task successfully',
         data: result,
-      });
+      };
     } catch (error) {
       throwCntrllrErr(error);
     }
   }
 
   @Get()
-  async getList(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Query('search') search: string,
-    @Query('offset') offset: number,
-    @Query('limit') limit: number,
-  ) {
+  async getList(@Request() req, @Query() queryDto: PaginationQueryDto) {
     try {
-      const result = await this.taskService.getList(
-        { offset, limit },
-        search?.trim(),
-      );
-      return res.status(HttpStatus.OK).json({
-        data: result,
-      });
+      const result = await this.taskService.getList(queryDto);
+      return { data: result };
     } catch (error) {
       throwCntrllrErr(error);
     }
   }
 
   @Get('/:taskId')
-  async getDetail(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Param('taskId', TaskID) taskId: string,
-  ) {
+  async getDetail(@Request() req, @Param('taskId') taskId: string) {
     try {
       const result = await this.taskService.getDetail(taskId);
-      return res.status(HttpStatus.OK).json({
-        data: result,
-      });
+      return { data: result };
     } catch (error) {
       throwCntrllrErr(error);
     }
   }
 
   @Delete('/:taskId')
-  async delete(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Param('taskId', TaskID) taskId: string,
-  ) {
+  async delete(@Request() req, @Param('taskId') taskId: string) {
     try {
       await this.taskService.delete(taskId);
-      return res.status(HttpStatus.OK).json({
+      return {
         message: 'Delete Task successfully',
-      });
+      };
     } catch (error) {
       throwCntrllrErr(error);
     }
@@ -106,18 +79,17 @@ export class TaskController {
 
   @Put('/:taskId')
   async update(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
+    @Request() req,
     @Body() taskDTO: UpdateTaskDTO,
-    @Param('taskId', TaskID) taskId: string,
+    @Param('taskId') taskId: string,
   ) {
     try {
       const originURL = getOriginURL(req);
       const result = await this.taskService.update(taskId, taskDTO, originURL);
-      return res.status(HttpStatus.OK).json({
+      return {
         message: 'Update Task successfully',
         data: result,
-      });
+      };
     } catch (error) {
       throwCntrllrErr(error);
     }
