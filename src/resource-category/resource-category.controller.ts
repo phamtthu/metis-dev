@@ -12,13 +12,11 @@ import {
 } from '@nestjs/common';
 import { Controller, Get, Param } from '@nestjs/common';
 import { throwCntrllrErr } from 'src/common/utils/error';
-import { Request as ERequest } from 'express';
-import { Response as EResponse } from 'express';
-import { AddRCategoryDTO } from './dto/add-rcategory.dto';
+import { AddRCategoryDTO } from './dto/add-resource-category.dto';
 import { ResourceCategoryService } from './resource-category.service';
-import { ResourceCategoryID } from 'src/shared/pipe/resourcecategoryId.pipe';
 import { getOriginURL } from 'src/shared/helper';
-import { UpdateRCategoryRDTO } from './dto/update-rcategory.dto';
+import { UpdateRCategoryRDTO } from './dto/update-resource-category.dto';
+import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 
 @Controller('api/resource-category')
 @UsePipes(
@@ -32,74 +30,47 @@ export class ResourceCategoryController {
   constructor(private rcategoryService: ResourceCategoryService) {}
 
   @Post()
-  async create(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Body() rCategoryDTO: AddRCategoryDTO,
-  ) {
+  async create(@Request() req, @Body() rCategoryDTO: AddRCategoryDTO) {
     try {
       const originURL = getOriginURL(req);
       const result = await this.rcategoryService.create(
         rCategoryDTO,
         originURL,
       );
-      return res.status(HttpStatus.CREATED).json({
+      return {
         message: 'Create Resouce Category successfully',
         data: result,
-      });
+      };
     } catch (error) {
       throwCntrllrErr(error);
     }
   }
 
   @Get()
-  async getList(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Query('offset') offset: number,
-    @Query('limit') limit: number,
-    @Query('search') search: string,
-  ) {
+  async getList(@Request() req, @Query() queryDto: PaginationQueryDto) {
     try {
-      const result = await this.rcategoryService.getList(
-        { offset, limit },
-        search?.trim(),
-      );
-      return res.status(HttpStatus.OK).json({
-        data: result,
-      });
+      const result = await this.rcategoryService.getList(queryDto);
+      return { data: result };
     } catch (error) {
       throwCntrllrErr(error);
     }
   }
 
   @Get('/:categoryId')
-  async getDetail(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Param('categoryId', ResourceCategoryID) categoryId: string,
-  ) {
+  async getDetail(@Request() req, @Param('categoryId') categoryId: string) {
     try {
       const result = await this.rcategoryService.getDetail(categoryId);
-      return res.status(HttpStatus.OK).json({
-        data: result,
-      });
+      return { data: result };
     } catch (error) {
       throwCntrllrErr(error);
     }
   }
 
   @Delete('/:categoryId')
-  async delete(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Param('categoryId', ResourceCategoryID) categoryId: string,
-  ) {
+  async delete(@Request() req, @Param('categoryId') categoryId: string) {
     try {
       await this.rcategoryService.delete(categoryId);
-      return res.status(HttpStatus.OK).json({
-        message: 'Delete Resource Category successfully',
-      });
+      return { message: 'Delete Resource Category successfully' };
     } catch (error) {
       throwCntrllrErr(error);
     }
@@ -107,10 +78,9 @@ export class ResourceCategoryController {
 
   @Put('/:categoryId')
   async update(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
+    @Request() req,
     @Body() rCategoryDTO: UpdateRCategoryRDTO,
-    @Param('categoryId', ResourceCategoryID) categoryId: string,
+    @Param('categoryId') categoryId: string,
   ) {
     try {
       const originURL = getOriginURL(req);
@@ -119,10 +89,10 @@ export class ResourceCategoryController {
         rCategoryDTO,
         originURL,
       );
-      return res.status(HttpStatus.OK).json({
+      return {
         message: 'Update Resource Category successfully',
         data: result,
-      });
+      };
     } catch (error) {
       throwCntrllrErr(error);
     }
@@ -131,17 +101,14 @@ export class ResourceCategoryController {
   // Get all Resource From this Category
   @Get('resource/:categoryId')
   async getProductFromGivenPCategory(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Param('categoryId', ResourceCategoryID) categoryId: string,
+    @Request() req,
+    @Param('categoryId') categoryId: string,
   ) {
     try {
       const result = await this.rcategoryService.getResourceFromGivenPCategory(
         categoryId,
       );
-      return res.status(HttpStatus.OK).json({
-        data: result,
-      });
+      return { data: result };
     } catch (error) {
       throwCntrllrErr(error);
     }
