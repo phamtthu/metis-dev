@@ -1,24 +1,20 @@
 import {
   Body,
   Delete,
-  HttpStatus,
   Post,
   Put,
   Query,
   Request,
-  Response,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
 import { Controller, Get, Param } from '@nestjs/common';
 import { throwCntrllrErr } from 'src/common/utils/error';
-import { Request as ERequest } from 'express';
-import { Response as EResponse } from 'express';
-import { AddPCategoryDTO } from './dto/add-pcategory.dto';
+import { AddPCategoryDTO } from './dto/add-product-category.dto';
 import { ProductCategoryService } from './product-category.service';
 import { getOriginURL } from 'src/shared/helper';
-import { UpdatePCategoryRDTO } from './dto/update-pcategory.dto';
-import { ProductCategoryID } from 'src/shared/pipe/productcategoryId.pipe';
+import { UpdatePCategoryRDTO } from './dto/update-product-category.dto';
+import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 
 @Controller('api/product-category')
 @UsePipes(
@@ -32,74 +28,49 @@ export class ProductCategoryController {
   constructor(private pcategoryService: ProductCategoryService) {}
 
   @Post()
-  async create(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Body() pCategoryDTO: AddPCategoryDTO,
-  ) {
+  async create(@Request() req, @Body() pCategoryDTO: AddPCategoryDTO) {
     try {
       const originURL = getOriginURL(req);
       const result = await this.pcategoryService.create(
         pCategoryDTO,
         originURL,
       );
-      return res.status(HttpStatus.CREATED).json({
+      return {
         message: 'Create Product Category successfully',
         data: result,
-      });
+      };
     } catch (error) {
       throwCntrllrErr(error);
     }
   }
 
   @Get()
-  async getList(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Query('search') search: string,
-    @Query('offset') offset: number,
-    @Query('limit') limit: number,
-  ) {
+  async getList(@Request() req, @Query() queryDto: PaginationQueryDto) {
     try {
-      const result = await this.pcategoryService.getList(
-        { offset, limit },
-        search?.trim(),
-      );
-      return res.status(HttpStatus.OK).json({
-        data: result,
-      });
+      const result = await this.pcategoryService.getList(queryDto);
+      return { data: result };
     } catch (error) {
       throwCntrllrErr(error);
     }
   }
 
   @Get('/:categoryId')
-  async getDetail(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Param('categoryId', ProductCategoryID) categoryId: string,
-  ) {
+  async getDetail(@Request() req, @Param('categoryId') categoryId: string) {
     try {
       const result = await this.pcategoryService.getDetail(categoryId);
-      return res.status(HttpStatus.OK).json({
-        data: result,
-      });
+      return { data: result };
     } catch (error) {
       throwCntrllrErr(error);
     }
   }
 
   @Delete('/:categoryId')
-  async delete(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Param('categoryId', ProductCategoryID) categoryId: string,
-  ) {
+  async delete(@Request() req, @Param('categoryId') categoryId: string) {
     try {
       await this.pcategoryService.delete(categoryId);
-      return res.status(HttpStatus.OK).json({
+      return {
         message: 'Delete Product Category successfully',
-      });
+      };
     } catch (error) {
       throwCntrllrErr(error);
     }
@@ -107,10 +78,9 @@ export class ProductCategoryController {
 
   @Put('/:categoryId')
   async update(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
+    @Request() req,
     @Body() pCategoryDTO: UpdatePCategoryRDTO,
-    @Param('categoryId', ProductCategoryID) categoryId: string,
+    @Param('categoryId') categoryId: string,
   ) {
     try {
       const originURL = getOriginURL(req);
@@ -119,10 +89,10 @@ export class ProductCategoryController {
         pCategoryDTO,
         originURL,
       );
-      return res.status(HttpStatus.OK).json({
+      return {
         message: 'Update Product Category successfully',
         data: result,
-      });
+      };
     } catch (error) {
       throwCntrllrErr(error);
     }
@@ -130,17 +100,14 @@ export class ProductCategoryController {
 
   @Get('product/:categoryId')
   async getProductFromGivenPCategory(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Param('categoryId', ProductCategoryID) categoryId: string,
+    @Request() req,
+    @Param('categoryId') categoryId: string,
   ) {
     try {
       const result = await this.pcategoryService.getProductFromGivenPCategory(
         categoryId,
       );
-      return res.status(HttpStatus.OK).json({
-        data: result,
-      });
+      return { data: result };
     } catch (error) {
       throwCntrllrErr(error);
     }

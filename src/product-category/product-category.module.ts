@@ -1,13 +1,12 @@
 import { Module } from '@nestjs/common';
-import { ProductDatabaseModule } from 'src/model/product-database.module';
-import { ProductCategoryDatabaseModule } from 'src/model/productcategory-database.module';
-import { SharedModule } from 'src/shared/shared.module';
-import { PCategoryIDExistenceValidator } from './custom-validator/pcategoryId-existence.validator';
+import { ProductDatabaseModule } from 'src/model/product/product-database.module';
+import { ProductCategoryDatabaseModule } from 'src/model/product-category/product-category-database.module';
+import { PCategoryIDExistenceValidator } from './custom-validator/pcategory-id-existence.validator';
 import { ProductCategoryController } from './product-category.controller';
 import { ProductCategoryService } from './product-category.service';
 
 @Module({
-  imports: [ProductCategoryDatabaseModule, ProductDatabaseModule, SharedModule],
+  imports: [ProductCategoryDatabaseModule, ProductDatabaseModule],
   controllers: [ProductCategoryController],
   providers: [ProductCategoryService, PCategoryIDExistenceValidator],
   exports: [ProductCategoryService],
