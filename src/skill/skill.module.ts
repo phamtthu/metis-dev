@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
 import { SkillService } from './skill.service';
-import { SkillDatabaseModule } from 'src/model/skill-database.module';
+import { SkillDatabaseModule } from 'src/model/skill/skill-database.module';
 import { SkillController } from './skill.controller';
-import { SharedModule } from 'src/shared/shared.module';
-import { SkillIDExistenceValidator } from './custom-validator/skillId-existence.validator';
-import { UserDatabaseModule } from 'src/model/user-database.module';
+
+import { SkillIDExistenceValidator } from './custom-validator/skill-id-existence.validator';
+import { TaskDatabaseModule } from 'src/model/task/task-database.module';
 
 @Module({
-  imports: [SkillDatabaseModule, UserDatabaseModule, SharedModule],
+  imports: [SkillDatabaseModule, TaskDatabaseModule],
   controllers: [SkillController],
   providers: [SkillService, SkillIDExistenceValidator],
   exports: [SkillService],
