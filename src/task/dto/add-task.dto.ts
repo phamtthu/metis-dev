@@ -14,12 +14,13 @@ import {
   Validate,
   ValidateIf,
 } from 'class-validator';
-import { LabelIDsExistenceValidator } from 'src/label/custom-validtor/labelId-existence.validator';
-import { ProductIDExistenceValidator } from 'src/product/custom-validator/productId-existence.validator';
-import { SkillIDExistenceValidator } from 'src/skill/custom-validator/skillId-existence.validator';
-import { TaskStatusIDExistenceValidator } from 'src/task-status/custom-validator/taskstatusId-existence.validator';
-import { UserIDsExistenceValidator } from 'src/user/custom-validator/userIds.validator';
-import { TaskIDExistenceValidator } from '../custom-validator/taskId-existence.validator';
+import { LabelIDsExistenceValidator } from 'src/label/custom-validtor/label-ids-existence.validator';
+import { ProductWorkCenterIDExistenceValidator } from 'src/product-workcenter/custom-validator/product-workcenter-id.existence.validator';
+import { ProductIDExistenceValidator } from 'src/product/custom-validator/product-id-existence.validator';
+import { SkillIDExistenceValidator } from 'src/skill/custom-validator/skill-id-existence.validator';
+import { TaskStatusIDExistenceValidator } from 'src/task-status/custom-validator/task-status-id-existence.validator';
+import { UserIDsExistenceValidator } from 'src/user/custom-validator/user-ids.validator';
+import { TaskIDExistenceValidator } from '../custom-validator/task-id-existence.validator';
 
 export class AddTaskDTO {
   @IsString()
@@ -45,9 +46,6 @@ export class AddTaskDTO {
 
   @IsUrl({ require_tld: false }, { each: true })
   images: string[];
-
-  // @IsUrl({ require_tld: false }, { each: true })
-  // files: string[]
 
   @IsNotEmpty()
   plan_start_date: Date;
@@ -121,6 +119,12 @@ export class AddTaskDTO {
   @ValidateIf((object, value) => value !== null)
   @Validate(ProductIDExistenceValidator)
   product: string;
+
+  @IsMongoId()
+  @IsNotEmpty()
+  @ValidateIf((object, value) => value !== null)
+  @Validate(ProductWorkCenterIDExistenceValidator)
+  product_workcenter: string;
 
   @IsMongoId({ each: true })
   @IsArray()

@@ -1,5 +1,5 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import * as mongoose from 'mongoose';
 import * as mongoosePaginate from 'mongoose-paginate-v2';
 
 export enum TaskStatus {
@@ -10,7 +10,7 @@ export enum TaskStatus {
 }
 
 @Schema({ timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } })
-export class Task extends Document {
+export class Task extends mongoose.Document {
   @Prop({ required: true, default: null })
   name: string;
 
@@ -25,9 +25,6 @@ export class Task extends Document {
 
   @Prop({ type: [String], required: true })
   images: string[];
-
-  // @Prop({ type: [String] })
-  // files: string[]
 
   @Prop({ type: Date, required: true, default: null })
   plan_start_date: Date;
@@ -68,35 +65,58 @@ export class Task extends Document {
   @Prop({ required: true, default: null })
   comment: string;
 
-  @Prop({ required: true, type: Types.ObjectId, ref: 'Skill', default: null })
+  @Prop({
+    required: true,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Skill',
+    default: null,
+  })
   skill: string;
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Label' }] })
+  @Prop({
+    type: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Label',
+        required: true,
+      },
+    ],
+  })
   labels: string[];
 
   @Prop({
-    type: Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'Task_Status',
     required: true,
     default: null,
   })
   status: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'Product', required: true, default: null })
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Product',
+    required: true,
+    default: null,
+  })
   product: string;
 
-  // @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }] })
-  // users: string[]
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Product_WorkCenter',
+    required: true,
+    default: null,
+  })
+  product_workcenter: string;
 
   // Optional
 
-  @Prop({ type: Types.ObjectId, ref: 'Task', default: null })
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Task', default: null })
   parent: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'Task', default: null })
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Task', default: null })
   pre_task: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'Task', default: null })
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Task', default: null })
   after_task: string;
 }
 
