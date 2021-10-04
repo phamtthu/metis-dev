@@ -1,5 +1,5 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import * as mongoose from 'mongoose';
 import * as mongoosePaginate from 'mongoose-paginate-v2';
 
 export enum SequenceConstraint {
@@ -9,7 +9,7 @@ export enum SequenceConstraint {
 }
 
 @Schema({ timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } })
-export class Sequence extends Document {
+export class Sequence extends mongoose.Document {
   @Prop({ required: true, default: null, unique: true })
   name: string;
 
@@ -34,16 +34,18 @@ export class Sequence extends Document {
   @Prop({ required: true, type: String, default: null })
   title_color: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'Process', default: null })
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Process',
+    default: null,
+  })
   process: string;
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Resource' }] })
-  resources: string[];
-
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }] })
-  users: string[];
-
-  @Prop({ type: Types.ObjectId, ref: 'Sequence', default: null })
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Sequence',
+    default: null,
+  })
   parent: string;
 
   @Prop({ type: Number, enum: SequenceConstraint, default: null })
