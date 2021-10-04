@@ -14,8 +14,8 @@ import {
   Min,
   Validate,
 } from 'class-validator';
-import { ResourceIDsExistenceValidator } from 'src/resource/custom-validator/resourceIds-existence-validator';
-import { UserIDsExistenceValidator } from 'src/user/custom-validator/userIds.validator';
+import { ResourceIDsExistenceValidator } from 'src/resource/custom-validator/resource-ids-existence-validator';
+import { UserIDsExistenceValidator } from 'src/user/custom-validator/user-ids.validator';
 
 export class AddWorkCenterDTO {
   @IsString()

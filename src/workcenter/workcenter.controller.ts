@@ -12,13 +12,12 @@ import {
 } from '@nestjs/common';
 import { Controller, Get, Param } from '@nestjs/common';
 import { throwCntrllrErr } from 'src/common/utils/error';
-import { Request as ERequest } from 'express';
-import { Response as EResponse } from 'express';
+
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { WorkCenterService } from './workcenter.service';
 import { AddWorkCenterDTO } from './dto/add-workcenter.dto';
-import { WorkCenterID } from 'src/shared/pipe/workcenterId.pipe';
 import { UpdateWorkCenterDTO } from './dto/update-workcenter.dto';
+import { UpdateProductWorkCenterDTO } from './dto/update-product-workcenter.dto';
 
 @Controller('api/workcenter')
 @UsePipes(
@@ -32,70 +31,45 @@ export class WorkCenterController {
   constructor(private workCenterService: WorkCenterService) {}
 
   @Post()
-  async create(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Body() workCenterDTO: AddWorkCenterDTO,
-  ) {
+  async create(@Request() req, @Body() workCenterDTO: AddWorkCenterDTO) {
     try {
       const result = await this.workCenterService.create(workCenterDTO);
-      return res.status(HttpStatus.CREATED).json({
+      return {
         message: 'Create Work Center successfully',
         data: result,
-      });
+      };
     } catch (error) {
       throwCntrllrErr(error);
     }
   }
 
   @Get()
-  async getList(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Query('search') search: string,
-    @Query('offset') offset: number,
-    @Query('limit') limit: number,
-  ) {
+  async getList(@Request() req, @Query() queryDto: PaginationQueryDto) {
     try {
-      const result = await this.workCenterService.getList(
-        { offset, limit },
-        search?.trim(),
-      );
-      return res.status(HttpStatus.OK).json({
-        data: result,
-      });
+      const result = await this.workCenterService.getList(queryDto);
+      return { data: result };
     } catch (error) {
       throwCntrllrErr(error);
     }
   }
 
   @Get('/:workCenterId')
-  async getDetail(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Param('workCenterId', WorkCenterID) workCenterId: string,
-  ) {
+  async getDetail(@Request() req, @Param('workCenterId') workCenterId: string) {
     try {
       const result = await this.workCenterService.getDetail(workCenterId);
-      return res.status(HttpStatus.OK).json({
-        data: result,
-      });
+      return { data: result };
     } catch (error) {
       throwCntrllrErr(error);
     }
   }
 
   @Delete('/:workCenterId')
-  async delete(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Param('workCenterId', WorkCenterID) workCenterId: string,
-  ) {
+  async delete(@Request() req, @Param('workCenterId') workCenterId: string) {
     try {
       await this.workCenterService.delete(workCenterId);
-      return res.status(HttpStatus.OK).json({
+      return {
         message: 'Delete Work Center successfully',
-      });
+      };
     } catch (error) {
       throwCntrllrErr(error);
     }
@@ -104,20 +78,40 @@ export class WorkCenterController {
   // Add Resource, User to WC
   @Put('/:workCenterId')
   async update(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
+    @Request() req,
     @Body() workCenterDTO: UpdateWorkCenterDTO,
-    @Param('workCenterId', WorkCenterID) workCenterId: string,
+    @Param('workCenterId') workCenterId: string,
   ) {
     try {
       const result = await this.workCenterService.update(
         workCenterId,
         workCenterDTO,
       );
-      return res.status(HttpStatus.OK).json({
+      return {
         message: 'Update Work Center successfully',
         data: result,
-      });
+      };
+    } catch (error) {
+      throwCntrllrErr(error);
+    }
+  }
+
+  // Add Resource, User to WC
+  @Put('product/:workCenterId')
+  async updateProductWorkCenter(
+    @Request() req,
+    @Body() workCenterDTO: UpdateProductWorkCenterDTO,
+    @Param('workCenterId') workCenterId: string,
+  ) {
+    try {
+      const result = await this.workCenterService.updateProductWorkCenter(
+        workCenterId,
+        workCenterDTO,
+      );
+      return {
+        message: 'Update Product Work Center successfully',
+        data: result,
+      };
     } catch (error) {
       throwCntrllrErr(error);
     }
