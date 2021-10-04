@@ -4,30 +4,45 @@ import {
   HttpException,
   HttpStatus,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, PaginateModel } from 'mongoose';
-import { User } from '../model/user.shema';
+import { User } from '../model/user/user.shema';
 import { Role, SortQuery, Status } from 'src/common/enum/filter.enum';
-import { throwSrvErr } from 'src/common/utils/error';
+import { throwCanNotDeleteErr, throwSrvErr } from 'src/common/utils/error';
 import { AddUserDTO } from './dto/add-user.dto';
 import { deleteImgPath, getNewImgLink } from 'src/common/utils/image-handler';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { UpdateUserDTO } from './dto/update-user';
-import { ResourceUser } from 'src/model/resource-user.schema';
-import { Resource } from 'src/model/resource.shema';
-import { WorkCenterUser } from 'src/model/workcenter-user.schema';
+import { ResourceUser } from 'src/model/resource-user/resource-user.schema';
+import { Resource } from 'src/model/resource/resource.shema';
+import { WorkCenterUser } from 'src/model/workcenter-user/workcenter-user.schema';
 import { UserResponse } from './response/user-response';
+import { SequenceUser } from 'src/model/sequence-user/sequence-user.schema';
+import { TaskUser } from 'src/model/task-user/taskuser.schema';
+import { Task } from 'src/model/task/task.schema';
+import { ProductWorkCenter } from 'src/model/product-workcenter/product-workcenter.schema';
 
 @Injectable()
 export class UserService {
   constructor(
-    @InjectModel('User') private userModel: PaginateModel<User>,
-    @InjectModel('Resource') private resourceModel: PaginateModel<Resource>,
+    @InjectModel('User')
+    private userModel: PaginateModel<User>,
+    @InjectModel('Resource')
+    private resourceModel: PaginateModel<Resource>,
     @InjectModel('Resource_User')
     private resourceUserModel: Model<ResourceUser>,
     @InjectModel('WorkCenter_User')
     private wcUserModel: PaginateModel<WorkCenterUser>,
+    @InjectModel('Sequence_User')
+    private sequenceUserModel: Model<SequenceUser>,
+    @InjectModel('Task')
+    private taskModel: PaginateModel<Task>,
+    @InjectModel('Task_User')
+    private taskUserModel: Model<TaskUser>,
+    @InjectModel('Product_WorkCenter')
+    private productWorkCenterService: Model<ProductWorkCenter>,
   ) {}
 
   // For admin
@@ -46,7 +61,7 @@ export class UserService {
 
   async findUserByEmail(email: string) {
     try {
-      return await this.userModel.findOne({ email: email });
+      return await this.userModel.findOne({ email: email }).lean();
     } catch (e) {
       throwSrvErr(e);
     }
@@ -92,16 +107,15 @@ export class UserService {
       if (email) throw new ConflictException('email is already exist');
       userDTO.image = await getNewImgLink(userDTO.image, 'user', originURL);
       const user = await new this.userModel(userDTO).save();
-      return new UserResponse(user.toJSON());
-      // return user
+      return user;
     } catch (e) {
       throwSrvErr(e);
     }
   }
 
-  async getList(paginateQuery: PaginationQueryDto, search: string) {
+  async getList(queryDto: PaginationQueryDto) {
     try {
-      const searchRegex = new RegExp(search, 'i');
+      const searchRegex = new RegExp(queryDto.search, 'i');
       const query = {
         $or: [
           { name: { $regex: searchRegex } },
@@ -110,10 +124,10 @@ export class UserService {
           { title: { $regex: searchRegex } },
         ],
       };
-      if (paginateQuery.offset >= 0 && paginateQuery.limit >= 0) {
+      if (queryDto.offset >= 0 && queryDto.limit >= 0) {
         const options = {
-          offset: paginateQuery.offset,
-          limit: paginateQuery.limit,
+          offset: queryDto.offset,
+          limit: queryDto.limit,
           sort: { created_at: SortQuery.Desc },
           customLabels: {
             page: 'page',
@@ -135,14 +149,27 @@ export class UserService {
 
   async getDetail(userId: string) {
     try {
-      const user = await this.userModel.findById(userId).lean();
-      // // Resource
-      // const resourceUsers = await this.resourceUserModel.find({ user: userId }).populate('resource')
-      // user['resources'] = resourceUsers.map((e) => e.resource)
-      // // WorkCenter
-      // const wcUsers = await this.wcUserModel.find({ user: userId }).populate('workcenter')
-      // user['workcenters'] = wcUsers.map((e) => e.workcenter)
-      // return user
+      const user = await this.checkIsUserExist(userId);
+      if (!user) throw new NotFoundException('User is not exist');
+      // Resource
+      const resourceUsers = await this.resourceUserModel
+        .find({ user: userId })
+        .populate('resource');
+      user['resources'] = resourceUsers.map((e) => e.resource);
+      // WorkCenter
+      const wcUsers = await this.wcUserModel
+        .find({ user: userId })
+        .populate('workcenter');
+      user['workcenters'] = wcUsers.map((e) => e.workcenter);
+      // Sequence
+      const sequenceUsers = await this.sequenceUserModel
+        .find({ user: userId })
+        .populate('sequence');
+      user['sequences'] = sequenceUsers.map((e) => e.sequence);
+      const tasks = await this.taskUserModel
+        .find({ user: userId })
+        .populate('task');
+      user['tasks'] = tasks.map((e) => e.task);
       return new UserResponse(user);
     } catch (e) {
       throwSrvErr(e);
@@ -151,17 +178,29 @@ export class UserService {
 
   async delete(userId: string) {
     try {
-      const resourceUsers = await this.resourceUserModel.find({ user: userId });
-      if (resourceUsers.length > 0)
-        throw new BadRequestException(
-          'Can not delete User. There are Resources link with this User',
-        );
-      const wcUsers = await this.wcUserModel.find({ user: userId });
-      if (wcUsers.length > 0)
-        throw new BadRequestException(
-          'Can not delete User. There are WorkCenter link with this User',
-        );
+      await this.checkIsUserExist(userId);
+      const relatedResources = await this.resourceUserModel.find({
+        user: userId,
+      });
+      if (relatedResources.length > 0) throwCanNotDeleteErr('User', 'Resource');
+      const relatedWorkCenters = await this.wcUserModel.find({
+        user: userId,
+      });
+      if (relatedWorkCenters.length > 0)
+        throwCanNotDeleteErr('User', 'WorkCenter');
+      const relatedSequences = await this.sequenceUserModel.find({
+        user: userId,
+      });
+      if (relatedSequences.length > 0) throwCanNotDeleteErr('User', 'Sequence');
+      const relatedTasks = await this.taskUserModel.find({ user: userId });
+      if (relatedTasks.length > 0) throwCanNotDeleteErr('User', 'Task');
+      const relatedProductWorkCenters =
+        await this.productWorkCenterService.find({ users: userId });
+      if (relatedProductWorkCenters.length > 0)
+        throwCanNotDeleteErr('User', 'Product WorkCenter');
+
       const deletedUser = await this.userModel.findByIdAndDelete(userId);
+
       // Delete Image
       if (deletedUser.image) await deleteImgPath(deletedUser.image);
     } catch (e) {
@@ -171,7 +210,7 @@ export class UserService {
 
   async update(userId: string, userDTO: UpdateUserDTO, originURL: string) {
     try {
-      const oldUser = await this.userModel.findById(userId);
+      const oldUser = await this.checkIsUserExist(userId);
       // Delete Image
       await deleteImgPath(oldUser.image);
       // Insert New Image
@@ -181,7 +220,6 @@ export class UserService {
         .findByIdAndUpdate(userId, userDTO, { new: true })
         .lean();
       return newUser;
-      // return new UserResponse(newUser)
     } catch (e) {
       throwSrvErr(e);
     }
@@ -193,6 +231,16 @@ export class UserService {
       return users.map((user) => String(user._id));
     } catch (e) {
       throwSrvErr(e);
+    }
+  }
+
+  async checkIsUserExist(userId: string) {
+    try {
+      const user = await this.userModel.findById(userId).lean();
+      if (!user) throw new NotFoundException('User is not exist');
+      return user;
+    } catch (error) {
+      throwSrvErr(error);
     }
   }
 }

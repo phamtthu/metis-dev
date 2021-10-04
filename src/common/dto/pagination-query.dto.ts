@@ -5,4 +5,7 @@ export class PaginationQueryDto {
 
   @IsOptional()
   offset: number;
+
+  @IsOptional()
+  search: string;
 }

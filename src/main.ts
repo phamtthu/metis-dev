@@ -19,22 +19,17 @@ async function bootstrap() {
     credential: admin.credential.cert(adminConfig),
   });
 
+  app.enableCors();
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
       transformOptions: { enableImplicitConversion: true },
-    }),
-  );
-
-  app.enableCors();
-  app.useGlobalPipes(
-    new ValidationPipe({
       exceptionFactory: (errors: ValidationError[]) => {
-        const retError = {};
+        let retError = {};
         errors.forEach((item) => {
           retError[item.property] = Object.values(item.constraints);
         });
-        const rs = {
+        let rs = {
           message: 'Validation errors in your request',
           errors: retError,
         };

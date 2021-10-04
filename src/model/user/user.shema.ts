@@ -1,43 +1,43 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
-import { Document, Types } from 'mongoose';
+import * as mongoose from 'mongoose';
 import { Role, Status } from 'src/common/enum/filter.enum';
 import * as mongoosePaginate from 'mongoose-paginate-v2';
 
 @Schema({ timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } })
-export class User extends Document {
+export class User extends mongoose.Document {
   @Prop({ default: null })
   name: string;
 
   @Prop({ required: true, unique: true })
   email: string;
 
-  @Prop({ required: true, select: false })
+  @Prop({ required: true })
   password: string;
 
   @Prop({ type: Number, enum: Status, default: Status.Active })
   is_active: number;
 
-  @Prop({ required: true, default: null })
+  @Prop({ default: null })
   user_no: string;
 
-  @Prop({ required: true, default: null })
+  @Prop({ default: null })
   title: string;
 
-  @Prop({ required: true, default: null })
+  @Prop({ default: null })
   group_level: number;
 
-  @Prop({ required: true, default: null })
+  @Prop({ default: null })
   department: string;
 
   @Prop({ require: true, default: null })
   image: string;
 
-  @Prop({ required: true, default: null })
+  @Prop({ default: null })
   cost_per_hour: number;
 
-  @Prop({ type: Boolean, default: false, required: true })
-  is_parttime: boolean;
+  @Prop({ type: Boolean, default: false })
+  is_parttime: Boolean;
 
   @Prop({
     type: [String],
@@ -53,7 +53,7 @@ export class User extends Document {
   last_connect: Date;
 
   @Prop({ type: Number, default: 0 })
-  today_connect_count: number;
+  today_connect_count: Number;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

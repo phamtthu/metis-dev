@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus } from '@nestjs/common';
 
 export const throwCntrllrErr = (error) => {
   throw new HttpException(
@@ -16,5 +16,11 @@ export const throwSrvErr = (error) => {
   throw new HttpException(
     error.message,
     error.status ?? HttpStatus.BAD_REQUEST,
+  );
+};
+
+export const throwCanNotDeleteErr = (target: string, related: string) => {
+  throw new BadRequestException(
+    `Can't delete ${target} right now. There are ${related}(s) link to this ${target}`,
   );
 };
