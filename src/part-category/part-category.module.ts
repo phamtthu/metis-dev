@@ -1,18 +1,13 @@
 import { Module } from '@nestjs/common';
-import { PartCategoryDatabaseModule } from 'src/model/partcategory-database.module';
-import { ProductPartDatabaseModule } from 'src/model/productpart-database.module';
+import { PartCategoryDatabaseModule } from 'src/model/part-category/part-category-database.module';
+import { PartDatabaseModule } from 'src/model/part/part-database.module';
 
-import { SharedModule } from 'src/shared/shared.module';
-import { PartCategoryIDExistenceValidator } from './custom-validator/part-categoryId-existence.validator';
+import { PartCategoryIDExistenceValidator } from './custom-validator/part-category-id-existence.validator';
 import { PartCategoryController } from './part-category.controller';
 import { PartCategoryService } from './part-category.service';
 
 @Module({
-  imports: [
-    PartCategoryDatabaseModule,
-    ProductPartDatabaseModule,
-    SharedModule,
-  ],
+  imports: [PartCategoryDatabaseModule, PartDatabaseModule],
   controllers: [PartCategoryController],
   providers: [PartCategoryService, PartCategoryIDExistenceValidator],
   exports: [PartCategoryService],

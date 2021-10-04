@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { PartCategorySchema } from './partcategory.schema';
+import { PartCategorySchema } from './part-category.schema';
 
 @Module({
   imports: [

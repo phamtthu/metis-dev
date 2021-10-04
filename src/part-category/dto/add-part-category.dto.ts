@@ -1,7 +1,5 @@
 import {
-  IsEnum,
   IsMongoId,
-  IsNotEmpty,
   IsString,
   IsUrl,
   MaxLength,
@@ -9,15 +7,12 @@ import {
   ValidateIf,
 } from 'class-validator';
 import { Status } from 'src/common/enum/filter.enum';
-import { PartCategoryIDExistenceValidator } from '../custom-validator/part-categoryId-existence.validator';
+import { PartCategoryIDExistenceValidator } from '../custom-validator/part-category-id-existence.validator';
 
 export class AddPCategoryDTO {
   @IsString()
   @MaxLength(50)
   name: string;
-
-  // @IsEnum(Status)
-  // is_active: number
 
   @IsMongoId()
   @ValidateIf((object, value) => value !== null)
