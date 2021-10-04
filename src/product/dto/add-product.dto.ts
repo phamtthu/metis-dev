@@ -1,27 +1,19 @@
 import { Type } from 'class-transformer';
 import {
-  ArrayNotEmpty,
   IsArray,
-  IsEmail,
   IsEnum,
   IsMongoId,
   IsNotEmpty,
   IsNumber,
-  IsPositive,
   IsString,
   IsUrl,
   Matches,
-  Max,
   MaxLength,
   Min,
   Validate,
-  ValidateNested,
 } from 'class-validator';
-import { ProductStatus } from 'src/model/product.schema';
-import { PCategoryIDExistenceValidator } from 'src/product-category/custom-validator/pcategoryId-existence.validator';
-import { ProductPartIDsExistenceValidator } from 'src/product-part/custom-validator/product-partIds-exitence.validator';
-import { ResourceIDsExistenceValidator } from 'src/resource/custom-validator/resourceIds-existence-validator';
-import { UserIDsExistenceValidator } from 'src/user/custom-validator/userIds.validator';
+import { ProductStatus } from 'src/model/product/product.schema';
+import { PCategoryIDExistenceValidator } from 'src/product-category/custom-validator/pcategory-id-existence.validator';
 
 export class AddProductDTO {
   @IsString()
@@ -92,24 +84,4 @@ export class AddProductDTO {
   @IsArray()
   attributes: string[];
 
-  @IsArray()
-  @ArrayNotEmpty()
-  @IsMongoId({ each: true })
-  @Validate(ProductPartIDsExistenceValidator)
-  parts: string[];
-
-  // For Product WorkCenter
-  @IsArray()
-  @ArrayNotEmpty()
-  @IsMongoId({ each: true })
-  @Validate(UserIDsExistenceValidator)
-  users: string[];
-
-  @IsArray()
-  @ArrayNotEmpty()
-  @IsMongoId({ each: true })
-  @Validate(ResourceIDsExistenceValidator)
-  resources: string[];
-
-  // work_center
 }

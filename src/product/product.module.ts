@@ -1,23 +1,26 @@
 import { Module } from '@nestjs/common';
-import { SkillDatabaseModule } from 'src/model/skill-database.module';
-import { SharedModule } from 'src/shared/shared.module';
-import { ProductDatabaseModule } from 'src/model/product-database.module';
+import { ProductDatabaseModule } from 'src/model/product/product-database.module';
 import { ProductController } from './product.controller';
 import { ProductService } from './product.service';
-import { ProductIDExistenceValidator } from './custom-validator/productId-existence.validator';
-import { TaskDatabaseModule } from 'src/model/task-database.module';
-import { OrderDatabaseModule } from 'src/model/order-database.module';
-import { ProductPartDatabaseModule } from 'src/model/productpart-database.module';
-import { ProductWorkCenterDatabaseModule } from 'src/model/productworkcenter-database.module';
+import { ProductIDExistenceValidator } from './custom-validator/product-id-existence.validator';
+import { TaskDatabaseModule } from 'src/model/task/task-database.module';
+import { OrderDatabaseModule } from 'src/model/order/order-database.module';
+import { PartDatabaseModule } from 'src/model/part/part-database.module';
+import { ProductWorkCenterDatabaseModule } from 'src/model/product-workcenter/product-workcenter-database.module';
+import { OrderProductDatabaseModule } from 'src/model/order-product/order-product.database.module';
+import { ProductPartDatabaseModule } from 'src/model/product-part/product-part-database.module';
 
 @Module({
   imports: [
     ProductDatabaseModule,
     TaskDatabaseModule,
     OrderDatabaseModule,
+    PartDatabaseModule,
     ProductPartDatabaseModule,
     ProductWorkCenterDatabaseModule,
-    SharedModule,
+    PartDatabaseModule,
+    OrderProductDatabaseModule,
+    ProductWorkCenterDatabaseModule,
   ],
   controllers: [ProductController],
   providers: [ProductService, ProductIDExistenceValidator],

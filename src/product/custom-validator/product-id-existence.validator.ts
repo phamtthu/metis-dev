@@ -24,6 +24,6 @@ export class ProductIDExistenceValidator
   }
 
   defaultMessage(args: ValidationArguments) {
-    return 'There is Product that does not exist.';
+    return 'Product ID is not exist.';
   }
 }
