@@ -20,10 +20,9 @@ import { throwCntrllrErr } from 'src/common/utils/error';
 import { AddUserDTO } from './dto/add-user.dto';
 import { UpdateUserDTO } from './dto/update-user';
 import { UserService } from './user.service';
-import { Request as ERequest } from 'express';
-import { Response as EResponse } from 'express';
+
 import { getOriginURL } from 'src/shared/helper';
-import { UserID } from 'src/shared/pipe/userId.pipe';
+import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 
 @Controller('api/user')
 @UsePipes(
@@ -38,7 +37,7 @@ export class UserController {
   constructor(private userService: UserService) {}
 
   @Post()
-  async create(@Request() req: ERequest, @Body() userDTO: AddUserDTO) {
+  async create(@Request() req, @Body() userDTO: AddUserDTO) {
     try {
       const originURL = getOriginURL(req);
       const result = await this.userService.create(userDTO, originURL);
@@ -52,35 +51,20 @@ export class UserController {
   }
 
   @Get()
-  async getList(
-    @Request() req: ERequest,
-    @Query('search') search: string,
-    @Query('offset') offset: number,
-    @Query('limit') limit: number,
-  ) {
+  async getList(@Request() req, @Query() queryDto: PaginationQueryDto) {
     try {
-      const result = await this.userService.getList(
-        { offset, limit },
-        search?.trim(),
-      );
-      return {
-        data: result,
-      };
+      const result = await this.userService.getList(queryDto);
+      return { data: result };
     } catch (error) {
       throwCntrllrErr(error);
     }
   }
 
   @Get('/:userId')
-  async getDetail(
-    @Request() req: ERequest,
-    @Param('userId', UserID) userId: string,
-  ) {
+  async getDetail(@Request() req, @Param('userId') userId: string) {
     try {
       const result = await this.userService.getDetail(userId);
-      return {
-        data: result,
-      };
+      return { data: result };
     } catch (error) {
       throwCntrllrErr(error);
     }
@@ -88,9 +72,9 @@ export class UserController {
 
   @Delete('/:userId')
   async delete(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Param('userId', UserID) userId: string,
+    @Request() req,
+    @Response() res,
+    @Param('userId') userId: string,
   ) {
     try {
       await this.userService.delete(userId);
@@ -104,8 +88,8 @@ export class UserController {
 
   @Put('/:userId')
   async update(
-    @Request() req: ERequest,
-    @Param('userId', UserID) userId: string,
+    @Request() req,
+    @Param('userId') userId: string,
     @Body() userDTO: UpdateUserDTO,
   ) {
     try {

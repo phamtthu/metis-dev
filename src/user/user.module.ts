@@ -1,10 +1,13 @@
 import { Module } from '@nestjs/common';
-import { ResourceDatabaseModule } from 'src/model/resource-database.module';
-import { ResourceUserDatabaseModule } from 'src/model/resource-user-database.module';
-import { UserDatabaseModule } from 'src/model/user-database.module';
-import { WorkCenterUserDatabaseModule } from 'src/model/workcenter-user-database.module';
-import { SharedModule } from 'src/shared/shared.module';
-import { UserIDsExistenceValidator } from './custom-validator/userIds.validator';
+import { ProductWorkCenterDatabaseModule } from 'src/model/product-workcenter/product-workcenter-database.module';
+import { ResourceDatabaseModule } from 'src/model/resource/resource-database.module';
+import { ResourceUserDatabaseModule } from 'src/model/resource-user/resource-user-database.module';
+import { SequenceUserDatabaseModule } from 'src/model/sequence-user/sequence-user-database.module';
+import { TaskDatabaseModule } from 'src/model/task/task-database.module';
+import { TaskUserDatabaseModule } from 'src/model/task-user/taskuser-database.module';
+import { UserDatabaseModule } from 'src/model/user/user-database.module';
+import { WorkCenterUserDatabaseModule } from 'src/model/workcenter-user/workcenter-user-database.module';
+import { UserIDsExistenceValidator } from './custom-validator/user-ids.validator';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
 
@@ -14,7 +17,11 @@ import { UserService } from './user.service';
     ResourceUserDatabaseModule,
     ResourceDatabaseModule,
     WorkCenterUserDatabaseModule,
-    SharedModule,
+    SequenceUserDatabaseModule,
+    ProductWorkCenterDatabaseModule,
+    TaskDatabaseModule,
+    TaskUserDatabaseModule,
+    ProductWorkCenterDatabaseModule,
   ],
   providers: [UserService, UserIDsExistenceValidator],
   controllers: [UserController],
