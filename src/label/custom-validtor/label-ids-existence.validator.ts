@@ -31,6 +31,6 @@ export class LabelIDsExistenceValidator
   }
 
   defaultMessage(args: ValidationArguments) {
-    return 'LabelID must be exist and do not contain duplicate values';
+    return 'Label ID must be exist and do not contain duplicate values';
   }
 }
