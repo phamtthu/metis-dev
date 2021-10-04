@@ -1,11 +1,11 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import * as mongoose from 'mongoose';
 import * as mongoosePaginate from 'mongoose-paginate-v2';
 
 @Schema({ timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } })
-export class WorkCenterResource extends Document {
+export class WorkCenterResource extends mongoose.Document {
   @Prop({
-    type: Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'WorkCenter',
     required: true,
     default: null,
@@ -13,7 +13,7 @@ export class WorkCenterResource extends Document {
   workcenter: string;
 
   @Prop({
-    type: Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'Resource',
     required: true,
     default: null,
