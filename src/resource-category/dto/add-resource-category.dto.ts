@@ -1,15 +1,12 @@
 import {
-  IsEnum,
   IsMongoId,
-  IsNotEmpty,
   IsString,
   IsUrl,
   MaxLength,
   Validate,
   ValidateIf,
 } from 'class-validator';
-import { Status } from 'src/common/enum/filter.enum';
-import { RCategoryIDExistenceValidator } from '../custom-validator/rcategoryId-existence.validator';
+import { ResourceCategoryIDExistenceValidator } from '../custom-validator/resource-category-id-existence.validator';
 
 export class AddRCategoryDTO {
   @IsString()
@@ -18,7 +15,7 @@ export class AddRCategoryDTO {
 
   @IsMongoId()
   @ValidateIf((object, value) => value !== null)
-  @Validate(RCategoryIDExistenceValidator)
+  @Validate(ResourceCategoryIDExistenceValidator)
   parent: string;
 
   @IsUrl({ require_tld: false })

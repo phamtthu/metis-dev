@@ -6,9 +6,12 @@ import {
 } from 'class-validator';
 import { ResourceCategoryService } from '../resource-category.service';
 
-@ValidatorConstraint({ name: 'RCategoryIDExistenceValidator', async: true })
+@ValidatorConstraint({
+  name: 'ResourceCategoryIDExistenceValidator',
+  async: true,
+})
 @Injectable()
-export class RCategoryIDExistenceValidator
+export class ResourceCategoryIDExistenceValidator
   implements ValidatorConstraintInterface
 {
   constructor(private rCategoryService: ResourceCategoryService) {}
