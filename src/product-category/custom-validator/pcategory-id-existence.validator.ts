@@ -24,6 +24,6 @@ export class PCategoryIDExistenceValidator
   }
 
   defaultMessage(args: ValidationArguments) {
-    return 'There is Product CategoryID that does not exist';
+    return 'Product CategoryID is not exist';
   }
 }

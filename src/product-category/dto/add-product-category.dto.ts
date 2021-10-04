@@ -9,15 +9,12 @@ import {
   ValidateIf,
 } from 'class-validator';
 import { Status } from 'src/common/enum/filter.enum';
-import { PCategoryIDExistenceValidator } from '../custom-validator/pcategoryId-existence.validator';
+import { PCategoryIDExistenceValidator } from '../custom-validator/pcategory-id-existence.validator';
 
 export class AddPCategoryDTO {
   @IsString()
   @MaxLength(50)
   name: string;
-
-  // @IsEnum(Status)
-  // is_active: number
 
   @IsMongoId()
   @ValidateIf((object, value) => value !== null)
