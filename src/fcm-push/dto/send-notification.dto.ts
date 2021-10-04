@@ -8,7 +8,7 @@ import {
   Max,
   IsOptional,
 } from 'class-validator';
-import { User } from 'src/model/user.shema';
+import { User } from 'src/model/user/user.shema';
 
 export class PushNotificationDto {
   @IsNotEmpty()

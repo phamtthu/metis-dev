@@ -115,8 +115,8 @@ export const getNestedList = (parent = null, flatArray = []) => {
 };
 
 export const paginator = (items, offset = 0, limit = 10) => {
-  const page = offset / limit + 1;
-  const total_pages = Math.ceil(items.length / limit);
+  let page = offset / limit + 1;
+  let total_pages = Math.ceil(items.length / limit);
   return {
     data: items.slice(offset, offset + limit),
     total: items.length,

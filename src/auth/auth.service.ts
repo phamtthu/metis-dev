@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { throwSrvErr } from 'src/common/utils/error';
-import { User } from 'src/model/user.shema';
+import { User } from 'src/model/user/user.shema';
 import { UserService } from '../user/user.service';
 
 const bcrypt = require('bcrypt');

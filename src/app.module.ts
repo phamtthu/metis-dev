@@ -12,7 +12,6 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { CronService } from './cron/cron.service';
 import { ResourceModule } from './resource/resource.module';
 import { SkillModule } from './skill/skill.module';
-import { PositionModule } from './position/position.module';
 import { ResourceCategoryModule } from './resource-category/resource-category.module';
 import { WorkCenterModule } from './workcenter/workcenter.module';
 import { TaskModule } from './task/task.module';
@@ -20,13 +19,13 @@ import { ProductCategoryModule } from './product-category/product-category.modul
 import { OrderModule } from './order/order.module';
 import { ProductModule } from './product/product.module';
 import { CustomerModule } from './customer/customer.module';
-import { Label } from './model/label.schema';
 import { LabelModule } from './label/label.module';
 import { ProcessModule } from './process/process.module';
 import { SequenceModule } from './sequence/sequence.module';
-import { ProductPartModule } from './product-part/product-part.module';
+import { PartModule } from './part/part.module';
 import { PartCategoryModule } from './part-category/part-category.module';
 import { TaskStatusModule } from './task-status/task-status.module';
+import { ProductWorkCenterModule } from './product-workcenter/product-workcenter.module';
 
 @Module({
   imports: [
@@ -42,20 +41,21 @@ import { TaskStatusModule } from './task-status/task-status.module';
     UploadModule,
     ResourceModule,
     ResourceCategoryModule,
-    // ProductCategoryModule,
-    // SkillModule,
-    // PositionModule,
+    ProductCategoryModule,
+    SkillModule,
     WorkCenterModule,
-    // TaskModule,
-    // OrderModule,
-    // ProductModule,
-    // CustomerModule,
-    // LabelModule,
-    // ProcessModule,
-    // SequenceModule,
-    // ProductPartModule,
-    // PartCategoryModule,
-    // TaskStatusModule
+    TaskModule,
+    OrderModule,
+    ProductModule,
+    CustomerModule,
+    LabelModule,
+    ProcessModule,
+    SequenceModule,
+    PartModule,
+    PartCategoryModule,
+    TaskStatusModule,
+    LabelModule,
+    ProductWorkCenterModule
   ],
   controllers: [AppController],
   providers: [AppService, CronService],
