@@ -4,14 +4,15 @@ import {
   IsArray,
   IsMongoId,
   IsNotEmpty,
+  IsOptional,
   IsPositive,
   IsString,
   Matches,
   Validate,
   ValidateNested,
 } from 'class-validator';
-import { CustomerIDExistenceValidator } from 'src/customer/custom-validator/customerId.validator';
-import { ProductIDExistenceValidator } from 'src/product/custom-validator/productId-existence.validator';
+import { CustomerIdExistenceValidator } from 'src/customer/custom-validator/customer-id.validator';
+import { ProductIDExistenceValidator } from 'src/product/custom-validator/product-id-existence.validator';
 
 export class Product {
   @IsMongoId()
@@ -26,7 +27,7 @@ export class Product {
 export class AddOrderDTO {
   @IsMongoId()
   @IsNotEmpty()
-  @Validate(CustomerIDExistenceValidator)
+  @Validate(CustomerIdExistenceValidator)
   customer: string;
 
   @IsString()
