@@ -9,6 +9,7 @@ import { Part } from 'src/model/part/part.schema';
 import { AddPartDTO } from './dto/add-part.dto';
 import { UpdatePartDTO } from './dto/update-part.dto';
 import { ProductPart } from 'src/model/product-part/product-part.schema';
+import { generateRandomCode } from 'src/shared/helper';
 
 @Injectable()
 export class PartService {
@@ -21,7 +22,11 @@ export class PartService {
 
   async create(productPartDTO: AddPartDTO) {
     try {
-      return await new this.partModel(productPartDTO).save();
+      const codes = (await this.partModel.find()).map((e) => e.material_no);
+      return await new this.partModel({
+        material_no: generateRandomCode(codes),
+        ...productPartDTO,
+      }).save();
     } catch (error) {
       throwSrvErr(error);
     }

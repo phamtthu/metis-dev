@@ -22,3 +22,5 @@ export class SequenceResource extends mongoose.Document {
 export const SequenceResourceSchema =
   SchemaFactory.createForClass(SequenceResource);
 SequenceResourceSchema.plugin(mongoosePaginate);
+
+SequenceResourceSchema.index({ sequence: 1, resource: 1 }, { unique: true });

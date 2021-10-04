@@ -27,13 +27,6 @@ export class AddProductDTO {
 
   @IsString()
   @IsNotEmpty()
-  @Matches(/\b[a-zA-Z]{2}[0-9]{3}\b/, {
-    message: 'product_no must follow 2 Letter and 3 Number, Ex: AA000',
-  })
-  product_no: string;
-
-  @IsString()
-  @IsNotEmpty()
   @MaxLength(13)
   sku: string;
 

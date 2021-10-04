@@ -11,7 +11,7 @@ import { SortQuery } from 'src/common/enum/filter.enum';
 import { throwCanNotDeleteErr, throwSrvErr } from 'src/common/utils/error';
 import { Process } from 'src/model/process/process.schema';
 import { Sequence } from 'src/model/sequence/sequence.schema';
-import { getNestedList } from 'src/shared/helper';
+import { generateRandomCode, getNestedList } from 'src/shared/helper';
 import { AddProcessDTO } from './dto/add-process.dto';
 import { UpdateProcessDTO } from './dto/update-process.dto';
 
@@ -24,7 +24,11 @@ export class ProcessService {
 
   async create(processDTO: AddProcessDTO) {
     try {
-      return await new this.processModel(processDTO).save();
+      const codes = (await this.processModel.find()).map((e) => e.process_no);
+      return await new this.processModel({
+        process_no: generateRandomCode(codes),
+        ...processDTO,
+      }).save();
     } catch (error) {
       throwSrvErr(error);
     }

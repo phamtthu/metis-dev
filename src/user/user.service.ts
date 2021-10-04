@@ -23,6 +23,7 @@ import { SequenceUser } from 'src/model/sequence-user/sequence-user.schema';
 import { TaskUser } from 'src/model/task-user/taskuser.schema';
 import { Task } from 'src/model/task/task.schema';
 import { ProductWorkCenter } from 'src/model/product-workcenter/product-workcenter.schema';
+import { generateRandomCode } from 'src/shared/helper';
 
 @Injectable()
 export class UserService {
@@ -99,14 +100,14 @@ export class UserService {
 
   async create(userDTO: AddUserDTO, originURL: string) {
     try {
-      const user_no = await this.userModel.findOne({
-        user_no: userDTO.user_no,
-      });
-      if (user_no) throw new ConflictException('user_no is already exist');
+      const codes = (await this.userModel.find()).map((e) => e.user_no);
       const email = await this.userModel.findOne({ email: userDTO.email });
       if (email) throw new ConflictException('email is already exist');
       userDTO.image = await getNewImgLink(userDTO.image, 'user', originURL);
-      const user = await new this.userModel(userDTO).save();
+      const user = await new this.userModel({
+        user_no: generateRandomCode(codes),
+        ...userDTO,
+      }).save();
       return user;
     } catch (e) {
       throwSrvErr(e);

@@ -12,7 +12,12 @@ import { deleteImgPath, getNewImgLink } from 'src/common/utils/image-handler';
 import { User } from 'src/model/user/user.shema';
 import { Product } from 'src/model/product/product.schema';
 import { Task } from 'src/model/task/task.schema';
-import { getNestedList, isTwoArrayEqual, paginator } from 'src/shared/helper';
+import {
+  generateRandomCode,
+  getNestedList,
+  isTwoArrayEqual,
+  paginator,
+} from 'src/shared/helper';
 import { AddTaskDTO } from './dto/add-task.dto';
 import { UpdateTaskDTO } from './dto/update-task.dto';
 import { TaskUser } from 'src/model/task-user/taskuser.schema';
@@ -28,16 +33,16 @@ export class TaskService {
 
   async create(taskDTO: AddTaskDTO, originURL: string) {
     try {
-      const result = await this.taskModel.findOne({
-        task_no: taskDTO.task_no,
-      });
-      if (result) throw new ConflictException('task_no is already exist');
+      const codes = (await this.taskModel.find()).map((e) => e.task_no);
       taskDTO.images = await Promise.all(
         taskDTO.images.map(
           async (img) => await getNewImgLink(img, 'task', originURL),
         ),
       );
-      const task = await new this.taskModel(taskDTO).save();
+      const task = await new this.taskModel({
+        task_no: generateRandomCode(codes),
+        ...taskDTO,
+      }).save();
       await this.addTaskUsers(task.id, taskDTO.users);
       return task;
     } catch (error) {

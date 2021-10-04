@@ -17,6 +17,7 @@ import { WorkCenterResource } from 'src/model/workcenter-resource/workcenter-res
 import { WorkCenterUser } from 'src/model/workcenter-user/workcenter-user.schema';
 import { ProductWorkCenter } from 'src/model/product-workcenter/product-workcenter.schema';
 import { UpdateProductWorkCenterDTO } from './dto/update-product-workcenter.dto';
+import { generateRandomCode } from 'src/shared/helper';
 
 @Injectable()
 export class WorkCenterService {
@@ -35,11 +36,13 @@ export class WorkCenterService {
 
   async create(workCenterDTO: AddWorkCenterDTO) {
     try {
-      const result = await this.workCenterModel.findOne({
-        workcenter_no: workCenterDTO.workcenter_no,
-      });
-      if (result) throw new ConflictException('workcenter_no is already exist');
-      return await new this.workCenterModel(workCenterDTO).save();
+      const codes = (await this.workCenterModel.find()).map(
+        (e) => e.workcenter_no,
+      );
+      return await new this.workCenterModel({
+        workcenter_no: generateRandomCode(codes),
+        ...workCenterDTO,
+      }).save();
     } catch (error) {
       throwSrvErr(error);
     }

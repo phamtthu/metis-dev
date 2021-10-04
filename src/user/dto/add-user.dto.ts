@@ -30,13 +30,6 @@ export class AddUserDTO {
   password: string;
 
   @IsString()
-  @IsNotEmpty()
-  @Matches(/\b[a-zA-Z]{2}[0-9]{3}\b/, {
-    message: 'user_no must follow 2 Letter and 3 Number, Ex: AA000',
-  })
-  user_no: string;
-
-  @IsString()
   @MaxLength(50)
   @IsNotEmpty()
   title: string;

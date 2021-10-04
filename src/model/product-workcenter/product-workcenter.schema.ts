@@ -36,3 +36,5 @@ export class ProductWorkCenter extends mongoose.Document {
 export const ProductWorkCenterSchema =
   SchemaFactory.createForClass(ProductWorkCenter);
 ProductWorkCenterSchema.plugin(mongoosePaginate);
+
+ProductWorkCenterSchema.index({ product: 1, workcenter: 1 }, { unique: true });

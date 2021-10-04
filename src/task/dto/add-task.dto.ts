@@ -28,13 +28,6 @@ export class AddTaskDTO {
   @MaxLength(50)
   name: string;
 
-  @IsString()
-  @IsNotEmpty()
-  @Matches(/\b[a-zA-Z]{2}[0-9]{3}\b/, {
-    message: 'task_no must follow 2 Letter and 3 Number, Ex: AA000',
-  })
-  task_no: string;
-
   @IsEnum([1, 2, 3])
   @IsNotEmpty()
   priority: number;
