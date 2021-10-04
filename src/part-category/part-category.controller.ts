@@ -12,13 +12,11 @@ import {
 } from '@nestjs/common';
 import { Controller, Get, Param } from '@nestjs/common';
 import { throwCntrllrErr } from 'src/common/utils/error';
-import { Request as ERequest } from 'express';
-import { Response as EResponse } from 'express';
 import { AddPCategoryDTO } from './dto/add-part-category.dto';
 import { PartCategoryService } from './part-category.service';
 import { getOriginURL } from 'src/shared/helper';
 import { UpdatePCategoryRDTO } from './dto/update-part-category.dto';
-import { PartCategoryID } from 'src/shared/pipe/partcategoryId.pipe';
+import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 
 @Controller('api/part-category')
 @UsePipes(
@@ -32,74 +30,49 @@ export class PartCategoryController {
   constructor(private partCategoryService: PartCategoryService) {}
 
   @Post()
-  async create(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Body() pCategoryDTO: AddPCategoryDTO,
-  ) {
+  async create(@Request() req, @Body() pCategoryDTO: AddPCategoryDTO) {
     try {
       const originURL = getOriginURL(req);
       const result = await this.partCategoryService.create(
         pCategoryDTO,
         originURL,
       );
-      return res.status(HttpStatus.CREATED).json({
+      return {
         message: 'Create Part Category successfully',
         data: result,
-      });
+      };
     } catch (error) {
       throwCntrllrErr(error);
     }
   }
 
   @Get()
-  async getList(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Query('search') search: string,
-    @Query('offset') offset: number,
-    @Query('limit') limit: number,
-  ) {
+  async getList(@Request() req, @Query() queryDto: PaginationQueryDto) {
     try {
-      const result = await this.partCategoryService.getList(
-        { offset, limit },
-        search?.trim(),
-      );
-      return res.status(HttpStatus.OK).json({
-        data: result,
-      });
+      const result = await this.partCategoryService.getList(queryDto);
+      return { data: result };
     } catch (error) {
       throwCntrllrErr(error);
     }
   }
 
   @Get('/:categoryId')
-  async getDetail(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Param('categoryId', PartCategoryID) categoryId: string,
-  ) {
+  async getDetail(@Request() req, @Param('categoryId') categoryId: string) {
     try {
       const result = await this.partCategoryService.getDetail(categoryId);
-      return res.status(HttpStatus.OK).json({
-        data: result,
-      });
+      return { data: result };
     } catch (error) {
       throwCntrllrErr(error);
     }
   }
 
   @Delete('/:categoryId')
-  async delete(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Param('categoryId', PartCategoryID) categoryId: string,
-  ) {
+  async delete(@Request() req, @Param('categoryId') categoryId: string) {
     try {
       await this.partCategoryService.delete(categoryId);
-      return res.status(HttpStatus.OK).json({
+      return {
         message: 'Delete Part Category successfully',
-      });
+      };
     } catch (error) {
       throwCntrllrErr(error);
     }
@@ -107,10 +80,9 @@ export class PartCategoryController {
 
   @Put('/:categoryId')
   async update(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
+    @Request() req,
     @Body() pCategoryDTO: UpdatePCategoryRDTO,
-    @Param('categoryId', PartCategoryID) categoryId: string,
+    @Param('categoryId') categoryId: string,
   ) {
     try {
       const originURL = getOriginURL(req);
@@ -119,29 +91,24 @@ export class PartCategoryController {
         pCategoryDTO,
         originURL,
       );
-      return res.status(HttpStatus.OK).json({
+      return {
         message: 'Update Part Category successfully',
         data: result,
-      });
+      };
     } catch (error) {
       throwCntrllrErr(error);
     }
   }
 
   @Get('part/:categoryId')
-  async getProductPartFromGivenPartCategory(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
-    @Param('categoryId', PartCategoryID) categoryId: string,
+  async getPartFromGivenPartCategory(
+    @Request() req,
+    @Param('categoryId') categoryId: string,
   ) {
     try {
       const result =
-        await this.partCategoryService.getProductPartFromGivenPartCategory(
-          categoryId,
-        );
-      return res.status(HttpStatus.OK).json({
-        data: result,
-      });
+        await this.partCategoryService.getPartFromGivenPartCategory(categoryId);
+      return { data: result };
     } catch (error) {
       throwCntrllrErr(error);
     }

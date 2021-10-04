@@ -24,6 +24,6 @@ export class PartCategoryIDExistenceValidator
   }
 
   defaultMessage(args: ValidationArguments) {
-    return 'There is Part CategoryID that does not exist';
+    return 'Part Category ID that is not exist';
   }
 }

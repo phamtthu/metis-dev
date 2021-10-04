@@ -3,10 +3,10 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, PaginateModel } from 'mongoose';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { SortQuery } from 'src/common/enum/filter.enum';
-import { throwSrvErr } from 'src/common/utils/error';
+import { throwCanNotDeleteErr, throwSrvErr } from 'src/common/utils/error';
 import { deleteImgPath, getNewImgLink } from 'src/common/utils/image-handler';
-import { PartCategory } from 'src/model/partcategory.schema';
-import { ProductPart } from 'src/model/productpart.schema';
+import { PartCategory } from 'src/model/part-category/part-category.schema';
+import { Part } from 'src/model/part/part.schema';
 import { getNestedList, paginator } from 'src/shared/helper';
 import { AddPCategoryDTO } from './dto/add-part-category.dto';
 import { UpdatePCategoryRDTO } from './dto/update-part-category.dto';
@@ -16,14 +16,14 @@ export class PartCategoryService {
   constructor(
     @InjectModel('Part_Category')
     private partCategoryModel: PaginateModel<PartCategory>,
-    @InjectModel('Product_Part') private productPartModel: Model<ProductPart>,
+    @InjectModel('Part') private partModel: Model<Part>,
   ) {}
 
   async create(pCategoryDTO: AddPCategoryDTO, originURL: string) {
     try {
       pCategoryDTO.image = await getNewImgLink(
         pCategoryDTO.image,
-        'product-category',
+        'part-category',
         originURL,
       );
       return await new this.partCategoryModel(pCategoryDTO).save();
@@ -32,19 +32,19 @@ export class PartCategoryService {
     }
   }
 
-  async getList(paginateQuery: PaginationQueryDto, search: string) {
+  async getList(queryDto: PaginationQueryDto) {
     try {
-      const searchRegex = new RegExp(search, 'i');
+      const searchRegex = new RegExp(queryDto.search, 'i');
       const query = {
         $or: [
           { name: { $regex: searchRegex } },
           { description: { $regex: searchRegex } },
         ],
       };
-      if (search) {
+      if (queryDto.search) {
         const paginationOptions = {
-          offset: paginateQuery.offset,
-          limit: paginateQuery.limit,
+          offset: queryDto.offset,
+          limit: queryDto.limit,
           sort: { created_at: SortQuery.Desc },
           customLabels: {
             page: 'page',
@@ -54,7 +54,7 @@ export class PartCategoryService {
             docs: 'data',
           },
         };
-        if (paginateQuery.offset >= 0 && paginateQuery.limit >= 0) {
+        if (queryDto.offset >= 0 && queryDto.limit >= 0) {
           return await this.partCategoryModel.paginate(
             query,
             paginationOptions,
@@ -70,12 +70,8 @@ export class PartCategoryService {
           .sort({ created_at: SortQuery.Desc })
           .lean();
         const nestedCategories = getNestedList(null, categories);
-        if (paginateQuery.offset >= 0 && paginateQuery.limit >= 0) {
-          return paginator(
-            nestedCategories,
-            paginateQuery.offset,
-            paginateQuery.limit,
-          );
+        if (queryDto.offset >= 0 && queryDto.limit >= 0) {
+          return paginator(nestedCategories, queryDto.offset, queryDto.limit);
         } else {
           return nestedCategories;
         }
@@ -87,15 +83,15 @@ export class PartCategoryService {
 
   async getDetail(categoryId: string) {
     try {
-      const theCategory: any = await this.partCategoryModel
-        .findById(categoryId)
-        .lean();
+      const theCategory: any = await this.checkIsPartCategoryExist(categoryId);
       const categories: any = await this.partCategoryModel
         .find()
         .sort({ created_at: SortQuery.Desc })
         .lean();
-      const rootAndsubCategories =
-        await this.getAllSubCategoriesFromRootCategory(theCategory, categories);
+      let rootAndsubCategories = await this.getAllSubCategoriesFromRootCategory(
+        theCategory,
+        categories,
+      );
       theCategory['sub_categoriesID'] = rootAndsubCategories.map((e) => e._id);
       theCategory['children'] = getNestedList(categoryId, categories);
       return theCategory;
@@ -121,20 +117,19 @@ export class PartCategoryService {
 
   async delete(categoryId: string) {
     try {
-      const deletedRCategory = await this.partCategoryModel.findByIdAndDelete(
-        categoryId,
-      );
-      await this.productPartModel.updateMany(
-        { category: categoryId },
-        { category: null },
-      );
+      const deletedCategory = await this.checkIsPartCategoryExist(categoryId);
+      const relatedParts = await this.partModel.find({
+        category: categoryId,
+      });
+      if (relatedParts.length > 0)
+        throwCanNotDeleteErr('Part Category', 'Part');
+      await this.partCategoryModel.findByIdAndDelete(categoryId);
       // Change parent_id of its Sub Category to null
       await this.partCategoryModel.updateMany(
         { parent: categoryId },
         { parent: null },
       );
-      if (deletedRCategory.image) await deleteImgPath(deletedRCategory.image);
-      return deletedRCategory;
+      if (deletedCategory.image) await deleteImgPath(deletedCategory.image);
     } catch (error) {
       throwSrvErr(error);
     }
@@ -146,30 +141,40 @@ export class PartCategoryService {
     originURL: string,
   ) {
     try {
+      const beforeUpdate = await this.checkIsPartCategoryExist(categoryId);
       pCategoryDTO.image = await getNewImgLink(
         pCategoryDTO.image,
-        'product-category',
+        'part-category',
         originURL,
       );
-      const beforeUpdate = await this.partCategoryModel.findByIdAndUpdate(
+      await deleteImgPath(beforeUpdate.image);
+      return await this.partCategoryModel.findByIdAndUpdate(
         categoryId,
         pCategoryDTO,
+        { new: true },
       );
-      // Delete old Image
-      await deleteImgPath(beforeUpdate.image);
-      return await this.partCategoryModel.findById(categoryId);
     } catch (error) {
       throwSrvErr(error);
     }
   }
 
-  async getProductPartFromGivenPartCategory(categoryId: string) {
+  async getPartFromGivenPartCategory(categoryId: string) {
     try {
       let { sub_categoriesID }: any = await this.getDetail(categoryId);
       sub_categoriesID = sub_categoriesID.map((e) => String(e));
-      return await this.productPartModel.find({
+      return await this.partModel.find({
         category: { $in: sub_categoriesID },
       });
+    } catch (error) {
+      throwSrvErr(error);
+    }
+  }
+
+  async checkIsPartCategoryExist(categoryId: string) {
+    try {
+      const category = await this.partCategoryModel.findById(categoryId).lean();
+      if (!category) throw new NotFoundException('Part Category is not exist');
+      return category;
     } catch (error) {
       throwSrvErr(error);
     }
