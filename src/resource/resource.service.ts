@@ -7,25 +7,33 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, PaginateModel, Types } from 'mongoose';
 import { SortQuery } from 'src/common/enum/filter.enum';
-import { User } from 'src/model/user.shema';
+import { User } from 'src/model/user/user.shema';
 import { AddResourceDTO } from './dto/add-resource.dto';
 import { UpdateResourceDTO } from './dto/update-resource.dto';
-import { Resource } from '../model/resource.shema';
-import { throwSrvErr } from 'src/common/utils/error';
+import { Resource } from '../model/resource/resource.shema';
+import { throwCanNotDeleteErr, throwSrvErr } from 'src/common/utils/error';
 import { deleteImgPath, getNewImgLink } from 'src/common/utils/image-handler';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
-import { ResourceUser } from 'src/model/resource-user.schema';
-import { WorkCenterResource } from 'src/model/workcenter-resource.schema';
+import { ResourceUser } from 'src/model/resource-user/resource-user.schema';
+import { WorkCenterResource } from 'src/model/workcenter-resource/workcenter-resource.schema';
+import { SequenceResource } from 'src/model/sequence-resource/sequence-resource.schema';
+import { ProductWorkCenter } from 'src/model/product-workcenter/product-workcenter.schema';
 
 @Injectable()
 export class ResourceService {
   constructor(
-    @InjectModel('Resource') private resourceModel: PaginateModel<Resource>,
-    @InjectModel('User') private userModel: Model<User>,
+    @InjectModel('Resource')
+    private resourceModel: PaginateModel<Resource>,
+    @InjectModel('User')
+    private userModel: Model<User>,
     @InjectModel('Resource_User')
     private resourceUserModel: Model<ResourceUser>,
     @InjectModel('WorkCenter_Resource')
     private wcResourceModel: PaginateModel<WorkCenterResource>,
+    @InjectModel('Sequence_Resource')
+    private sequenceResourceModel: Model<SequenceResource>,
+    @InjectModel('Product_WorkCenter')
+    private productWorkCenterService: Model<ProductWorkCenter>,
   ) {}
 
   async create(resourceDTO: AddResourceDTO, originURL: string) {
@@ -46,9 +54,9 @@ export class ResourceService {
     }
   }
 
-  async getList(paginateQuery: PaginationQueryDto, search: string) {
+  async getList(queryDto: PaginationQueryDto) {
     try {
-      const searchRegex = new RegExp(search, 'i');
+      const searchRegex = new RegExp(queryDto.search, 'i');
       const query = {
         $or: [
           { equipment_name: { $regex: searchRegex } },
@@ -56,10 +64,10 @@ export class ResourceService {
           { description: { $regex: searchRegex } },
         ],
       };
-      if (paginateQuery.offset >= 0 && paginateQuery.limit >= 0) {
+      if (queryDto.offset >= 0 && queryDto.limit >= 0) {
         const options = {
-          offset: paginateQuery.offset,
-          limit: paginateQuery.limit,
+          offset: queryDto.offset,
+          limit: queryDto.limit,
           sort: { created_at: SortQuery.Desc },
           customLabels: {
             page: 'page',
@@ -82,8 +90,7 @@ export class ResourceService {
   async getDetail(resourceId: string) {
     try {
       // Lean wil remove blank field
-      const resource = await this.resourceModel.findById(resourceId).lean();
-
+      const resource = await this.checkIsResourceExist(resourceId);
       const resourceUsers = await this.resourceUserModel
         .find({ resource: resourceId })
         .populate('user');
@@ -92,6 +99,10 @@ export class ResourceService {
         .find({ resource: resourceId })
         .populate('workcenter');
       resource['workcenters'] = wcResources.map((e) => e.workcenter);
+      const sequenceResources = await this.sequenceResourceModel
+        .find({ resource: resourceId })
+        .populate('sequence');
+      resource['sequences'] = sequenceResources.map((e) => e.sequence);
       return resource;
     } catch (e) {
       throwSrvErr(e);
@@ -100,25 +111,27 @@ export class ResourceService {
 
   async delete(resourceId: string) {
     try {
-      const resourceUsers = await this.resourceUserModel.find({
-        resource: resourceId,
-      });
-      if (resourceUsers.length > 0)
-        throw new BadRequestException(
-          'Can not delete Resource. There are Users link with this Resource',
-        );
-
+      await this.checkIsResourceExist(resourceId);
       const wcResources = await this.wcResourceModel.find({
         resource: resourceId,
       });
       if (wcResources.length > 0)
-        throw new BadRequestException(
-          'Can not delete Resource. There are WorkCenter link with this Resource',
-        );
-
+        throwCanNotDeleteErr('Resource', 'WorkCenter');
+      const relatedSequences = await this.sequenceResourceModel.find({
+        resource: resourceId,
+      });
+      if (relatedSequences.length > 0)
+        throwCanNotDeleteErr('Resource', 'Sequence');
       const deletedResource = await this.resourceModel
         .findByIdAndDelete(resourceId)
         .lean();
+      const relatedProductWorkCenters =
+        await this.productWorkCenterService.find({
+          resources: resourceId,
+        });
+      if (relatedProductWorkCenters.length > 0)
+        throwCanNotDeleteErr('Resource', 'Product WorkCenter');
+      await this.resourceUserModel.deleteMany({ resource: resourceId });
       // Delete Image
       deletedResource.images.forEach(async (img) => {
         await deleteImgPath(img);
@@ -134,9 +147,12 @@ export class ResourceService {
     originURL: string,
   ) {
     try {
+      await this.checkIsResourceExist(resourceId);
       // Add User to Resource
       if (Array.isArray(resourceDTO.users)) {
-        await this.resourceUserModel.deleteMany({ resource: resourceId });
+        await this.resourceUserModel.deleteMany({
+          resource: resourceId,
+        });
         const resourceUsers = resourceDTO.users.map((userId) => ({
           user: userId,
           resource: resourceId,
@@ -174,6 +190,19 @@ export class ResourceService {
       return resources.map((e) => String(e._id));
     } catch (e) {
       throwSrvErr(e);
+    }
+  }
+
+  async checkIsResourceExist(resourceId: string) {
+    try {
+      const order = await this.resourceModel
+        .findById(resourceId)
+        .populate('category')
+        .lean();
+      if (!order) throw new NotFoundException('Resource is not exist');
+      return order;
+    } catch (error) {
+      throwSrvErr(error);
     }
   }
 }

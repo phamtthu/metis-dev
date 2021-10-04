@@ -13,8 +13,8 @@ import {
   Min,
   Validate,
 } from 'class-validator';
-import { ResourceStatus } from 'src/model/resource.shema';
-import { RCategoryIDExistenceValidator } from 'src/resource-category/custom-validator/rcategoryId-existence.validator';
+import { ResourceStatus } from 'src/model/resource/resource.shema';
+import { ResourceCategoryIDExistenceValidator } from 'src/resource-category/custom-validator/resource-category-id-existence.validator';
 
 export class AddResourceDTO {
   @IsString()
@@ -34,7 +34,7 @@ export class AddResourceDTO {
   status: number;
 
   @IsMongoId()
-  @Validate(RCategoryIDExistenceValidator)
+  @Validate(ResourceCategoryIDExistenceValidator)
   category: string;
 
   @IsNumber()

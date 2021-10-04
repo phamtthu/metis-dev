@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
-import { ResourceUserDatabaseModule } from 'src/model/resource-user-database.module';
-import { UserDatabaseModule } from 'src/model/user-database.module';
-import { WorkCenterResourceDatabaseModule } from 'src/model/workcenter-resource-database.module';
-import { SharedModule } from 'src/shared/shared.module';
-import { ResourceDatabaseModule } from '../model/resource-database.module';
-import { ResourceIDsExistenceValidator } from './custom-validator/resourceIds-existence-validator';
+import { ProductWorkCenterDatabaseModule } from 'src/model/product-workcenter/product-workcenter-database.module';
+import { ResourceUserDatabaseModule } from 'src/model/resource-user/resource-user-database.module';
+import { SequenceResourceDatabaseModule } from 'src/model/sequence-resource/sequence-resource-database.module';
+import { UserDatabaseModule } from 'src/model/user/user-database.module';
+import { WorkCenterResourceDatabaseModule } from 'src/model/workcenter-resource/workcenter-resource-database.module';
+import { ResourceDatabaseModule } from '../model/resource/resource-database.module';
+import { ResourceIDsExistenceValidator } from './custom-validator/resource-ids-existence-validator';
 import { ResourceController } from './resource.controller';
 import { ResourceService } from './resource.service';
 
@@ -14,7 +15,8 @@ import { ResourceService } from './resource.service';
     UserDatabaseModule,
     ResourceUserDatabaseModule,
     WorkCenterResourceDatabaseModule,
-    SharedModule,
+    SequenceResourceDatabaseModule,
+    ProductWorkCenterDatabaseModule,
   ],
   controllers: [ResourceController],
   providers: [ResourceService, ResourceIDsExistenceValidator],

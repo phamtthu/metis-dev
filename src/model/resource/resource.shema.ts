@@ -1,5 +1,5 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import * as mongoose from 'mongoose';
 import * as mongoosePaginate from 'mongoose-paginate-v2';
 
 export enum ResourceStatus {
@@ -8,19 +8,23 @@ export enum ResourceStatus {
 }
 
 @Schema({ timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } })
-export class Resource extends Document {
+export class Resource extends mongoose.Document {
   @Prop({ required: true, default: null })
   equipment_name: string;
 
   @Prop({ unique: true, required: true })
   equipment_no: string;
 
-  @Prop({ required: true, default: ResourceStatus.Ready, enum: ResourceStatus })
+  @Prop({
+    required: true,
+    default: ResourceStatus.Ready,
+    enum: ResourceStatus,
+  })
   status: number;
 
   @Prop({
     required: true,
-    type: Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'Resource_Category',
     default: null,
   })
