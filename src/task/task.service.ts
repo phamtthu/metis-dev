@@ -56,7 +56,7 @@ export class TaskService {
         ],
       };
       const populateOption = [
-        { path: 'status', model: 'TaskStatus', select: 'name' },
+        { path: 'status', model: 'Task_Status', select: 'name' },
         { path: 'skill', model: 'Skill', select: 'name' },
         { path: 'labels', model: 'Label', select: 'name' },
         {
@@ -111,7 +111,7 @@ export class TaskService {
       const task = await this.checkIsTaskExist(taskId);
       const users = await this.taskUserModel
         .find({ task: taskId })
-        .populate('users');
+        .populate('user');
       task['users'] = users.map((e) => e.user);
       return task;
     } catch (error) {
@@ -169,7 +169,8 @@ export class TaskService {
           'labels',
           'status',
           'product_workcenter',
-        ]);
+        ])
+        .lean();
       if (!task) throw new NotFoundException('Task is not exist');
       return task;
     } catch (error) {
