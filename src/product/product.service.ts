@@ -18,6 +18,7 @@ import { AddProductDTO } from './dto/add-product.dto';
 import { UpdateProductDTO } from './dto/update-product.dto';
 import { ProductPart } from 'src/model/product-part/product-part.schema';
 import { OrderProduct } from 'src/model/order-product/order-product.schema';
+import { generateRandomCode } from 'src/shared/helper';
 
 @Injectable()
 export class ProductService {
@@ -40,11 +41,6 @@ export class ProductService {
 
   async create(productDTO: AddProductDTO, originURL: string) {
     try {
-      const resultProduct_no = await this.productModel.findOne({
-        product_no: productDTO.product_no,
-      });
-      if (resultProduct_no)
-        throw new ConflictException('product_no is already exist');
       const resultSku = await this.productModel.findOne({
         sku: productDTO.sku,
       });
@@ -59,7 +55,11 @@ export class ProductService {
           async (img) => await getNewImgLink(img, 'product', originURL),
         ),
       );
-      const product = await new this.productModel(productDTO).save();
+      const codes = (await this.productModel.find()).map((e) => e.product_no);
+      const product = await new this.productModel({
+        product_no: generateRandomCode(codes),
+        ...productDTO,
+      }).save();
       return product;
     } catch (error) {
       throwSrvErr(error);

@@ -128,3 +128,20 @@ export const paginator = (items, offset = 0, limit = 10) => {
     next_page: page >= total_pages ? null : Math.floor(page + 1),
   };
 };
+
+export const generateRandomCode = (codes) => {
+  const letters = 'ABCDEFGHIJKLMNPQRSTUVWXYZ';
+  const numbers = '1234567890';
+  var code = '';
+  do {
+    for (let i = 0; i < 2; i++) {
+      var rnd = Math.floor(Math.random() * letters.length);
+      code = code + letters.charAt(rnd);
+    }
+    for (let i = 0; i < 3; i++) {
+      var rnd2 = Math.floor(Math.random() * numbers.length);
+      code = code + numbers.charAt(rnd2);
+    }
+  } while (codes.includes(code));
+  return code;
+};

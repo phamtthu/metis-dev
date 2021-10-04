@@ -7,6 +7,7 @@ import { throwSrvErr } from 'src/common/utils/error';
 import { Customer } from 'src/model/customer/customer.schema';
 import { OrderProduct } from 'src/model/order-product/order-product.schema';
 import { Order } from 'src/model/order/order.schema';
+import { generateRandomCode } from 'src/shared/helper';
 import { AddCustomerDTO } from './dto/add-customer.dto';
 import { UpdateCustomerDTO } from './dto/update-customer.dto';
 
@@ -21,7 +22,12 @@ export class CustomerService {
 
   async create(customerDTO: AddCustomerDTO) {
     try {
-      return await new this.customerModel(customerDTO).save();
+      const customers = await this.customerModel.find();
+      const codes = customers.map((e) => e.customer_no);
+      return await new this.customerModel({
+        customer_no: generateRandomCode(codes),
+        ...customerDTO,
+      }).save();
     } catch (error) {
       throwSrvErr(error);
     }

@@ -22,13 +22,6 @@ export class AddResourceDTO {
   @MaxLength(50)
   equipment_name: string;
 
-  @IsString()
-  @IsNotEmpty()
-  @Matches(/\b[a-zA-Z]{2}[0-9]{3}\b/, {
-    message: 'equipment_no must follow 2 Numbers and 3 Letters, Ex: 00AAA',
-  })
-  equipment_no: string;
-
   @IsNotEmpty()
   @IsEnum(ResourceStatus)
   status: number;

@@ -18,6 +18,7 @@ import { ResourceUser } from 'src/model/resource-user/resource-user.schema';
 import { WorkCenterResource } from 'src/model/workcenter-resource/workcenter-resource.schema';
 import { SequenceResource } from 'src/model/sequence-resource/sequence-resource.schema';
 import { ProductWorkCenter } from 'src/model/product-workcenter/product-workcenter.schema';
+import { generateRandomCode } from 'src/shared/helper';
 
 @Injectable()
 export class ResourceService {
@@ -38,16 +39,18 @@ export class ResourceService {
 
   async create(resourceDTO: AddResourceDTO, originURL: string) {
     try {
-      const result = await this.resourceModel.findOne({
-        equipment_no: resourceDTO.equipment_no,
-      });
-      if (result) throw new ConflictException('equipment_no is already exist');
+      const codes = (await this.resourceModel.find()).map(
+        (e) => e.equipment_no,
+      );
       resourceDTO.images = await Promise.all(
         resourceDTO.images.map(
           async (img) => await getNewImgLink(img, 'resource', originURL),
         ),
       );
-      const resource = await new this.resourceModel(resourceDTO).save();
+      const resource = await new this.resourceModel({
+        equipment_no: generateRandomCode(codes),
+        ...resourceDTO,
+      }).save();
       return resource;
     } catch (e) {
       throwSrvErr(e);

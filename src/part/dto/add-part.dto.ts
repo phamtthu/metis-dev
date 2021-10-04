@@ -30,13 +30,6 @@ export class AddPartDTO {
   @IsNotEmpty()
   status: number;
 
-  @IsString()
-  @IsNotEmpty()
-  @Matches(/\b[a-zA-Z]{2}[0-9]{3}\b/, {
-    message: 'material_no must follow 2 Letter and 3 Number, Ex: AA000',
-  })
-  material_no: string;
-
   @IsMongoId()
   @Validate(PartCategoryIDExistenceValidator)
   category: string;

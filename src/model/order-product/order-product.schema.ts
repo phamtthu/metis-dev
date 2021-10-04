@@ -20,3 +20,5 @@ export class OrderProduct extends mongoose.Document {
 
 export const OrderProductSchema = SchemaFactory.createForClass(OrderProduct);
 OrderProductSchema.plugin(mongoosePaginate);
+
+OrderProductSchema.index({ order: 1, product: 1 }, { unique: true });

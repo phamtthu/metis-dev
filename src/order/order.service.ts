@@ -12,7 +12,7 @@ import { Customer } from 'src/model/customer/customer.schema';
 import { OrderProduct } from 'src/model/order-product/order-product.schema';
 import { Order } from 'src/model/order/order.schema';
 import { Product } from 'src/model/product/product.schema';
-import { paginator } from 'src/shared/helper';
+import { generateRandomCode, paginator } from 'src/shared/helper';
 import { Product as MultiProduct } from './dto/add-order.dto';
 import { AddOrderDTO } from './dto/add-order.dto';
 import { UpdateOrderDTO } from './dto/update-product.dto';
@@ -32,7 +32,11 @@ export class OrderService {
 
   async create(orderDTO: AddOrderDTO) {
     try {
-      const order = await new this.orderModel(orderDTO).save();
+      const codes = (await this.orderModel.find()).map((e) => e.po_no);
+      const order = await new this.orderModel({
+        po_no: generateRandomCode(codes),
+        ...orderDTO,
+      }).save();
       await this.addOrderProduct(order._id, orderDTO.products);
       return order;
     } catch (error) {

@@ -26,3 +26,5 @@ export class ProductPart extends mongoose.Document {
 
 export const ProductPartSchema = SchemaFactory.createForClass(ProductPart);
 ProductPartSchema.plugin(mongoosePaginate);
+
+ProductPartSchema.index({ product: 1, part: 1 }, { unique: true });
