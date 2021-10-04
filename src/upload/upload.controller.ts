@@ -20,8 +20,7 @@ import {
   keepExtensionFileName,
 } from './utils/file-upload.utils';
 import { ImageDto } from './dto/image-dto';
-import { Request as ERequest } from 'express';
-import { Response as EResponse } from 'express';
+
 import { throwCntrllrErr } from 'src/common/utils/error';
 import * as fs from 'fs-extra';
 
@@ -130,8 +129,8 @@ export class UploadController {
 
   @Get('/api/download/:encodePath')
   async download(
-    @Request() req: ERequest,
-    @Response() res: EResponse,
+    @Request() req,
+    @Response() res,
     @Param('encodePath') encodePath: string,
   ) {
     try {

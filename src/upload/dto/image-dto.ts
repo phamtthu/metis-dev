@@ -1,3 +1,3 @@
 export class ImageDto {
-  image: string;
+    image: string;
 }
