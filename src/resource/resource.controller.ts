@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { Controller, Get, Param } from '@nestjs/common';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
-import { throwCntrllrErr } from 'src/common/utils/error';
+import { messageError } from 'src/common/utils/error';
 import { AddResourceDTO } from './dto/add-resource.dto';
 import { UpdateResourceDTO } from './dto/update-resource.dto';
 import { ResourceService } from './resource.service';
@@ -41,7 +41,7 @@ export class ResourceController {
         data: result,
       };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -49,9 +49,9 @@ export class ResourceController {
   async getList(@Request() req, @Query() queryDto: PaginationQueryDto) {
     try {
       const result = await this.resoureService.getList(queryDto);
-      return { data: result };
+      return result;
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -61,7 +61,7 @@ export class ResourceController {
       const result = await this.resoureService.getDetail(resourceId);
       return { data: result };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -73,7 +73,7 @@ export class ResourceController {
         message: 'Delete Resource successfully',
       };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -96,7 +96,7 @@ export class ResourceController {
         data: result,
       };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 }

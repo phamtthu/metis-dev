@@ -11,14 +11,18 @@ import { User } from 'src/model/user/user.shema';
 import { AddResourceDTO } from './dto/add-resource.dto';
 import { UpdateResourceDTO } from './dto/update-resource.dto';
 import { Resource } from '../model/resource/resource.shema';
-import { throwCanNotDeleteErr, throwSrvErr } from 'src/common/utils/error';
+import { throwCanNotDeleteErr, errorException } from 'src/common/utils/error';
 import { deleteImgPath, getNewImgLink } from 'src/common/utils/image-handler';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { ResourceUser } from 'src/model/resource-user/resource-user.schema';
 import { WorkCenterResource } from 'src/model/workcenter-resource/workcenter-resource.schema';
 import { SequenceResource } from 'src/model/sequence-resource/sequence-resource.schema';
 import { ProductWorkCenter } from 'src/model/product-workcenter/product-workcenter.schema';
-import { generateRandomCode } from 'src/shared/helper';
+import { generateRandomCode, paginator, toJsObject } from 'src/shared/helper';
+import { classToPlain } from 'class-transformer';
+import { ResourceResponse } from './response/resource-response';
+import { ResourcesResponse } from './response/resources-response';
+import { ResourceDetailResponse } from './response/resource-detail-response';
 
 @Injectable()
 export class ResourceService {
@@ -51,9 +55,9 @@ export class ResourceService {
         equipment_no: generateRandomCode(codes),
         ...resourceDTO,
       }).save();
-      return resource;
+      return classToPlain(new ResourceResponse(toJsObject(resource)));
     } catch (e) {
-      throwSrvErr(e);
+      errorException(e);
     }
   }
 
@@ -80,13 +84,20 @@ export class ResourceService {
             docs: 'data',
           },
         };
-        return await this.resourceModel.paginate(query, options);
-      } else
-        return await this.resourceModel
+        const resources = await this.resourceModel.paginate(query, options);
+        return classToPlain(new ResourcesResponse(toJsObject(resources)));
+      } else {
+        const resources = await this.resourceModel
           .find(query)
           .sort({ created_at: SortQuery.Desc });
+        return classToPlain(
+          new ResourcesResponse(
+            toJsObject(paginator(resources, 0, resources.length)),
+          ),
+        );
+      }
     } catch (e) {
-      throwSrvErr(e);
+      errorException(e);
     }
   }
 
@@ -106,9 +117,9 @@ export class ResourceService {
         .find({ resource: resourceId })
         .populate('sequence');
       resource['sequences'] = sequenceResources.map((e) => e.sequence);
-      return resource;
+      return classToPlain(new ResourceDetailResponse(toJsObject(resource)));
     } catch (e) {
-      throwSrvErr(e);
+      errorException(e);
     }
   }
 
@@ -140,7 +151,7 @@ export class ResourceService {
         await deleteImgPath(img);
       });
     } catch (e) {
-      throwSrvErr(e);
+      errorException(e);
     }
   }
 
@@ -180,10 +191,10 @@ export class ResourceService {
           resourceDTO,
           { new: true },
         );
-        return newResource;
+        return classToPlain(new ResourceResponse(toJsObject(newResource)));
       }
     } catch (e) {
-      throwSrvErr(e);
+      errorException(e);
     }
   }
 
@@ -192,7 +203,7 @@ export class ResourceService {
       const resources = await this.resourceModel.find().lean();
       return resources.map((e) => String(e._id));
     } catch (e) {
-      throwSrvErr(e);
+      errorException(e);
     }
   }
 
@@ -205,7 +216,7 @@ export class ResourceService {
       if (!order) throw new NotFoundException('Resource is not exist');
       return order;
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 }
