@@ -11,7 +11,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { Controller, Get, Param } from '@nestjs/common';
-import { throwCntrllrErr } from 'src/common/utils/error';
+import { messageError } from 'src/common/utils/error';
 import { AddPCategoryDTO } from './dto/add-part-category.dto';
 import { PartCategoryService } from './part-category.service';
 import { getOriginURL } from 'src/shared/helper';
@@ -42,7 +42,7 @@ export class PartCategoryController {
         data: result,
       };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -50,9 +50,9 @@ export class PartCategoryController {
   async getList(@Request() req, @Query() queryDto: PaginationQueryDto) {
     try {
       const result = await this.partCategoryService.getList(queryDto);
-      return { data: result };
+      return result;
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -62,7 +62,7 @@ export class PartCategoryController {
       const result = await this.partCategoryService.getDetail(categoryId);
       return { data: result };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -74,7 +74,7 @@ export class PartCategoryController {
         message: 'Delete Part Category successfully',
       };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -96,7 +96,7 @@ export class PartCategoryController {
         data: result,
       };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -110,7 +110,7 @@ export class PartCategoryController {
         await this.partCategoryService.getPartFromGivenPartCategory(categoryId);
       return { data: result };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 }
