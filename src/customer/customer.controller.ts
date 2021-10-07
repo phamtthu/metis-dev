@@ -9,7 +9,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { Controller, Get, Param } from '@nestjs/common';
-import { throwCntrllrErr } from 'src/common/utils/error';
+import { messageError } from 'src/common/utils/error';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { CustomerService } from './customer.service';
 import { AddCustomerDTO } from './dto/add-customer.dto';
@@ -35,7 +35,7 @@ export class CustomerController {
         data: result,
       };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -43,9 +43,9 @@ export class CustomerController {
   async getList(@Request() req, @Query() queryDto: PaginationQueryDto) {
     try {
       const result = await this.customerService.getList(queryDto);
-      return { data: result };
+      return result;
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -55,7 +55,7 @@ export class CustomerController {
       const result = await this.customerService.getDetail(customerId);
       return { data: result };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -67,7 +67,7 @@ export class CustomerController {
         message: 'Delete Customer successfully',
       };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -84,7 +84,7 @@ export class CustomerController {
         data: result,
       };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 }
