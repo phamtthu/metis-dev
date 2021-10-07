@@ -6,9 +6,6 @@ import * as mongoosePaginate from 'mongoose-paginate-v2';
 export class Skill extends mongoose.Document {
   @Prop({ required: true, default: null })
   name: string;
-
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Customer' })
-  customer: string;
 }
 
 export const SkillSchema = SchemaFactory.createForClass(Skill);
