@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, PaginateModel } from 'mongoose';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { SortQuery } from 'src/common/enum/filter.enum';
-import { throwCanNotDeleteErr, throwSrvErr } from 'src/common/utils/error';
+import { throwCanNotDeleteErr, errorException } from 'src/common/utils/error';
 import { User } from 'src/model/user/user.shema';
 import { Process } from 'src/model/process/process.schema';
 import { Resource } from 'src/model/resource/resource.shema';
@@ -12,7 +12,13 @@ import { AddSequenceDTO } from './dto/add-sequence.dto';
 import { UpdateSequenceDTO } from './dto/update-sequence.dto';
 import { SequenceResource } from 'src/model/sequence-resource/sequence-resource.schema';
 import { SequenceUser } from 'src/model/sequence-user/sequence-user.schema';
-import { getNestedList } from 'src/shared/helper';
+import { getNestedList, paginator, toJsObject } from 'src/shared/helper';
+import { SequenceResponse } from './response/sequence-response';
+import { classToPlain } from 'class-transformer';
+import { SequencesResponse } from './response/sequences-response';
+import { SequenceDetailResponse } from './response/sequence-detail-response';
+import { SequenceUserResponse } from './response/sequence-user-response';
+import { SequenceResourceResponse } from './response/sequence-resource-response';
 
 @Injectable()
 export class SequenceService {
@@ -29,9 +35,10 @@ export class SequenceService {
 
   async create(sequenceDTO: AddSequenceDTO) {
     try {
-      return await new this.sequenceModel(sequenceDTO).save();
+      const sequence = await new this.sequenceModel(sequenceDTO).save();
+      return classToPlain(new SequenceResponse(toJsObject(sequence)));
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -52,13 +59,20 @@ export class SequenceService {
             docs: 'data',
           },
         };
-        return await this.sequenceModel.paginate(query, options);
-      } else
-        return await this.sequenceModel
+        const sequences = await this.sequenceModel.paginate(query, options);
+        return classToPlain(new SequencesResponse(toJsObject(sequences)));
+      } else {
+        const sequences = await this.sequenceModel
           .find(query)
           .sort({ created_at: SortQuery.Desc });
+        return classToPlain(
+          new SequencesResponse(
+            toJsObject(paginator(sequences, 0, sequences.length)),
+          ),
+        );
+      }
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -68,18 +82,16 @@ export class SequenceService {
       const sequenceResources = await this.sequenceResourceModel
         .find({ sequence: sequenceId })
         .populate('resource');
-      const subSequences = await this.sequenceModel
-        .find({ parent: sequenceId })
-        .lean();
-      sequence['sub_sequences'] = getNestedList(sequenceId, subSequences);
+      const subSequences = await this.sequenceModel.find().lean();
+      sequence['children'] = getNestedList(sequenceId, subSequences);
       sequence['resources'] = sequenceResources.map((e) => e.resource);
       const sequenceUsers = await this.sequenceUserModel
         .find({ sequence: sequenceId })
         .populate('user');
       sequence['users'] = sequenceUsers.map((e) => e.user);
-      return sequence;
+      return classToPlain(new SequenceDetailResponse(toJsObject(sequence)));
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -95,7 +107,7 @@ export class SequenceService {
       });
       await this.sequenceUserModel.deleteMany({ sequence: sequenceId });
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -107,30 +119,39 @@ export class SequenceService {
         await this.sequenceResourceModel.deleteMany({
           sequence: sequenceId,
         });
-        const sequenceResources = sequenceDTO.resources.map((resourceId) => ({
-          sequence: sequenceId,
-          resource: resourceId,
-        }));
-        return await this.sequenceResourceModel.insertMany(sequenceResources);
+        const sequenceResources = await this.sequenceResourceModel.insertMany(
+          sequenceDTO.resources.map((resourceId) => ({
+            sequence: sequenceId,
+            resource: resourceId,
+          })),
+        );
+        return sequenceResources.map((e) =>
+          classToPlain(new SequenceResourceResponse(toJsObject(e))),
+        );
         // Add User to Sequence
       } else if (Array.isArray(sequenceDTO.users)) {
         await this.sequenceUserModel.deleteMany({
           sequence: sequenceId,
         });
-        const sequenceUsers = sequenceDTO.users.map((userId) => ({
-          sequence: sequenceId,
-          user: userId,
-        }));
-        return await this.sequenceUserModel.insertMany(sequenceUsers);
+        const sequenceUsers = await this.sequenceUserModel.insertMany(
+          sequenceDTO.users.map((userId) => ({
+            sequence: sequenceId,
+            user: userId,
+          })),
+        );
+        return sequenceUsers.map((e) =>
+          classToPlain(new SequenceUserResponse(toJsObject(e))),
+        );
       } else {
-        return await this.sequenceModel.findByIdAndUpdate(
+        const sequence = await this.sequenceModel.findByIdAndUpdate(
           sequenceId,
           sequenceDTO,
           { new: true },
         );
+        return classToPlain(new SequenceResponse(toJsObject(sequence)));
       }
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -143,7 +164,7 @@ export class SequenceService {
       if (!sequence) throw new NotFoundException('Sequence is not exist');
       return sequence;
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 }
