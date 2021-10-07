@@ -7,7 +7,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, PaginateModel } from 'mongoose';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { SortQuery } from 'src/common/enum/filter.enum';
-import { throwCanNotDeleteErr, throwSrvErr } from 'src/common/utils/error';
+import { throwCanNotDeleteErr, errorException } from 'src/common/utils/error';
 import { deleteImgPath, getNewImgLink } from 'src/common/utils/image-handler';
 import { Order } from 'src/model/order/order.schema';
 import { Product } from 'src/model/product/product.schema';
@@ -18,7 +18,12 @@ import { AddProductDTO } from './dto/add-product.dto';
 import { UpdateProductDTO } from './dto/update-product.dto';
 import { ProductPart } from 'src/model/product-part/product-part.schema';
 import { OrderProduct } from 'src/model/order-product/order-product.schema';
-import { generateRandomCode } from 'src/shared/helper';
+import { generateRandomCode, paginator, toJsObject } from 'src/shared/helper';
+import { classToPlain } from 'class-transformer';
+import { ProductsResponse } from './response/products-response';
+import { ProductDetailResponse } from './response/product-detail-response';
+import { ProductPartResponse } from './response/product-part-response';
+import { ProductResponse } from './response/product-response';
 
 @Injectable()
 export class ProductService {
@@ -60,9 +65,9 @@ export class ProductService {
         product_no: generateRandomCode(codes),
         ...productDTO,
       }).save();
-      return product;
+      return classToPlain(new ProductResponse(toJsObject(product)));
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -90,13 +95,20 @@ export class ProductService {
             docs: 'data',
           },
         };
-        return await this.productModel.paginate(query, options);
-      } else
-        return await this.productModel
+        const products = await this.productModel.paginate(query, options);
+        return classToPlain(new ProductsResponse(toJsObject(products)));
+      } else {
+        const products = await this.productModel
           .find(query)
           .sort({ created_at: SortQuery.Desc });
+        return classToPlain(
+          new ProductsResponse(
+            toJsObject(paginator(products, 0, products.length)),
+          ),
+        );
+      }
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -120,9 +132,9 @@ export class ProductService {
       product['orders'] = orders;
       const tasks = await this.taskModel.find({ product: productId });
       product['tasks'] = tasks;
-      return product;
+      return classToPlain(new ProductDetailResponse(toJsObject(product)));
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -152,7 +164,7 @@ export class ProductService {
       await this.productPartModel.deleteMany({ product: productId });
       await this.orderProductModel.deleteMany({ product: productId });
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -165,13 +177,17 @@ export class ProductService {
       // Add Part to Product
       await this.checkIsProductExist(productId);
       if (Array.isArray(productDTO.parts)) {
-        const productParts = productDTO.parts.map((e) => ({
-          product: productId,
-          part: e.part,
-          quantity: e.quantity,
-        }));
         await this.productPartModel.deleteMany({ product: productId });
-        return await this.productPartModel.insertMany(productParts);
+        const productParts = await this.productPartModel.insertMany(
+          productDTO.parts.map((e) => ({
+            product: productId,
+            part: e.part,
+            quantity: e.quantity,
+          })),
+        );
+        return productParts.map((e) =>
+          classToPlain(new ProductPartResponse(toJsObject(e))),
+        );
       } else {
         const oldProduct = await this.checkIsProductExist(productId);
         productDTO.images = await Promise.all(
@@ -193,10 +209,10 @@ export class ProductService {
         const newProduct = await this.productModel
           .findByIdAndUpdate(productId, productDTO, { new: true })
           .lean();
-        return newProduct;
+        return classToPlain(new ProductResponse(toJsObject(newProduct)));
       }
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -206,7 +222,7 @@ export class ProductService {
       if (!product) throw new NotFoundException('Product is not exist');
       return product;
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 }
