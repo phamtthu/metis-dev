@@ -7,7 +7,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, PaginateModel } from 'mongoose';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { SortQuery } from 'src/common/enum/filter.enum';
-import { throwSrvErr } from 'src/common/utils/error';
+import { errorException } from 'src/common/utils/error';
 import { deleteImgPath, getNewImgLink } from 'src/common/utils/image-handler';
 import { User } from 'src/model/user/user.shema';
 import { Product } from 'src/model/product/product.schema';
@@ -15,12 +15,16 @@ import { Task } from 'src/model/task/task.schema';
 import {
   generateRandomCode,
   getNestedList,
-  isTwoArrayEqual,
   paginator,
+  toJsObject,
 } from 'src/shared/helper';
 import { AddTaskDTO } from './dto/add-task.dto';
 import { UpdateTaskDTO } from './dto/update-task.dto';
 import { TaskUser } from 'src/model/task-user/taskuser.schema';
+import { TaskResponse } from './response/task-response';
+import { classToPlain } from 'class-transformer';
+import { TasksResponse } from './response/tasks-response';
+import { TaskDetailResponse } from './response/task-detail-response';
 
 @Injectable()
 export class TaskService {
@@ -44,9 +48,9 @@ export class TaskService {
         ...taskDTO,
       }).save();
       await this.addTaskUsers(task.id, taskDTO.users);
-      return task;
+      return classToPlain(new TaskResponse(toJsObject(task)));
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -86,12 +90,15 @@ export class TaskService {
         };
         if (queryDto.offset >= 0 && queryDto.limit >= 0) {
           const tasks = await this.taskModel.paginate(query, paginationOptions);
-          return tasks;
+          return classToPlain(new TasksResponse(toJsObject(tasks)));
         } else {
-          return await this.taskModel
+          const tasks = await this.taskModel
             .find(query)
             .populate(populateOption)
             .sort({ created_at: SortQuery.Desc });
+          return classToPlain(
+            new TasksResponse(toJsObject(paginator(tasks, 0, tasks.length))),
+          );
         }
       } else {
         const tasks = await this.taskModel
@@ -101,13 +108,23 @@ export class TaskService {
           .lean();
         const nestedTasks = getNestedList(null, tasks);
         if (queryDto.offset >= 0 && queryDto.limit >= 0) {
-          return paginator(nestedTasks, queryDto.offset, queryDto.limit);
+          return classToPlain(
+            new TasksResponse(
+              toJsObject(
+                paginator(nestedTasks, queryDto.offset, queryDto.limit),
+              ),
+            ),
+          );
         } else {
-          return nestedTasks;
+          return classToPlain(
+            new TasksResponse(
+              toJsObject(paginator(nestedTasks, 0, nestedTasks.length)),
+            ),
+          );
         }
       }
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -118,9 +135,9 @@ export class TaskService {
         .find({ task: taskId })
         .populate('user');
       task['users'] = users.map((e) => e.user);
-      return task;
+      return classToPlain(new TaskDetailResponse(toJsObject(task)));
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -136,7 +153,7 @@ export class TaskService {
       await this.taskModel.updateMany({ pre_task: taskId }, { parent: null });
       await this.taskModel.updateMany({ after_task: taskId }, { parent: null });
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -156,11 +173,12 @@ export class TaskService {
       oldTask.images.forEach(async (img) => {
         await deleteImgPath(img);
       });
-      return await this.taskModel.findByIdAndUpdate(taskId, taskDTO, {
+      const task = await this.taskModel.findByIdAndUpdate(taskId, taskDTO, {
         new: true,
       });
+      return classToPlain(new TaskResponse(toJsObject(task)));
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -179,7 +197,7 @@ export class TaskService {
       if (!task) throw new NotFoundException('Task is not exist');
       return task;
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -191,7 +209,7 @@ export class TaskService {
       }));
       await this.taskUserModel.insertMany(taskUsers);
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 }
