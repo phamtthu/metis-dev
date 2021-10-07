@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { Status } from 'src/common/enum/filter.enum';
 import { AuthService } from '../auth.service';
-import { throwCntrllrErr } from 'src/common/utils/error';
+import { messageError } from 'src/common/utils/error';
 
 require('dotenv').config();
 
@@ -30,7 +30,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       // => req.user
       else throw new ForbiddenException('Request denied. User is not active');
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 }

@@ -1,6 +1,6 @@
 import { BadRequestException, HttpException, HttpStatus } from '@nestjs/common';
 
-export const throwCntrllrErr = (error) => {
+export const messageError = (error) => {
   throw new HttpException(
     {
       status: error.status ?? HttpStatus.BAD_REQUEST,
@@ -12,7 +12,7 @@ export const throwCntrllrErr = (error) => {
   );
 };
 
-export const throwSrvErr = (error) => {
+export const errorException = (error) => {
   throw new HttpException(
     error.message,
     error.status ?? HttpStatus.BAD_REQUEST,

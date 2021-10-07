@@ -1,5 +1,8 @@
+import { errorException } from 'src/common/utils/error';
+
 const fs = require('fs');
 const path = require('path');
+const bcrypt = require('bcrypt');
 
 export const moveTmpToMain = async (data = [], dir = '') => {
   return data.map((item) => {
@@ -144,4 +147,18 @@ export const generateRandomCode = (codes) => {
     }
   } while (codes.includes(code));
   return code;
+};
+
+export const toJsObject = (target) => {
+  return JSON.parse(JSON.stringify(target));
+};
+
+export const bcryptPassword = async (password) => {
+  try {
+    const salt = await bcrypt.genSalt(10);
+    const bcryptPassword = await bcrypt.hash(password, salt);
+    return bcryptPassword;
+  } catch (e) {
+    errorException(e);
+  }
 };

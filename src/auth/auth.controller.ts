@@ -13,7 +13,7 @@ import {
   Param,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { throwCntrllrErr } from 'src/common/utils/error';
+import { messageError } from 'src/common/utils/error';
 import { AuthService } from './auth.service';
 
 @Controller('api/auth')
@@ -28,7 +28,7 @@ export class AuthController {
         password: process.env.password || 'password',
       });
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -42,7 +42,7 @@ export class AuthController {
         data: result,
       });
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 }
