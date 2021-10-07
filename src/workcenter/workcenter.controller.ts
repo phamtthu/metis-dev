@@ -11,7 +11,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { Controller, Get, Param } from '@nestjs/common';
-import { throwCntrllrErr } from 'src/common/utils/error';
+import { messageError } from 'src/common/utils/error';
 
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { WorkCenterService } from './workcenter.service';
@@ -39,7 +39,7 @@ export class WorkCenterController {
         data: result,
       };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -47,9 +47,9 @@ export class WorkCenterController {
   async getList(@Request() req, @Query() queryDto: PaginationQueryDto) {
     try {
       const result = await this.workCenterService.getList(queryDto);
-      return { data: result };
+      return result;
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -59,7 +59,7 @@ export class WorkCenterController {
       const result = await this.workCenterService.getDetail(workCenterId);
       return { data: result };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -71,7 +71,7 @@ export class WorkCenterController {
         message: 'Delete Work Center successfully',
       };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -92,7 +92,7 @@ export class WorkCenterController {
         data: result,
       };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -113,7 +113,7 @@ export class WorkCenterController {
         data: result,
       };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 }
