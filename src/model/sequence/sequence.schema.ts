@@ -10,7 +10,7 @@ export enum SequenceConstraint {
 
 @Schema({ timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } })
 export class Sequence extends mongoose.Document {
-  @Prop({ required: true, default: null, unique: true })
+  @Prop({ required: true, default: null })
   name: string;
 
   @Prop({ required: true, type: Number, default: null })

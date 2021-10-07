@@ -21,7 +21,7 @@ import {
 } from './utils/file-upload.utils';
 import { ImageDto } from './dto/image-dto';
 
-import { throwCntrllrErr } from 'src/common/utils/error';
+import { messageError } from 'src/common/utils/error';
 import * as fs from 'fs-extra';
 
 @Controller()
@@ -139,7 +139,7 @@ export class UploadController {
         throw new NotFoundException('File is not found');
       res.download(`./public/${path}`);
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 }
