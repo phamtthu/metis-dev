@@ -3,13 +3,18 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, PaginateModel } from 'mongoose';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { SortQuery } from 'src/common/enum/filter.enum';
-import { throwCanNotDeleteErr, throwSrvErr } from 'src/common/utils/error';
+import { throwCanNotDeleteErr, errorException } from 'src/common/utils/error';
 import { deleteImgPath, getNewImgLink } from 'src/common/utils/image-handler';
 import { Resource } from 'src/model/resource/resource.shema';
 import { ResourceCategory } from 'src/model/resource-category/resource-category.schema';
-import { getNestedList, paginator } from 'src/shared/helper';
+import { getNestedList, paginator, toJsObject } from 'src/shared/helper';
 import { AddRCategoryDTO } from './dto/add-resource-category.dto';
 import { UpdateRCategoryRDTO } from './dto/update-resource-category.dto';
+import { classToPlain } from 'class-transformer';
+import { ResourceCategoryResponse } from './response/resource-category-response';
+import { ResourceCategoriesResponse } from './response/resource-categories-response';
+import { ResourceCategoryDetailResponse } from './response/resource-category-detail-response';
+import { ResourceResponse } from 'src/resource/response/resource-response';
 
 @Injectable()
 export class ResourceCategoryService {
@@ -27,9 +32,12 @@ export class ResourceCategoryService {
         'resource-category',
         originURL,
       );
-      return await new this.resourceCategoryModel(rCategoryDTO).save();
+      const category = await new this.resourceCategoryModel(
+        rCategoryDTO,
+      ).save();
+      return classToPlain(new ResourceCategoryResponse(toJsObject(category)));
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -56,14 +64,22 @@ export class ResourceCategoryService {
           },
         };
         if (queryDto.offset >= 0 && queryDto.limit >= 0) {
-          return await this.resourceCategoryModel.paginate(
+          const categories = await this.resourceCategoryModel.paginate(
             query,
             paginationOptions,
           );
+          return classToPlain(
+            new ResourceCategoriesResponse(toJsObject(categories)),
+          );
         } else {
-          return await this.resourceCategoryModel
+          const categories = await this.resourceCategoryModel
             .find(query)
             .sort({ created_at: SortQuery.Desc });
+          return classToPlain(
+            new ResourceCategoriesResponse(
+              toJsObject(paginator(categories, 0, categories.length)),
+            ),
+          );
         }
       } else {
         const categories = await this.resourceCategoryModel
@@ -72,13 +88,27 @@ export class ResourceCategoryService {
           .lean();
         const nestedCategories = getNestedList(null, categories);
         if (queryDto.offset >= 0 && queryDto.limit >= 0) {
-          return paginator(nestedCategories, queryDto.offset, queryDto.limit);
+          return classToPlain(
+            new ResourceCategoriesResponse(
+              toJsObject(
+                paginator(nestedCategories, queryDto.offset, queryDto.limit),
+              ),
+            ),
+          );
         } else {
-          return nestedCategories;
+          return nestedCategories.map((category) =>
+            classToPlain(
+              new ResourceCategoryResponse(
+                toJsObject(
+                  paginator(nestedCategories, 0, nestedCategories.length),
+                ),
+              ),
+            ),
+          );
         }
       }
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -97,9 +127,11 @@ export class ResourceCategoryService {
       );
       theCategory['sub_categoriesID'] = rootAndsubCategories.map((e) => e._id);
       theCategory['children'] = getNestedList(categoryId, categories);
-      return theCategory;
+      return classToPlain(
+        new ResourceCategoryDetailResponse(toJsObject(theCategory)),
+      );
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -114,7 +146,7 @@ export class ResourceCategoryService {
         arr.flatMap(({ children, ...o }) => [o, ...flatten(children)]);
       return flatten([theCategory]);
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -155,15 +187,20 @@ export class ResourceCategoryService {
       );
     // Delete old Image
     await deleteImgPath(oldResourceCategory.image);
-    return newResourceCategory;
+    return classToPlain(
+      new ResourceCategoryResponse(toJsObject(newResourceCategory)),
+    );
   }
 
   async getResourceFromGivenPCategory(categoryId: string) {
     let { sub_categoriesID }: any = await this.getDetail(categoryId);
     sub_categoriesID = sub_categoriesID.map((e) => String(e));
-    return await this.resourceModel.find({
+    const resources = await this.resourceModel.find({
       category: { $in: sub_categoriesID },
     });
+    return resources.map((resource) =>
+      classToPlain(new ResourceResponse(toJsObject(resource))),
+    );
   }
 
   async checkIsResourceCategoryExist(categoryId: string) {
@@ -175,7 +212,7 @@ export class ResourceCategoryService {
         throw new NotFoundException('Resource Category is not exist');
       return category;
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 }
