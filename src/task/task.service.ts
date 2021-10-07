@@ -47,7 +47,7 @@ export class TaskService {
         task_no: generateRandomCode(codes),
         ...taskDTO,
       }).save();
-      await this.addTaskUsers(task.id, taskDTO.users);
+      await this.addTaskUsers(task._id, taskDTO.users);
       return classToPlain(new TaskResponse(toJsObject(task)));
     } catch (error) {
       errorException(error);
