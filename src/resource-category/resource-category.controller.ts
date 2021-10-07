@@ -1,5 +1,6 @@
 import {
   Body,
+  ClassSerializerInterceptor,
   Delete,
   HttpStatus,
   Post,
@@ -7,11 +8,12 @@ import {
   Query,
   Request,
   Response,
+  UseInterceptors,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
 import { Controller, Get, Param } from '@nestjs/common';
-import { throwCntrllrErr } from 'src/common/utils/error';
+import { messageError } from 'src/common/utils/error';
 import { AddRCategoryDTO } from './dto/add-resource-category.dto';
 import { ResourceCategoryService } from './resource-category.service';
 import { getOriginURL } from 'src/shared/helper';
@@ -26,6 +28,7 @@ import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
     whitelist: true,
   }),
 )
+@UseInterceptors(ClassSerializerInterceptor)
 export class ResourceCategoryController {
   constructor(private rcategoryService: ResourceCategoryService) {}
 
@@ -42,7 +45,7 @@ export class ResourceCategoryController {
         data: result,
       };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -50,9 +53,9 @@ export class ResourceCategoryController {
   async getList(@Request() req, @Query() queryDto: PaginationQueryDto) {
     try {
       const result = await this.rcategoryService.getList(queryDto);
-      return { data: result };
+      return result;
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -62,7 +65,7 @@ export class ResourceCategoryController {
       const result = await this.rcategoryService.getDetail(categoryId);
       return { data: result };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -72,7 +75,7 @@ export class ResourceCategoryController {
       await this.rcategoryService.delete(categoryId);
       return { message: 'Delete Resource Category successfully' };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -94,13 +97,13 @@ export class ResourceCategoryController {
         data: result,
       };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
   // Get all Resource From this Category
   @Get('resource/:categoryId')
-  async getProductFromGivenPCategory(
+  async getResourceFromGivenPCategory(
     @Request() req,
     @Param('categoryId') categoryId: string,
   ) {
@@ -110,7 +113,7 @@ export class ResourceCategoryController {
       );
       return { data: result };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 }
