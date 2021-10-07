@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { throwSrvErr } from 'src/common/utils/error';
+import { errorException } from 'src/common/utils/error';
 import { User } from 'src/model/user/user.shema';
+import { bcryptPassword } from 'src/shared/helper';
 import { UserService } from '../user/user.service';
 
 const bcrypt = require('bcrypt');
@@ -16,20 +17,10 @@ export class AuthService {
 
   async adminRegister(admin) {
     try {
-      admin.password = await this.bcryptPassword(admin.password);
+      admin.password = await bcryptPassword(admin.password);
       await this.userService.adminRegister(admin);
     } catch (e) {
-      throwSrvErr(e);
-    }
-  }
-
-  async bcryptPassword(password) {
-    try {
-      const salt = await bcrypt.genSalt(10);
-      const bcryptPassword = await bcrypt.hash(password, salt);
-      return bcryptPassword;
-    } catch (e) {
-      throwSrvErr(e);
+      errorException(e);
     }
   }
 
@@ -43,7 +34,7 @@ export class AuthService {
         is_active: user.is_active,
       };
     } catch (e) {
-      throwSrvErr(e);
+      errorException(e);
     }
   }
 
@@ -56,7 +47,7 @@ export class AuthService {
       }
       return null;
     } catch (e) {
-      throwSrvErr(e);
+      errorException(e);
     }
   }
 
@@ -64,7 +55,7 @@ export class AuthService {
     try {
       return await this.userService.findUserById(userId);
     } catch (e) {
-      throwSrvErr(e);
+      errorException(e);
     }
   }
 }

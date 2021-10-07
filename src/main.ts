@@ -1,6 +1,11 @@
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  ValidationPipe,
+  HttpException,
+  HttpStatus,
+  ClassSerializerInterceptor,
+} from '@nestjs/common';
 import { useContainer, ValidationError } from 'class-validator';
 
 // Import firebase-admin
@@ -25,11 +30,11 @@ async function bootstrap() {
       transform: true,
       transformOptions: { enableImplicitConversion: true },
       exceptionFactory: (errors: ValidationError[]) => {
-        let retError = {};
+        const retError = {};
         errors.forEach((item) => {
           retError[item.property] = Object.values(item.constraints);
         });
-        let rs = {
+        const rs = {
           message: 'Validation errors in your request',
           errors: retError,
         };
@@ -37,6 +42,7 @@ async function bootstrap() {
       },
     }),
   );
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
   await app.listen(3000);
 }
 bootstrap();
