@@ -1,13 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { classToPlain } from 'class-transformer';
 import { Model, PaginateModel } from 'mongoose';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { SortQuery } from 'src/common/enum/filter.enum';
-import { throwCanNotDeleteErr, throwSrvErr } from 'src/common/utils/error';
+import { throwCanNotDeleteErr, errorException } from 'src/common/utils/error';
 import { Label } from 'src/model/label/label.schema';
 import { Task } from 'src/model/task/task.schema';
+import { paginator, toJsObject } from 'src/shared/helper';
 import { AddLabelDTO } from './dto/add-label.dto';
 import { UpdateLabelDTO } from './dto/update-label.dto';
+import { LabelResponse } from './response/label-response';
+import { LabelsResponse } from './response/labels-response';
 
 @Injectable()
 export class LabelService {
@@ -18,9 +22,10 @@ export class LabelService {
 
   async create(labelDTO: AddLabelDTO) {
     try {
-      return await new this.labelModel(labelDTO).save();
+      const label = await new this.labelModel(labelDTO).save();
+      return classToPlain(new LabelResponse(toJsObject(label)));
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -41,13 +46,18 @@ export class LabelService {
             docs: 'data',
           },
         };
-        return await this.labelModel.paginate(query, options);
-      } else
-        return await this.labelModel
+        const labels = await this.labelModel.paginate(query, options);
+        return classToPlain(new LabelsResponse(toJsObject(labels)));
+      } else {
+        const labels = await this.labelModel
           .find(query)
           .sort({ created_at: SortQuery.Desc });
+        return classToPlain(
+          new LabelsResponse(toJsObject(paginator(labels, 0, labels.length))),
+        );
+      }
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -55,9 +65,9 @@ export class LabelService {
     try {
       const label = await this.checkIsLabelExist(labelId);
       label['tasks'] = await this.taskModel.find({ label: labelId });
-      return label;
+      return classToPlain(new LabelResponse(toJsObject(label)));
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -68,7 +78,7 @@ export class LabelService {
       if (relatedTasks.length > 0) throwCanNotDeleteErr('Label', 'Tasks');
       await this.labelModel.findByIdAndDelete(labelId);
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -78,9 +88,9 @@ export class LabelService {
         new: true,
       });
       if (!label) throw new NotFoundException('Label is not exist');
-      return label;
+      return classToPlain(new LabelResponse(toJsObject(label)));
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -89,7 +99,7 @@ export class LabelService {
       const labels = await this.labelModel.find().lean();
       return labels.map((label) => String(label._id));
     } catch (e) {
-      throwSrvErr(e);
+      errorException(e);
     }
   }
 
@@ -99,7 +109,7 @@ export class LabelService {
       if (!label) throw new NotFoundException('Label is not exist');
       return label;
     } catch (e) {
-      throwSrvErr(e);
+      errorException(e);
     }
   }
 }

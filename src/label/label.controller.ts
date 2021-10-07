@@ -9,7 +9,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { Controller, Get, Param } from '@nestjs/common';
-import { throwCntrllrErr } from 'src/common/utils/error';
+import { messageError } from 'src/common/utils/error';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { LabelService } from './label.service';
 import { AddLabelDTO } from './dto/add-label.dto';
@@ -35,7 +35,7 @@ export class LabelController {
         data: result,
       };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -43,11 +43,9 @@ export class LabelController {
   async getList(@Request() req, @Query() queryDto: PaginationQueryDto) {
     try {
       const result = await this.labelService.getList(queryDto);
-      return {
-        data: result,
-      };
+      return result;
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -59,7 +57,7 @@ export class LabelController {
         data: result,
       };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -71,7 +69,7 @@ export class LabelController {
         message: 'Delete Label successfully',
       };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -88,7 +86,7 @@ export class LabelController {
         daa: result,
       };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 }
