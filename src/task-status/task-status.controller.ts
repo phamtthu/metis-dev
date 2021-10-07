@@ -9,7 +9,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { Controller, Get, Param } from '@nestjs/common';
-import { throwCntrllrErr } from 'src/common/utils/error';
+import { messageError } from 'src/common/utils/error';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { TaskStatusService } from './task-status.service';
 import { AddTaskStatusDTO } from './dto/add-task.dto';
@@ -35,7 +35,7 @@ export class TaskStatusController {
         data: result,
       };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -43,9 +43,9 @@ export class TaskStatusController {
   async getList(@Request() req, @Query() queryDto: PaginationQueryDto) {
     try {
       const result = await this.taskStatusService.getList(queryDto);
-      return { data: result };
+      return result;
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -55,7 +55,7 @@ export class TaskStatusController {
       const result = await this.taskStatusService.getDetail(taskStatusId);
       return { data: result };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -67,7 +67,7 @@ export class TaskStatusController {
         message: 'Delete Task Status successfully',
       };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -87,7 +87,7 @@ export class TaskStatusController {
         data: result,
       };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 }
