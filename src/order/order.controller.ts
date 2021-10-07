@@ -11,7 +11,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { Controller, Get, Param } from '@nestjs/common';
-import { throwCntrllrErr } from 'src/common/utils/error';
+import { messageError } from 'src/common/utils/error';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { OrderService } from './order.service';
 import { AddOrderDTO } from './dto/add-order.dto';
@@ -37,7 +37,7 @@ export class OrderController {
         data: result,
       };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -45,9 +45,9 @@ export class OrderController {
   async getList(@Request() req, @Query() queryDto: PaginationQueryDto) {
     try {
       const result = await this.orderService.getList(queryDto);
-      return { data: result };
+      return result;
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -57,7 +57,7 @@ export class OrderController {
       const result = await this.orderService.getDetail(orderId);
       return { data: result };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -67,7 +67,7 @@ export class OrderController {
       await this.orderService.delete(orderId);
       return { message: 'Delete Order successfully' };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -85,7 +85,7 @@ export class OrderController {
         data: result,
       };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 }
