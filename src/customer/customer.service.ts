@@ -1,15 +1,19 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { classToPlain } from 'class-transformer';
 import { Model, PaginateModel } from 'mongoose';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { SortQuery } from 'src/common/enum/filter.enum';
-import { throwSrvErr } from 'src/common/utils/error';
+import { errorException } from 'src/common/utils/error';
 import { Customer } from 'src/model/customer/customer.schema';
 import { OrderProduct } from 'src/model/order-product/order-product.schema';
 import { Order } from 'src/model/order/order.schema';
-import { generateRandomCode } from 'src/shared/helper';
+import { generateRandomCode, paginator, toJsObject } from 'src/shared/helper';
 import { AddCustomerDTO } from './dto/add-customer.dto';
 import { UpdateCustomerDTO } from './dto/update-customer.dto';
+import { CustomerDetailResponse } from './response/customer-detail-response';
+import { CustomerResponse } from './response/customer-response';
+import { CustomersResponse } from './response/customers-response';
 
 @Injectable()
 export class CustomerService {
@@ -21,16 +25,17 @@ export class CustomerService {
   ) {}
 
   async create(customerDTO: AddCustomerDTO) {
-    try {
-      const customers = await this.customerModel.find();
-      const codes = customers.map((e) => e.customer_no);
-      return await new this.customerModel({
-        customer_no: generateRandomCode(codes),
-        ...customerDTO,
-      }).save();
-    } catch (error) {
-      throwSrvErr(error);
-    }
+    // try {
+    const customers = await this.customerModel.find();
+    const codes = customers.map((e) => e.customer_no);
+    const customer = await new this.customerModel({
+      customer_no: generateRandomCode(codes),
+      ...customerDTO,
+    }).save();
+    return classToPlain(new CustomerResponse(toJsObject(customer)));
+    // } catch (error) {
+    //   errorException(error);
+    // }
   }
 
   async getList(queryDto: PaginationQueryDto) {
@@ -56,25 +61,33 @@ export class CustomerService {
             docs: 'data',
           },
         };
-        return await this.customerModel.paginate(query, options);
-      } else
-        return await this.customerModel
+        const customers = await this.customerModel.paginate(query, options);
+        return classToPlain(new CustomersResponse(toJsObject(customers)));
+      } else {
+        const customers = await this.customerModel
           .find(query)
           .sort({ created_at: SortQuery.Desc });
+        return classToPlain(
+          new CustomersResponse(
+            toJsObject(paginator(customers, 0, customers.length)),
+          ),
+        );
+      }
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
   async getDetail(customerId: string) {
-    try {
-      const customer = await this.checkCustomerIsExist(customerId);
-      const orders = await this.orderModel.find({ customer: customerId });
-      customer['orders'] = orders;
-      return customer;
-    } catch (error) {
-      throwSrvErr(error);
-    }
+    // try {
+    const customer = await this.checkCustomerIsExist(customerId);
+    const orders = await this.orderModel.find({ customer: customerId });
+    customer['orders'] = orders;
+    //   throw new NotFoundException()
+    return classToPlain(new CustomerDetailResponse(toJsObject(customer)));
+    // } catch (error) {
+    //   errorException(error);
+    // }
   }
 
   async delete(customerId: string) {
@@ -90,7 +103,7 @@ export class CustomerService {
         order: { $in: orderIds },
       });
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -102,19 +115,19 @@ export class CustomerService {
         { new: true },
       );
       if (!newCustomer) throw new NotFoundException('User is not exist');
-      return newCustomer;
+      return classToPlain(new CustomerResponse(toJsObject(newCustomer)));
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
   async checkCustomerIsExist(customerId: string) {
-    try {
-      const customer = await this.customerModel.findById(customerId).lean();
-      if (!customer) throw new NotFoundException('User is not exist');
-      return customer;
-    } catch (error) {
-      throwSrvErr(error);
-    }
+    // try {
+    const customer = await this.customerModel.findById(customerId).lean();
+    if (!customer) throw new NotFoundException('User is not exist');
+    return customer;
+    // } catch (error) {
+    //   errorException(error);
+    // }
   }
 }

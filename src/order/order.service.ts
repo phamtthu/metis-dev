@@ -4,18 +4,22 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { classToPlain } from 'class-transformer';
 import { Model, mongo, PaginateModel, Types } from 'mongoose';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { SortQuery } from 'src/common/enum/filter.enum';
-import { throwSrvErr } from 'src/common/utils/error';
+import { errorException } from 'src/common/utils/error';
 import { Customer } from 'src/model/customer/customer.schema';
 import { OrderProduct } from 'src/model/order-product/order-product.schema';
 import { Order } from 'src/model/order/order.schema';
 import { Product } from 'src/model/product/product.schema';
-import { generateRandomCode, paginator } from 'src/shared/helper';
+import { generateRandomCode, paginator, toJsObject } from 'src/shared/helper';
 import { Product as MultiProduct } from './dto/add-order.dto';
 import { AddOrderDTO } from './dto/add-order.dto';
 import { UpdateOrderDTO } from './dto/update-product.dto';
+import { OrderDetailResponse } from './response/order-detail-response';
+import { OrderResponse } from './response/order-response';
+import { OrdersResponse } from './response/orders-response';
 
 @Injectable()
 export class OrderService {
@@ -40,7 +44,7 @@ export class OrderService {
       await this.addOrderProduct(order._id, orderDTO.products);
       return order;
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -92,11 +96,20 @@ export class OrderService {
         {
           $group: {
             _id: '$_id',
-            description: {
-              $first: '$description',
-            },
             customer: {
               $first: '$customer',
+            },
+            po_no: {
+              $first: '$po_no',
+            },
+            start_date: {
+              $first: '$start_date',
+            },
+            date_scheduled: {
+              $first: '$date_scheduled',
+            },
+            date_fulfilled: {
+              $first: '$date_fulfilled',
             },
             products: {
               $push: '$products',
@@ -107,10 +120,17 @@ export class OrderService {
       ];
       const orders = await this.orderModel.aggregate(query);
       if (queryDto.offset >= 0 && queryDto.limit >= 0) {
-        return paginator(orders, queryDto.offset, queryDto.limit);
-      } else return orders;
+        return classToPlain(
+          new OrdersResponse(
+            toJsObject(paginator(orders, queryDto.offset, queryDto.limit)),
+          ),
+        );
+      } else
+        return classToPlain(
+          new OrdersResponse(toJsObject(paginator(orders, 0, orders.length))),
+        );
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -127,9 +147,9 @@ export class OrderService {
         product: e.product,
         quantity: e.quantity,
       }));
-      return order;
+      return classToPlain(new OrderDetailResponse(toJsObject(order)));
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -139,23 +159,24 @@ export class OrderService {
       if (!deletedOrder) throw new NotFoundException('Order is not exist');
       await this.orderProductModel.deleteMany({ order: orderId });
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
   async update(orderId: string, orderDTO: UpdateOrderDTO) {
     try {
-      const newOrder = await this.orderModel.findByIdAndUpdate(
-        orderId,
-        orderDTO,
-        { new: true },
-      );
+      const newOrder = await this.orderModel
+        .findByIdAndUpdate(orderId, orderDTO, { new: true })
+        .lean();
       if (!newOrder) throw new NotFoundException('Order is not exist');
       await this.orderProductModel.deleteMany({ order: orderId });
-      await this.addOrderProduct(orderId, orderDTO.products);
-      return newOrder;
+      newOrder['products'] = await this.addOrderProduct(
+        orderId,
+        orderDTO.products,
+      );
+      return classToPlain(new OrderDetailResponse(toJsObject(newOrder)));
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -166,9 +187,9 @@ export class OrderService {
         product: e.product,
         quantity: e.quantity,
       }));
-      await this.orderProductModel.insertMany(orderProducts);
+      return await this.orderProductModel.insertMany(orderProducts);
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 }
