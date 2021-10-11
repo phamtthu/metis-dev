@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, PaginateModel } from 'mongoose';
-import { throwSrvErr } from 'src/common/utils/error';
+import { errorException } from 'src/common/utils/error';
 import { ProductWorkCenter } from 'src/model/product-workcenter/product-workcenter.schema';
 
 @Injectable()
@@ -20,7 +20,7 @@ export class ProductWorkCenterService {
         throw new NotFoundException('Product Work Center is not exist');
       return productWC;
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 }

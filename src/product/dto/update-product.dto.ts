@@ -24,6 +24,7 @@ export class Part {
 }
 
 export class UpdateProductDTO extends PartialType(AddProductDTO) {
+  @IsOptional()
   @IsArray()
   @ArrayNotEmpty()
   @Type(() => Part)
