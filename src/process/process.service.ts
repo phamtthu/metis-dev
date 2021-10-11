@@ -4,16 +4,25 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { classToPlain } from 'class-transformer';
 import { Model, PaginateModel } from 'mongoose';
 import process from 'process';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { SortQuery } from 'src/common/enum/filter.enum';
-import { throwCanNotDeleteErr, throwSrvErr } from 'src/common/utils/error';
+import { throwCanNotDeleteErr, errorException } from 'src/common/utils/error';
 import { Process } from 'src/model/process/process.schema';
 import { Sequence } from 'src/model/sequence/sequence.schema';
-import { generateRandomCode, getNestedList } from 'src/shared/helper';
+import {
+  generateRandomCode,
+  getNestedList,
+  paginator,
+  toJsObject,
+} from 'src/shared/helper';
 import { AddProcessDTO } from './dto/add-process.dto';
 import { UpdateProcessDTO } from './dto/update-process.dto';
+import { ProcessDetailResponse } from './response/process-detail-response';
+import { ProcessResponse } from './response/process-response';
+import { ProcessesResponse } from './response/processes-response';
 
 @Injectable()
 export class ProcessService {
@@ -25,12 +34,13 @@ export class ProcessService {
   async create(processDTO: AddProcessDTO) {
     try {
       const codes = (await this.processModel.find()).map((e) => e.process_no);
-      return await new this.processModel({
+      const process = await new this.processModel({
         process_no: generateRandomCode(codes),
         ...processDTO,
       }).save();
+      return classToPlain(new ProcessResponse(toJsObject(process)));
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -58,13 +68,20 @@ export class ProcessService {
             docs: 'data',
           },
         };
-        return await this.processModel.paginate(query, options);
-      } else
-        return await this.processModel
+        const processes = await this.processModel.paginate(query, options);
+        return classToPlain(new ProcessesResponse(toJsObject(processes)));
+      } else {
+        const processes = await this.processModel
           .find(query)
           .sort({ created_at: SortQuery.Desc });
+        return classToPlain(
+          new ProcessesResponse(
+            toJsObject(paginator(processes, 0, processes.length)),
+          ),
+        );
+      }
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -78,9 +95,9 @@ export class ProcessService {
         .find({ process: processId })
         .lean();
       process['sequences'] = getNestedList(null, sequences);
-      return process;
+      return classToPlain(new ProcessDetailResponse(toJsObject(process)));
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -94,7 +111,7 @@ export class ProcessService {
         throwCanNotDeleteErr('Process', 'Sequence');
       await this.processModel.findByIdAndDelete(processId);
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -106,9 +123,9 @@ export class ProcessService {
         { new: true },
       );
       if (!process) throw new NotFoundException('Process is not exist');
-      return process;
+      return classToPlain(new ProcessResponse(toJsObject(process)));
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -118,7 +135,7 @@ export class ProcessService {
       if (!process) throw new NotFoundException('Process is not exist');
       return process;
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 }

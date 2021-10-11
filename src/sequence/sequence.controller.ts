@@ -11,7 +11,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { Controller, Get, Param } from '@nestjs/common';
-import { throwCntrllrErr } from 'src/common/utils/error';
+import { messageError } from 'src/common/utils/error';
 import { SequenceService } from './sequence.service';
 import { AddSequenceDTO } from './dto/add-sequence.dto';
 import { UpdateSequenceDTO } from './dto/update-sequence.dto';
@@ -37,7 +37,7 @@ export class SequenceController {
         data: result,
       };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -45,11 +45,9 @@ export class SequenceController {
   async getList(@Request() req, @Query() queryDto: PaginationQueryDto) {
     try {
       const result = await this.sequenceService.getList(queryDto);
-      return {
-        data: result,
-      };
+      return result;
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -57,9 +55,9 @@ export class SequenceController {
   async getDetail(@Request() req, @Param('sequenceId') sequenceId: string) {
     try {
       const result = await this.sequenceService.getDetail(sequenceId);
-      return { data: result };
+      return { result };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -71,7 +69,7 @@ export class SequenceController {
         message: 'Delete Sequence successfully',
       };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -88,7 +86,7 @@ export class SequenceController {
         dta: result,
       };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 }
