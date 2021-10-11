@@ -3,11 +3,16 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, PaginateModel } from 'mongoose';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { SortQuery } from 'src/common/enum/filter.enum';
-import { throwCanNotDeleteErr, throwSrvErr } from 'src/common/utils/error';
+import { throwCanNotDeleteErr, errorException } from 'src/common/utils/error';
 import { Task } from 'src/model/task/task.schema';
 import { TaskStatus } from 'src/model/task-status/task-status.schema';
 import { AddTaskStatusDTO } from './dto/add-task.dto';
 import { UpdateTaskStatusDTO } from './dto/update-task.dto';
+import { TaskStatusResponse } from './response/task-status-response';
+import { paginator, toJsObject } from 'src/shared/helper';
+import { classToPlain } from 'class-transformer';
+import { TaskStatusesResponse } from './response/task-statuses-response';
+import { TaskStatusDetailResponse } from './response/task-status-detail-response';
 
 @Injectable()
 export class TaskStatusService {
@@ -19,9 +24,10 @@ export class TaskStatusService {
 
   async create(taskStatusDTO: AddTaskStatusDTO) {
     try {
-      return await new this.taskStatusModel(taskStatusDTO).save();
+      const taskStatus = await new this.taskStatusModel(taskStatusDTO).save();
+      return classToPlain(new TaskStatusResponse(toJsObject(taskStatus)));
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -47,26 +53,38 @@ export class TaskStatusService {
             docs: 'data',
           },
         };
-        return await this.taskStatusModel.paginate(query, options);
-      } else
-        return await this.taskStatusModel
+        const taskStatuses = await this.taskStatusModel.paginate(
+          query,
+          options,
+        );
+        return classToPlain(new TaskStatusesResponse(toJsObject(taskStatuses)));
+      } else {
+        const taskStatuses = await this.taskStatusModel
           .find(query)
           .sort({ created_at: SortQuery.Desc });
+        return classToPlain(
+          new TaskStatusesResponse(
+            toJsObject(paginator(taskStatuses, 0, taskStatuses.length)),
+          ),
+        );
+      }
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
   async getDetail(taskStatusId: string) {
     try {
       await this.checkIsTaskStatusExist(taskStatusId);
-      const taskStatus = await this.taskStatusModel.findById(taskStatusId);
+      const taskStatus = await this.taskStatusModel
+        .findById(taskStatusId)
+        .lean();
       taskStatus['tasks'] = await this.taskModel.find({
         status: taskStatusId,
       });
-      return taskStatus;
+      return classToPlain(new TaskStatusDetailResponse(toJsObject(taskStatus)));
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -79,7 +97,7 @@ export class TaskStatusService {
       if (relatedTasks.length > 0) throwCanNotDeleteErr('Task Status', 'Task');
       await this.taskStatusModel.findByIdAndDelete(taskStatusId);
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -91,9 +109,9 @@ export class TaskStatusService {
         { new: true },
       );
       if (!taskStatus) throw new NotFoundException('Task Status is not exist');
-      return taskStatus;
+      return classToPlain(new TaskStatusResponse(toJsObject(taskStatus)));
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -105,7 +123,7 @@ export class TaskStatusService {
       if (!taskStatus) throw new NotFoundException('Task Status is not exist');
       return taskStatus;
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 }
