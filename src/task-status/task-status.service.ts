@@ -45,7 +45,7 @@ export class TaskStatusService {
           offset: queryDto.offset,
           limit: queryDto.limit,
           sort: { created_at: SortQuery.Desc },
-          customTaskStatuss: {
+          customLabels: {
             page: 'page',
             limit: 'per_page',
             totalDocs: 'total',
