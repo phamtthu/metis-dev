@@ -9,7 +9,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { Controller, Get, Param } from '@nestjs/common';
-import { throwCntrllrErr } from 'src/common/utils/error';
+import { messageError } from 'src/common/utils/error';
 import { PartService } from './part.service';
 import { AddPartDTO } from './dto/add-part.dto';
 import { UpdatePartDTO } from './dto/update-part.dto';
@@ -35,7 +35,7 @@ export class PartController {
         data: result,
       };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -43,9 +43,9 @@ export class PartController {
   async getList(@Request() req, @Query() queryDto: PaginationQueryDto) {
     try {
       const result = await this.partService.getList(queryDto);
-      return { data: result };
+      return result;
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -55,7 +55,7 @@ export class PartController {
       const result = await this.partService.getDetail(partId);
       return { data: result };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -67,7 +67,7 @@ export class PartController {
         message: 'Delete Part successfully',
       };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -84,7 +84,7 @@ export class PartController {
         data: result,
       };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 }
