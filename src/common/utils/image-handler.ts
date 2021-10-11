@@ -72,6 +72,7 @@ export const getNewImgLink = async (imgLink, folderName, serverURL) => {
 // Delete Img
 export const deleteImgPath = async (oldImgLink: string) => {
   try {
+    if (oldImgLink === null) return;
     const imgPath = `./public${new URL(oldImgLink).pathname}`;
     await fs.remove(imgPath);
   } catch (error) {

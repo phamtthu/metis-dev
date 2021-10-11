@@ -28,7 +28,6 @@ import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
     whitelist: true,
   }),
 )
-@UseInterceptors(ClassSerializerInterceptor)
 export class ResourceCategoryController {
   constructor(private rcategoryService: ResourceCategoryService) {}
 

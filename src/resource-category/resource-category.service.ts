@@ -15,6 +15,7 @@ import { ResourceCategoryResponse } from './response/resource-category-response'
 import { ResourceCategoriesResponse } from './response/resource-categories-response';
 import { ResourceCategoryDetailResponse } from './response/resource-category-detail-response';
 import { ResourceResponse } from 'src/resource/response/resource-response';
+import { ResourcesResponse } from 'src/resource/response/resources-response';
 
 @Injectable()
 export class ResourceCategoryService {
@@ -96,12 +97,10 @@ export class ResourceCategoryService {
             ),
           );
         } else {
-          return nestedCategories.map((category) =>
-            classToPlain(
-              new ResourceCategoryResponse(
-                toJsObject(
-                  paginator(nestedCategories, 0, nestedCategories.length),
-                ),
+          return classToPlain(
+            new ResourceCategoriesResponse(
+              toJsObject(
+                paginator(nestedCategories, 0, nestedCategories.length),
               ),
             ),
           );
@@ -198,8 +197,10 @@ export class ResourceCategoryService {
     const resources = await this.resourceModel.find({
       category: { $in: sub_categoriesID },
     });
-    return resources.map((resource) =>
-      classToPlain(new ResourceResponse(toJsObject(resource))),
+    return classToPlain(
+      new ResourcesResponse(
+        toJsObject(paginator(resources, 0, resources.length)),
+      ),
     );
   }
 

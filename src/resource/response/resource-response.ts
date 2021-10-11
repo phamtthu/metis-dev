@@ -16,6 +16,7 @@ export class ResourceResponse {
   status: number;
 
   @Expose()
+  @Type(() => ResourceCategoryResponse)
   category: string | ResourceCategoryResponse;
 
   @Expose()
