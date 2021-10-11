@@ -3,11 +3,15 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, PaginateModel } from 'mongoose';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { SortQuery } from 'src/common/enum/filter.enum';
-import { throwCanNotDeleteErr, throwSrvErr } from 'src/common/utils/error';
+import { throwCanNotDeleteErr, errorException } from 'src/common/utils/error';
 import { Skill } from 'src/model/skill/skill.schema';
 import { AddSkillDTO } from './dto/add-skill.dto';
 import { UpdateSkillDTO } from './dto/update-skill.dto';
 import { Task } from 'src/model/task/task.schema';
+import { SkillResponse } from './response/skill-response';
+import { classToPlain } from 'class-transformer';
+import { paginator, toJsObject } from 'src/shared/helper';
+import { SkillsResponse } from './response/skills-response';
 
 @Injectable()
 export class SkillService {
@@ -18,9 +22,10 @@ export class SkillService {
 
   async create(skillDTO: AddSkillDTO) {
     try {
-      return await new this.skillModel(skillDTO).save();
+      const skill = await new this.skillModel(skillDTO).save();
+      return classToPlain(new SkillResponse(toJsObject(skill)));
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -41,13 +46,18 @@ export class SkillService {
             docs: 'data',
           },
         };
-        return await this.skillModel.paginate(query, options);
-      } else
-        return await this.skillModel
+        const skills = await this.skillModel.paginate(query, options);
+        return classToPlain(new SkillsResponse(toJsObject(skills)));
+      } else {
+        const skills = await this.skillModel
           .find(query)
           .sort({ created_at: SortQuery.Desc });
+        return classToPlain(
+          new SkillsResponse(toJsObject(paginator(skills, 0, skills.length))),
+        );
+      }
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -55,9 +65,9 @@ export class SkillService {
     try {
       const skill = await this.checkIsSkillExist(skillId);
       skill['tasks'] = await this.taskModel.find({ skill: skillId });
-      return skill;
+      return classToPlain(new SkillResponse(toJsObject(skill)));
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -68,7 +78,7 @@ export class SkillService {
       if (relatedTasks.length > 0) throwCanNotDeleteErr('Skill', 'Task');
       await this.skillModel.findByIdAndDelete(skillId);
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -82,9 +92,9 @@ export class SkillService {
         },
       );
       if (!newSkill) throw new NotFoundException('Skill is not exist');
-      return newSkill;
+      return classToPlain(new SkillResponse(toJsObject(newSkill)));
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -94,7 +104,7 @@ export class SkillService {
       if (!skill) throw new NotFoundException('Skill is not exist');
       return skill;
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 }
