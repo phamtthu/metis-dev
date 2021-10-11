@@ -93,15 +93,13 @@ export class PartCategoryService {
             ),
           );
         } else {
-          return nestedCategories.map((category) =>
-            classToPlain(
-              new PartCategoriesResponse(
-                toJsObject(
-                  paginator(nestedCategories, 0, nestedCategories.length),
+            return classToPlain(
+                new PartCategoriesResponse(
+                  toJsObject(
+                    paginator(nestedCategories, 0, nestedCategories.length),
+                  ),
                 ),
-              ),
-            ),
-          );
+            )
         }
       }
     } catch (error) {
