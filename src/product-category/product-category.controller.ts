@@ -9,7 +9,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { Controller, Get, Param } from '@nestjs/common';
-import { throwCntrllrErr } from 'src/common/utils/error';
+import { messageError } from 'src/common/utils/error';
 import { AddPCategoryDTO } from './dto/add-product-category.dto';
 import { ProductCategoryService } from './product-category.service';
 import { getOriginURL } from 'src/shared/helper';
@@ -40,7 +40,7 @@ export class ProductCategoryController {
         data: result,
       };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -48,9 +48,9 @@ export class ProductCategoryController {
   async getList(@Request() req, @Query() queryDto: PaginationQueryDto) {
     try {
       const result = await this.pcategoryService.getList(queryDto);
-      return { data: result };
+      return result;
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -60,7 +60,7 @@ export class ProductCategoryController {
       const result = await this.pcategoryService.getDetail(categoryId);
       return { data: result };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -72,7 +72,7 @@ export class ProductCategoryController {
         message: 'Delete Product Category successfully',
       };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -94,7 +94,7 @@ export class ProductCategoryController {
         data: result,
       };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 
@@ -109,7 +109,7 @@ export class ProductCategoryController {
       );
       return { data: result };
     } catch (error) {
-      throwCntrllrErr(error);
+      messageError(error);
     }
   }
 }

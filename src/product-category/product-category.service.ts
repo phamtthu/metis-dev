@@ -1,15 +1,20 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { classToPlain } from 'class-transformer';
 import { Model, PaginateModel } from 'mongoose';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { SortQuery } from 'src/common/enum/filter.enum';
-import { throwCanNotDeleteErr, throwSrvErr } from 'src/common/utils/error';
+import { throwCanNotDeleteErr, errorException } from 'src/common/utils/error';
 import { deleteImgPath, getNewImgLink } from 'src/common/utils/image-handler';
 import { ProductCategory } from 'src/model/product-category/product-category.schema';
 import { Product } from 'src/order/dto/add-order.dto';
-import { getNestedList, paginator } from 'src/shared/helper';
+import { ProductsResponse } from 'src/product/response/products-response';
+import { getNestedList, paginator, toJsObject } from 'src/shared/helper';
 import { AddPCategoryDTO } from './dto/add-product-category.dto';
 import { UpdatePCategoryRDTO } from './dto/update-product-category.dto';
+import { ProductCategoriesResponse } from './response/product-categories-response';
+import { ProductCategoryDetailResponse } from './response/product-category-detail-response';
+import { ProductCategoryResponse } from './response/product-category-response';
 
 @Injectable()
 export class ProductCategoryService {
@@ -27,9 +32,10 @@ export class ProductCategoryService {
         'product-category',
         originURL,
       );
-      return await new this.productCategoryModel(pCategoryDTO).save();
+      const category = await new this.productCategoryModel(pCategoryDTO).save();
+      return classToPlain(new ProductCategoryResponse(toJsObject(category)));
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -56,14 +62,22 @@ export class ProductCategoryService {
           },
         };
         if (queryDto.offset >= 0 && queryDto.limit >= 0) {
-          return await this.productCategoryModel.paginate(
+          const categories = await this.productCategoryModel.paginate(
             query,
             paginationOptions,
           );
+          return classToPlain(
+            new ProductCategoriesResponse(toJsObject(categories)),
+          );
         } else {
-          return await this.productCategoryModel
+          const categories = await this.productCategoryModel
             .find(query)
             .sort({ created_at: SortQuery.Desc });
+          return classToPlain(
+            new ProductCategoriesResponse(
+              toJsObject(paginator(categories, 0, categories.length)),
+            ),
+          );
         }
       } else {
         const categories = await this.productCategoryModel
@@ -72,13 +86,25 @@ export class ProductCategoryService {
           .lean();
         const nestedCategories = getNestedList(null, categories);
         if (queryDto.offset >= 0 && queryDto.limit >= 0) {
-          return paginator(nestedCategories, queryDto.offset, queryDto.limit);
+          return classToPlain(
+            new ProductCategoriesResponse(
+              toJsObject(
+                paginator(nestedCategories, queryDto.offset, queryDto.limit),
+              ),
+            ),
+          );
         } else {
-          return nestedCategories;
+          return classToPlain(
+            new ProductCategoriesResponse(
+              toJsObject(
+                paginator(nestedCategories, 0, nestedCategories.length),
+              ),
+            ),
+          );
         }
       }
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -97,9 +123,11 @@ export class ProductCategoryService {
       );
       theCategory['sub_categoriesID'] = rootAndsubCategories.map((e) => e._id);
       theCategory['children'] = getNestedList(categoryId, categories);
-      return theCategory;
+      return classToPlain(
+        new ProductCategoryDetailResponse(toJsObject(theCategory)),
+      );
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -114,7 +142,7 @@ export class ProductCategoryService {
         arr.flatMap(({ children, ...o }) => [o, ...flatten(children)]);
       return flatten([theCategory]);
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -137,7 +165,7 @@ export class ProductCategoryService {
       );
       if (deletedRCategory.image) await deleteImgPath(deletedRCategory.image);
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -153,13 +181,15 @@ export class ProductCategoryService {
         'product-category',
         originURL,
       );
-      await deleteImgPath(beforeUpdate.image);
-      return await this.productCategoryModel.findByIdAndUpdate(
+      const newCategory = await this.productCategoryModel.findByIdAndUpdate(
         categoryId,
         pCategoryDTO,
+        { new: true },
       );
+      await deleteImgPath(beforeUpdate.image);
+      return classToPlain(new ProductCategoryResponse(toJsObject(newCategory)));
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -167,11 +197,16 @@ export class ProductCategoryService {
     try {
       let { sub_categoriesID }: any = await this.getDetail(categoryId);
       sub_categoriesID = sub_categoriesID.map((e) => String(e));
-      return await this.productModel.find({
+      const products = await this.productModel.find({
         category: { $in: sub_categoriesID },
       });
+      return classToPlain(
+        new ProductsResponse(
+          toJsObject(paginator(products, 0, products.length)),
+        ),
+      );
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -184,7 +219,7 @@ export class ProductCategoryService {
         throw new NotFoundException('Product Category is not exist');
       return productCategory;
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 }

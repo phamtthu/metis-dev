@@ -1,15 +1,20 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { classToPlain } from 'class-transformer';
 import { Model, PaginateModel } from 'mongoose';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { SortQuery } from 'src/common/enum/filter.enum';
-import { throwCanNotDeleteErr, throwSrvErr } from 'src/common/utils/error';
+import { throwCanNotDeleteErr, errorException } from 'src/common/utils/error';
 import { deleteImgPath, getNewImgLink } from 'src/common/utils/image-handler';
 import { PartCategory } from 'src/model/part-category/part-category.schema';
 import { Part } from 'src/model/part/part.schema';
-import { getNestedList, paginator } from 'src/shared/helper';
+import { PartsResponse } from 'src/part/response/parts-response';
+import { getNestedList, paginator, toJsObject } from 'src/shared/helper';
 import { AddPCategoryDTO } from './dto/add-part-category.dto';
 import { UpdatePCategoryRDTO } from './dto/update-part-category.dto';
+import { PartCategoriesResponse } from './response/part-categories-response';
+import { PartCategoryDetailResponse } from './response/part-category-detail-response';
+import { PartCategoryResponse } from './response/part-category-response';
 
 @Injectable()
 export class PartCategoryService {
@@ -26,9 +31,10 @@ export class PartCategoryService {
         'part-category',
         originURL,
       );
-      return await new this.partCategoryModel(pCategoryDTO).save();
+      const category = await new this.partCategoryModel(pCategoryDTO).save();
+      return classToPlain(new PartCategoryResponse(toJsObject(category)));
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -55,14 +61,22 @@ export class PartCategoryService {
           },
         };
         if (queryDto.offset >= 0 && queryDto.limit >= 0) {
-          return await this.partCategoryModel.paginate(
+          const categories = await this.partCategoryModel.paginate(
             query,
             paginationOptions,
           );
+          return classToPlain(
+            new PartCategoriesResponse(toJsObject(categories)),
+          );
         } else {
-          return await this.partCategoryModel
+          const categories = await this.partCategoryModel
             .find(query)
             .sort({ created_at: SortQuery.Desc });
+          return classToPlain(
+            new PartCategoriesResponse(
+              toJsObject(paginator(categories, 0, categories.length)),
+            ),
+          );
         }
       } else {
         const categories = await this.partCategoryModel
@@ -71,13 +85,27 @@ export class PartCategoryService {
           .lean();
         const nestedCategories = getNestedList(null, categories);
         if (queryDto.offset >= 0 && queryDto.limit >= 0) {
-          return paginator(nestedCategories, queryDto.offset, queryDto.limit);
+          return classToPlain(
+            new PartCategoriesResponse(
+              toJsObject(
+                paginator(nestedCategories, queryDto.offset, queryDto.limit),
+              ),
+            ),
+          );
         } else {
-          return nestedCategories;
+          return nestedCategories.map((category) =>
+            classToPlain(
+              new PartCategoriesResponse(
+                toJsObject(
+                  paginator(nestedCategories, 0, nestedCategories.length),
+                ),
+              ),
+            ),
+          );
         }
       }
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -94,9 +122,11 @@ export class PartCategoryService {
       );
       theCategory['sub_categoriesID'] = rootAndsubCategories.map((e) => e._id);
       theCategory['children'] = getNestedList(categoryId, categories);
-      return theCategory;
+      return classToPlain(
+        new PartCategoryDetailResponse(toJsObject(theCategory)),
+      );
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -111,7 +141,7 @@ export class PartCategoryService {
         arr.flatMap(({ children, ...o }) => [o, ...flatten(children)]);
       return flatten([theCategory]);
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -131,7 +161,7 @@ export class PartCategoryService {
       );
       if (deletedCategory.image) await deleteImgPath(deletedCategory.image);
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -147,14 +177,17 @@ export class PartCategoryService {
         'part-category',
         originURL,
       );
-      await deleteImgPath(beforeUpdate.image);
-      return await this.partCategoryModel.findByIdAndUpdate(
+      const newPartCategory = await this.partCategoryModel.findByIdAndUpdate(
         categoryId,
         pCategoryDTO,
         { new: true },
       );
+      await deleteImgPath(beforeUpdate.image);
+      return classToPlain(
+        new PartCategoryResponse(toJsObject(newPartCategory)),
+      );
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -162,11 +195,14 @@ export class PartCategoryService {
     try {
       let { sub_categoriesID }: any = await this.getDetail(categoryId);
       sub_categoriesID = sub_categoriesID.map((e) => String(e));
-      return await this.partModel.find({
+      const parts = await this.partModel.find({
         category: { $in: sub_categoriesID },
       });
+      return classToPlain(
+        new PartsResponse(toJsObject(paginator(parts, 0, parts.length))),
+      );
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 
@@ -176,7 +212,7 @@ export class PartCategoryService {
       if (!category) throw new NotFoundException('Part Category is not exist');
       return category;
     } catch (error) {
-      throwSrvErr(error);
+      errorException(error);
     }
   }
 }
