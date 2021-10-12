@@ -96,7 +96,6 @@ export class WorkCenterController {
     }
   }
 
-  // Add Resource, User to WC
   @Put('product/:workCenterId')
   async updateProductWorkCenter(
     @Request() req,
