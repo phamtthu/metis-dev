@@ -34,13 +34,13 @@ export class AuthController {
 
   @UseGuards(AuthGuard('local'))
   @Post('/login')
-  async login(@Request() req, @Response() res) {
+  async login(@Request() req) {
     try {
       const result = this.authService.login(req.user);
-      return res.status(HttpStatus.OK).json({
+      return {
         message: `Login successfully`,
         data: result,
-      });
+      };
     } catch (error) {
       messageError(error);
     }

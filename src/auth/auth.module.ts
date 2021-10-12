@@ -6,6 +6,8 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { UserModule } from '../user/user.module';
+import { ProductWorkCenterDatabaseModule } from 'src/model/product-workcenter/product-workcenter-database.module';
+import { ProductWorkCenterModule } from 'src/product-workcenter/product-workcenter.module';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 require('dotenv').config();
@@ -20,6 +22,7 @@ require('dotenv').config();
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: process.env.TIME_EXPIRE },
     }),
+    ProductWorkCenterModule
   ],
   providers: [AuthService, LocalStrategy, JwtStrategy],
   controllers: [AuthController],

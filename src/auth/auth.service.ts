@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { errorException } from 'src/common/utils/error';
 import { User } from 'src/model/user/user.shema';
+import { ProductWorkCenterService } from 'src/product-workcenter/product-workcenter.service';
 import { bcryptPassword } from 'src/shared/helper';
 import { UserService } from '../user/user.service';
 
@@ -13,6 +14,7 @@ export class AuthService {
   constructor(
     private userService: UserService,
     private jwtService: JwtService,
+    private productWCService: ProductWorkCenterService,
   ) {}
 
   async adminRegister(admin) {
@@ -54,6 +56,14 @@ export class AuthService {
   async findUserById(userId: string) {
     try {
       return await this.userService.findUserById(userId);
+    } catch (e) {
+      errorException(e);
+    }
+  }
+
+  async checkBoardMember(boardId: string, userId: string) {
+    try {
+      return await this.productWCService.checkBoardMember(boardId, userId);
     } catch (e) {
       errorException(e);
     }
