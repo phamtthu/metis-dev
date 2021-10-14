@@ -104,7 +104,7 @@ export class WorkCenterService {
 
   async getDetail(workCenterId: string) {
     try {
-      const workCenter = await this.checkIsWorkCenterExist(workCenterId);
+      const workCenter = await this.checkWorkCenterExist(workCenterId);
       const wcResources = await this.wcResourceModel
         .find({ workcenter: workCenterId })
         .populate('resource');
@@ -142,7 +142,7 @@ export class WorkCenterService {
 
   async update(workCenterId: string, workCenterDTO: UpdateWorkCenterDTO) {
     try {
-      await this.checkIsWorkCenterExist(workCenterId);
+      await this.checkWorkCenterExist(workCenterId);
       // Add Resource to Work Center
       if (Array.isArray(workCenterDTO.resources)) {
         await this.wcResourceModel.deleteMany({
