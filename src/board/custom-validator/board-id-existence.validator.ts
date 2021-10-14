@@ -6,9 +6,9 @@ import {
 } from 'class-validator';
 import { BoardService } from '../board.service';
 
-@ValidatorConstraint({ name: 'BoardIDExistenceValidator', async: true })
+@ValidatorConstraint({ name: 'BoardExistValdator', async: true })
 @Injectable()
-export class BoardIDExistenceValidator implements ValidatorConstraintInterface {
+export class BoardExistValdator implements ValidatorConstraintInterface {
   constructor(private taskStatusService: BoardService) {}
 
   async validate(id: string, args: ValidationArguments) {

@@ -8,7 +8,7 @@ import { TaskDatabaseModule } from 'src/model/task/task-database.module';
 import { TaskGroupDatabaseModule } from 'src/model/task_group/task-group-database.module';
 import { BoardController } from './board.controller';
 import { BoardService } from './board.service';
-import { BoardIDExistenceValidator } from './custom-validator/board-id-existence.validator';
+import { BoardExistValdator } from './custom-validator/board-id-existence.validator';
 
 @Module({
   imports: [
@@ -18,10 +18,10 @@ import { BoardIDExistenceValidator } from './custom-validator/board-id-existence
     TaskGroupDatabaseModule,
     TaskUserDatabaseModule,
     LabelDatabaseModule,
-    TaskChecklistDatabaseModule
+    TaskChecklistDatabaseModule,
   ],
   controllers: [BoardController],
-  providers: [BoardService, BoardIDExistenceValidator],
+  providers: [BoardService, BoardExistValdator],
   exports: [BoardService],
 })
 export class BoardModule {}

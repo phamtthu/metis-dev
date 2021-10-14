@@ -188,8 +188,8 @@ export class WorkCenterService {
     productWorkCenterDTO: UpdateProductWorkCenterDTO,
   ) {
     try {
-      const workcenter = await this.checkIsWorkCenterExist(workCenterId);
-      const product = await this.checkIsProductExist(
+      const workcenter = await this.checkWorkCenterExist(workCenterId);
+      const product = await this.checkProductExist(
         productWorkCenterDTO.product,
       );
 
@@ -222,7 +222,7 @@ export class WorkCenterService {
     }
   }
 
-  async checkIsWorkCenterExist(workCenterId: string) {
+  async checkWorkCenterExist(workCenterId: string) {
     try {
       const workCenter = await this.workCenterModel
         .findById(workCenterId)
@@ -234,7 +234,7 @@ export class WorkCenterService {
     }
   }
 
-  async checkIsProductExist(productId: string) {
+  async checkProductExist(productId: string) {
     try {
       const product = await this.productModel.findById(productId).lean();
       if (!product) throw new NotFoundException('Product is not exist');

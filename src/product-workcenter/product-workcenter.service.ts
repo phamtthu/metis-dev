@@ -18,7 +18,7 @@ export class ProductWorkCenterService {
     private boardModel: Model<Board>,
   ) {}
 
-  async findProductWCById(productWCId: string) {
+  async findById(productWCId: string) {
     try {
       const productWC = await this.productWorkcenterModel
         .findById(productWCId)
@@ -33,7 +33,7 @@ export class ProductWorkCenterService {
 
   async checkBoardMember(boardId: string, userId: string) {
     try {
-      const board = await this.boardModel.findById(boardId);
+      const board = await this.boardModel.findById(boardId).lean();
       if (!board) throw new NotFoundException('Board is not exist');
       const productWC = await this.productWorkcenterModel.findOne({
         board: boardId,
