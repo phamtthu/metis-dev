@@ -8,7 +8,7 @@ export class Board extends mongoose.Document {
   name: string;
 
   @Prop({ default: null })
-  cover_background: String;
+  cover_background: string;
 }
 
 export const BoardSchema = SchemaFactory.createForClass(Board);
