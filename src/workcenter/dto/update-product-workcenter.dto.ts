@@ -20,7 +20,6 @@ import { ResourceIDsExistenceValidator } from 'src/resource/custom-validator/res
 import { UserIDsExistenceValidator } from 'src/user/custom-validator/user-ids.validator';
 
 export class UpdateProductWorkCenterDTO {
-  @IsOptional()
   @IsMongoId()
   @IsNotEmpty()
   @Validate(ProductIDExistenceValidator)

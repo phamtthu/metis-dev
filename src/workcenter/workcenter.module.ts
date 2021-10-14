@@ -8,6 +8,8 @@ import { WorkCenterService } from './workcenter.service';
 import { WorkCenterUserDatabaseModule } from 'src/model/workcenter-user/workcenter-user-database.module';
 import { WorkCenterResourceDatabaseModule } from 'src/model/workcenter-resource/workcenter-resource-database.module';
 import { ProductWorkCenterDatabaseModule } from 'src/model/product-workcenter/product-workcenter-database.module';
+import { ProductDatabaseModule } from 'src/model/product/product-database.module';
+import { BoardDatabaseModule } from 'src/model/board/board-database.module';
 
 @Module({
   imports: [
@@ -17,6 +19,8 @@ import { ProductWorkCenterDatabaseModule } from 'src/model/product-workcenter/pr
     WorkCenterUserDatabaseModule,
     WorkCenterResourceDatabaseModule,
     ProductWorkCenterDatabaseModule,
+    ProductDatabaseModule,
+    BoardDatabaseModule,
   ],
   controllers: [WorkCenterController],
   providers: [WorkCenterService, WorkCenterIDExistenceValidator],

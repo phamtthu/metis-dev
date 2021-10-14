@@ -25,6 +25,8 @@ import { WorkCenterDetailResponse } from './response/workcenter-detail-response'
 import { WorkCenterResourceResponse } from './response/workcenter-resource-response';
 import { WorkCenterUserResponse } from './response/workcenter-user-response';
 import { ProductWorkCenterResponse } from 'src/product-workcenter/response/product-workcenter-response';
+import { Product } from 'src/model/product/product.schema';
+import { Board } from 'src/model/board/board-schema';
 
 @Injectable()
 export class WorkCenterService {
@@ -39,6 +41,10 @@ export class WorkCenterService {
     private wcUserModel: PaginateModel<WorkCenterUser>,
     @InjectModel('Product_WorkCenter')
     private productWorkCenterModel: Model<ProductWorkCenter>,
+    @InjectModel('Product')
+    private productModel: Model<Product>,
+    @InjectModel('Board')
+    private boardModel: Model<Board>,
   ) {}
 
   async create(workCenterDTO: AddWorkCenterDTO) {
@@ -98,7 +104,7 @@ export class WorkCenterService {
 
   async getDetail(workCenterId: string) {
     try {
-      const workCenter = await this.checkIsWorkCenterExist(workCenterId);
+      const workCenter = await this.checkWorkCenterExist(workCenterId);
       const wcResources = await this.wcResourceModel
         .find({ workcenter: workCenterId })
         .populate('resource');
@@ -136,7 +142,7 @@ export class WorkCenterService {
 
   async update(workCenterId: string, workCenterDTO: UpdateWorkCenterDTO) {
     try {
-      await this.checkIsWorkCenterExist(workCenterId);
+      await this.checkWorkCenterExist(workCenterId);
       // Add Resource to Work Center
       if (Array.isArray(workCenterDTO.resources)) {
         await this.wcResourceModel.deleteMany({
@@ -182,30 +188,57 @@ export class WorkCenterService {
     productWorkCenterDTO: UpdateProductWorkCenterDTO,
   ) {
     try {
-      await this.checkIsWorkCenterExist(workCenterId);
+      const workcenter = await this.checkWorkCenterExist(workCenterId);
+      const product = await this.checkProductExist(
+        productWorkCenterDTO.product,
+      );
+
       const productWorkCenter =
         await this.productWorkCenterModel.findOneAndUpdate(
-          { workcenter: workCenterId },
+          { workcenter: workCenterId, product: productWorkCenterDTO.product },
           { workcenter: workCenterId, ...productWorkCenterDTO },
-          { new: true, upsert: true, setDefaultsOnInsert: true },
+          {
+            new: true,
+            upsert: true,
+            setDefaultsOnInsert: true,
+            rawResult: true,
+          },
         );
       if (!productWorkCenter)
-        throw new NotFoundException('Product Work Center is not exist');
+        throw new Error('Can not update Product WorkCenter');
+      if (productWorkCenter.lastErrorObject.updatedExisting === false) {
+        const boardName = `Board for ${workcenter.name} - ${product.name}`;
+        const board = await this.boardModel.create({ name: boardName });
+        await this.productWorkCenterModel.findByIdAndUpdate(
+          productWorkCenter.value._id,
+          { board: board._id },
+        );
+      }
       return classToPlain(
-        new ProductWorkCenterResponse(toJsObject(productWorkCenter)),
+        new ProductWorkCenterResponse(toJsObject(productWorkCenter.value)),
       );
     } catch (error) {
       errorException(error);
     }
   }
 
-  async checkIsWorkCenterExist(workCenterId: string) {
+  async checkWorkCenterExist(workCenterId: string) {
     try {
       const workCenter = await this.workCenterModel
         .findById(workCenterId)
         .lean();
       if (!workCenter) throw new NotFoundException('WorkCenter is not exist');
       return workCenter;
+    } catch (error) {
+      errorException(error);
+    }
+  }
+
+  async checkProductExist(productId: string) {
+    try {
+      const product = await this.productModel.findById(productId).lean();
+      if (!product) throw new NotFoundException('Product is not exist');
+      return product;
     } catch (error) {
       errorException(error);
     }

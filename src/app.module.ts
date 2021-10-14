@@ -26,6 +26,7 @@ import { PartModule } from './part/part.module';
 import { PartCategoryModule } from './part-category/part-category.module';
 import { TaskStatusModule } from './task-status/task-status.module';
 import { ProductWorkCenterModule } from './product-workcenter/product-workcenter.module';
+import { BoardModule } from './board/board.module';
 
 @Module({
   imports: [
@@ -55,7 +56,9 @@ import { ProductWorkCenterModule } from './product-workcenter/product-workcenter
     PartCategoryModule,
     TaskStatusModule,
     LabelModule,
-    ProductWorkCenterModule
+    ProductWorkCenterModule,
+
+    BoardModule
   ],
   controllers: [AppController],
   providers: [AppService, CronService],

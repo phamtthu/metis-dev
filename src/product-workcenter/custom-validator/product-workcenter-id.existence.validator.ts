@@ -18,7 +18,7 @@ export class ProductWorkCenterIDExistenceValidator
 
   async validate(id: string, args: ValidationArguments) {
     try {
-      const result = await this.productWorkCenterService.findProductWCById(id);
+      const result = await this.productWorkCenterService.findById(id);
       if (result) return true;
       else return false;
     } catch (error) {
