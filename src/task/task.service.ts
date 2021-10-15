@@ -86,7 +86,7 @@ export class TaskService {
   async getDeletedList(boardId: string) {
     try {
       const deletedTasks = await this.taskModel.findDeleted();
-      const deletedTasksOfGivenBoard = deletedTasks.map(
+      const deletedTasksOfGivenBoard = deletedTasks.filter(
         (task) => boardId === String(task.board),
       );
       return classToPlain(
