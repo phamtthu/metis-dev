@@ -162,3 +162,5 @@ export const bcryptPassword = async (password) => {
     errorException(e);
   }
 };
+
+export const overrideMethods = ['find', 'updateMany', 'aggregate'];
