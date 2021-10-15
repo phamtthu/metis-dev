@@ -27,7 +27,6 @@ export class TaskUserResponse {
   @Expose()
   updated_at: Date;
 
-  // Exclude
   __v: number;
 
   constructor(partial: Partial<TaskUserResponse>) {
