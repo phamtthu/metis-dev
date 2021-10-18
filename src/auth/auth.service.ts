@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { errorException } from 'src/common/utils/error';
+import { LabelService } from 'src/label/label.service';
 import { User } from 'src/model/user/user.shema';
 import { ProductWorkCenterService } from 'src/product-workcenter/product-workcenter.service';
 import { bcryptPassword } from 'src/shared/helper';
@@ -21,6 +22,7 @@ export class AuthService {
     private taskService: TaskService,
     private taskChecklistService: TaskChecklistService,
     private taskGroupService: TaskGroupService,
+    private labelService: LabelService,
   ) {}
 
   async adminRegister(admin) {
@@ -96,6 +98,14 @@ export class AuthService {
   async findTaskGroupById(taskGroupId: string) {
     try {
       return await this.taskGroupService.findTaskGroupById(taskGroupId);
+    } catch (error) {
+      errorException(error);
+    }
+  }
+
+  async findLabelById(labelId: string) {
+    try {
+      return await this.labelService.checkLabelExist(labelId);
     } catch (error) {
       errorException(error);
     }

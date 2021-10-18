@@ -10,6 +10,12 @@ export class LabelResponse {
   name: string;
 
   @Expose()
+  code: string;
+
+  @Expose()
+  board: string;
+
+  @Expose()
   created_at: Date;
 
   @Expose()

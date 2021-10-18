@@ -18,6 +18,7 @@ export class BoardMemberGuard implements CanActivate {
       let task;
       let taskChecklist;
       let taskGroup;
+      let label;
       switch (true) {
         case request.params.boardId != null:
           boardId = request.params.boardId;
@@ -44,6 +45,12 @@ export class BoardMemberGuard implements CanActivate {
             request.params.taskGroupId,
           );
           boardId = taskGroup.board;
+          break;
+        case request.params.labelId != null:
+          const label = await this.authService.findLabelById(
+            request.params.labelId,
+          );
+          boardId = label.board;
           break;
         default:
           throw new Error('Can not find Board');

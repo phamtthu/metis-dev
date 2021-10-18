@@ -5,15 +5,17 @@ import {
   Put,
   Query,
   Request,
+  UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
 import { Controller, Get, Param } from '@nestjs/common';
 import { messageError } from 'src/common/utils/error';
-import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { LabelService } from './label.service';
 import { AddLabelDTO } from './dto/add-label.dto';
 import { UpdateLabelDTO } from './dto/update-label.dto';
+import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { BoardMemberGuard } from 'src/auth/guard/board-members.guard';
 
 @Controller('api/label')
 @UsePipes(
@@ -23,6 +25,7 @@ import { UpdateLabelDTO } from './dto/update-label.dto';
     whitelist: true,
   }),
 )
+@UseGuards(JwtAuthGuard, BoardMemberGuard)
 export class LabelController {
   constructor(private labelService: LabelService) {}
 
@@ -39,23 +42,11 @@ export class LabelController {
     }
   }
 
-  @Get()
-  async getList(@Request() req, @Query() queryDto: PaginationQueryDto) {
+  @Get('/board/:boardId')
+  async getList(@Param('boardId') boardId: string) {
     try {
-      const result = await this.labelService.getList(queryDto);
+      const result = await this.labelService.getList(boardId);
       return result;
-    } catch (error) {
-      messageError(error);
-    }
-  }
-
-  @Get('/:labelId')
-  async getDetail(@Request() req, @Param('labelId') labelId: string) {
-    try {
-      const result = await this.labelService.getDetail(labelId);
-      return {
-        data: result,
-      };
     } catch (error) {
       messageError(error);
     }
