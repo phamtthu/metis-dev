@@ -6,11 +6,9 @@ import {
 } from 'class-validator';
 import { TaskStatusService } from '../task-status.service';
 
-@ValidatorConstraint({ name: 'TaskStatusIDExistenceValidator', async: true })
+@ValidatorConstraint({ name: 'TaskStatusExistValidator', async: true })
 @Injectable()
-export class TaskStatusIDExistenceValidator
-  implements ValidatorConstraintInterface
-{
+export class TaskStatusExistValidator implements ValidatorConstraintInterface {
   constructor(private taskStatusService: TaskStatusService) {}
 
   async validate(id: string, args: ValidationArguments) {

@@ -60,11 +60,27 @@ export class TaskStatusController {
   }
 
   @Delete('/:taskStatusId')
-  async delete(@Request() req, @Param('taskStatusId') taskStatusId: string) {
+  async softDelete(
+    @Request() req,
+    @Param('taskStatusId') taskStatusId: string,
+  ) {
     try {
-      await this.taskStatusService.delete(taskStatusId);
+      await this.taskStatusService.softDelete(taskStatusId);
       return {
-        message: 'Delete Task Status successfully',
+        message: 'Soft Delete Task Status successfully',
+      };
+    } catch (error) {
+      messageError(error);
+    }
+  }
+
+  @Get('restore/:taskStatusId')
+  async restore(@Request() req, @Param('taskStatusId') taskStatusId: string) {
+    try {
+      const result = await this.taskStatusService.restore(taskStatusId);
+      return {
+        message: 'Restore Task Status successfully',
+        data: result,
       };
     } catch (error) {
       messageError(error);

@@ -57,7 +57,7 @@ export const getNewImgLink = async (imgLink, folderName, serverURL) => {
       const response = await fetch(imgLink);
       const buffer = await response.buffer();
       let fileName = imgLink.split('/')[imgLink.split('/').length - 1];
-      fileName = fileName.trim().replace(/[^a-z0-9]+/gi, '-');
+      fileName = fileName.trim().replace(/[^a-z0-9.]+/gi, '-');
       const path = `./public/upload/${folderName}/${nanoid(10)}-${fileName}`;
       await fs.ensureFile(path);
       await fs.writeFile(path, buffer);

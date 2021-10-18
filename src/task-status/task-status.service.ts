@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, PaginateModel } from 'mongoose';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
@@ -13,13 +17,20 @@ import { paginator, toJsObject } from 'src/shared/helper';
 import { classToPlain } from 'class-transformer';
 import { TaskStatusesResponse } from './response/task-statuses-response';
 import { TaskStatusDetailResponse } from './response/task-status-detail-response';
+import { SoftDeleteModel } from 'mongoose-delete';
+import { TaskGroup } from 'src/model/task_group/task-group.schema';
 
 @Injectable()
 export class TaskStatusService {
   constructor(
     @InjectModel('Task_Status')
-    private taskStatusModel: PaginateModel<TaskStatus>,
-    @InjectModel('Task') private taskModel: PaginateModel<Task>,
+    private taskStatusModel: SoftDeleteModel<TaskStatus> &
+      PaginateModel<TaskStatus>,
+    @InjectModel('Task')
+    private taskModel: PaginateModel<Task>,
+    @InjectModel('Task_Group')
+    private taskGroupModel: PaginateModel<TaskGroup> &
+      SoftDeleteModel<TaskGroup>,
   ) {}
 
   async create(taskStatusDTO: AddTaskStatusDTO) {
@@ -88,14 +99,29 @@ export class TaskStatusService {
     }
   }
 
-  async delete(taskStatusId: string) {
+  async softDelete(taskStatusId: string) {
     try {
-      await this.checkIsTaskStatusExist(taskStatusId);
-      const relatedTasks = await this.taskModel.find({
+      const taskGroups = await this.taskGroupModel.find({
         status: taskStatusId,
       });
-      if (relatedTasks.length > 0) throwCanNotDeleteErr('Task Status', 'Task');
-      await this.taskStatusModel.findByIdAndDelete(taskStatusId);
+      if (taskGroups.length > 0)
+        throwCanNotDeleteErr('Task Status', 'Task Group');
+      const { n } = await this.taskStatusModel.deleteById(taskStatusId);
+      if (n !== 1) throw new Error('Can not soft delete Task');
+    } catch (error) {
+      errorException(error);
+    }
+  }
+
+  async restore(taskStatusId: string) {
+    try {
+      let taskStatus: any = await this.taskStatusModel.findById(taskStatusId);
+      if (!taskStatus.deleted)
+        throw new BadRequestException('Task Group is already restored');
+      const { n } = await this.taskStatusModel.restore({ _id: taskStatusId });
+      if (n !== 1) throw new Error('Can not restore Task');
+      taskStatus = await this.taskStatusModel.findById(taskStatusId);
+      return classToPlain(new TaskStatusResponse(toJsObject(taskStatus)));
     } catch (error) {
       errorException(error);
     }
