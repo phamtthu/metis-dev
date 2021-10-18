@@ -11,6 +11,7 @@ import { ProductWorkCenterModule } from 'src/product-workcenter/product-workcent
 import { TaskModule } from 'src/task/task.module';
 import { TaskChecklistModule } from 'src/task-checklist/task-checklist.module';
 import { TaskGroupModule } from 'src/task-group/task-group.module';
+import { LabelModule } from 'src/label/label.module';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 require('dotenv').config();
@@ -28,7 +29,8 @@ require('dotenv').config();
     ProductWorkCenterModule,
     TaskModule,
     TaskChecklistModule,
-    TaskGroupModule
+    TaskGroupModule,
+    LabelModule
   ],
   providers: [AuthService, LocalStrategy, JwtStrategy],
   controllers: [AuthController],

@@ -2,8 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { classToPlain } from 'class-transformer';
 import { Model, PaginateModel } from 'mongoose';
-import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
-import { SortQuery } from 'src/common/enum/filter.enum';
+import { SoftDeleteModel } from 'mongoose-delete';
 import { throwCanNotDeleteErr, errorException } from 'src/common/utils/error';
 import { Label } from 'src/model/label/label.schema';
 import { Task } from 'src/model/task/task.schema';
@@ -16,7 +15,7 @@ import { LabelsResponse } from './response/labels-response';
 @Injectable()
 export class LabelService {
   constructor(
-    @InjectModel('Label') private labelModel: PaginateModel<Label>,
+    @InjectModel('Label') private labelModel: SoftDeleteModel<Label>,
     @InjectModel('Task') private taskModel: PaginateModel<Task>,
   ) {}
 
@@ -29,43 +28,13 @@ export class LabelService {
     }
   }
 
-  async getList(queryDto: PaginationQueryDto) {
+  // Get List Label from given Board
+  async getList(boardId: string) {
     try {
-      const searchRegex = new RegExp(queryDto.search, 'i');
-      const query = { name: { $regex: searchRegex } };
-      if (queryDto.offset >= 0 && queryDto.limit >= 0) {
-        const options = {
-          offset: queryDto.offset,
-          limit: queryDto.limit,
-          sort: { created_at: SortQuery.Desc },
-          customLabels: {
-            page: 'page',
-            limit: 'per_page',
-            totalDocs: 'total',
-            totalPages: 'total_pages',
-            docs: 'data',
-          },
-        };
-        const labels = await this.labelModel.paginate(query, options);
-        return classToPlain(new LabelsResponse(toJsObject(labels)));
-      } else {
-        const labels = await this.labelModel
-          .find(query)
-          .sort({ created_at: SortQuery.Desc });
-        return classToPlain(
-          new LabelsResponse(toJsObject(paginator(labels, 0, labels.length))),
-        );
-      }
-    } catch (error) {
-      errorException(error);
-    }
-  }
-
-  async getDetail(labelId: string) {
-    try {
-      const label = await this.checkIsLabelExist(labelId);
-      label['tasks'] = await this.taskModel.find({ label: labelId });
-      return classToPlain(new LabelResponse(toJsObject(label)));
+      const labels = await this.labelModel.find({ board: boardId });
+      return classToPlain(
+        new LabelsResponse(toJsObject(paginator(labels, 0, labels.length))),
+      );
     } catch (error) {
       errorException(error);
     }
@@ -73,10 +42,18 @@ export class LabelService {
 
   async delete(labelId: string) {
     try {
-      await this.checkIsLabelExist(labelId);
-      const relatedTasks = await this.taskModel.find({ label: labelId });
-      if (relatedTasks.length > 0) throwCanNotDeleteErr('Label', 'Tasks');
-      await this.labelModel.findByIdAndDelete(labelId);
+      const deletedLabel = await this.labelModel.findByIdAndDelete(labelId);
+      if (!deletedLabel) {
+        throw new NotFoundException('Label is not exist');
+      }
+      await this.taskModel.updateMany(
+        { labels: labelId },
+        {
+          $pull: {
+            labels: labelId,
+          },
+        },
+      );
     } catch (error) {
       errorException(error);
     }
@@ -103,7 +80,7 @@ export class LabelService {
     }
   }
 
-  async checkIsLabelExist(labelId: string) {
+  async checkLabelExist(labelId: string) {
     try {
       const label = await this.labelModel.findById(labelId).lean();
       if (!label) throw new NotFoundException('Label is not exist');

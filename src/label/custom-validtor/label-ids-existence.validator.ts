@@ -21,7 +21,7 @@ export class LabelIDsExistenceValidator
         const laborIds = await this.labelService.findAllIds();
         return ids.every((val) => laborIds.includes(val));
       } else {
-        const result = await this.labelService.getDetail(ids);
+        const result = await this.labelService.checkLabelExist(ids);
         if (result) return true;
         else return false;
       }
