@@ -4,16 +4,16 @@ import {
   ValidatorConstraintInterface,
   ValidationArguments,
 } from 'class-validator';
-import { TaskStatusService } from '../task-status.service';
+import { TaskGroupService } from '../task-group.service';
 
-@ValidatorConstraint({ name: 'TaskStatusExistValidator', async: true })
+@ValidatorConstraint({ name: 'TaskGroupExistValidator', async: true })
 @Injectable()
-export class TaskStatusExistValidator implements ValidatorConstraintInterface {
-  constructor(private taskStatusService: TaskStatusService) {}
+export class TaskGroupExistValidator implements ValidatorConstraintInterface {
+  constructor(private taskStatusService: TaskGroupService) {}
 
   async validate(id: string, args: ValidationArguments) {
     try {
-      const result = await this.taskStatusService.getDetail(id);
+      const result = await this.taskStatusService.findTaskGroupById(id);
       if (result) return true;
       else return false;
     } catch (error) {
@@ -22,6 +22,6 @@ export class TaskStatusExistValidator implements ValidatorConstraintInterface {
   }
 
   defaultMessage(args: ValidationArguments) {
-    return 'Task Status ID is not exist';
+    return 'Task Group ID is not exist';
   }
 }
