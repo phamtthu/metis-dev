@@ -3,9 +3,12 @@ import { TaskService } from './task.service';
 import { TaskDatabaseModule } from 'src/model/task/task-database.module';
 import { TaskController } from './task.controller';
 import { ProductDatabaseModule } from 'src/model/product/product-database.module';
-import { TaskIDExistenceValidator } from './custom-validator/task-id-existence.validator';
+import { TaskExistValidator } from './custom-validator/task-id-existence.validator';
 import { UserDatabaseModule } from 'src/model/user/user-database.module';
 import { TaskUserDatabaseModule } from 'src/model/task-user/taskuser-database.module';
+import { TaskGroupDatabaseModule } from 'src/model/task_group/task-group-database.module';
+import { TaskStatusDatabaseModule } from 'src/model/task-status/task-status-database.module';
+import { ProductWorkCenterDatabaseModule } from 'src/model/product-workcenter/product-workcenter-database.module';
 
 @Module({
   imports: [
@@ -13,9 +16,12 @@ import { TaskUserDatabaseModule } from 'src/model/task-user/taskuser-database.mo
     UserDatabaseModule,
     ProductDatabaseModule,
     TaskUserDatabaseModule,
+    TaskGroupDatabaseModule,
+    TaskStatusDatabaseModule,
+    ProductWorkCenterDatabaseModule,
   ],
   controllers: [TaskController],
-  providers: [TaskService, TaskIDExistenceValidator],
+  providers: [TaskService, TaskExistValidator],
   exports: [TaskService],
 })
 export class TaskModule {}

@@ -1,28 +1,17 @@
 import {
-  ArrayNotEmpty,
-  IsArray,
   IsEnum,
   IsMongoId,
   IsNotEmpty,
   IsNumber,
   IsString,
-  IsUrl,
-  Matches,
-  Max,
   MaxLength,
-  Min,
   Validate,
   ValidateIf,
 } from 'class-validator';
-import { LabelIDsExistenceValidator } from 'src/label/custom-validtor/label-ids-existence.validator';
-import { ProductWorkCenterIDExistenceValidator } from 'src/product-workcenter/custom-validator/product-workcenter-id.existence.validator';
-import { ProductIDExistenceValidator } from 'src/product/custom-validator/product-id-existence.validator';
-import { SkillIDExistenceValidator } from 'src/skill/custom-validator/skill-id-existence.validator';
-import { TaskStatusIDExistenceValidator } from 'src/task-status/custom-validator/task-status-id-existence.validator';
-import { UserIDsExistenceValidator } from 'src/user/custom-validator/user-ids.validator';
-import { TaskIDExistenceValidator } from '../custom-validator/task-id-existence.validator';
+import { BoardExistValidator } from 'src/board/custom-validator/board-id-existence.validator';
+import { TaskGroupExistValidator } from 'src/task-group/custom-validator/task-group-id-existence.validator';
 
-export class AddTaskDTO {
+export class AddTaskDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(50)
@@ -37,9 +26,6 @@ export class AddTaskDTO {
   @MaxLength(200)
   description: string;
 
-  @IsUrl({ require_tld: false }, { each: true })
-  images: string[];
-
   @IsNotEmpty()
   plan_start_date: Date;
 
@@ -47,96 +33,19 @@ export class AddTaskDTO {
   plan_end_date: Date;
 
   @IsNotEmpty()
-  start_date: Date;
-
-  @IsNotEmpty()
-  end_date: Date;
-
-  @IsNumber()
-  @IsNotEmpty()
-  plan_start_time: number;
-
-  @IsNumber()
-  @IsNotEmpty()
-  plan_end_time: number;
-
-  @IsNumber()
-  @IsNotEmpty()
-  start_time: number;
-
-  @IsNumber()
-  @IsNotEmpty()
-  end_time: number;
-
-  @IsNumber()
-  @IsNotEmpty()
-  extra_time: number;
-
-  @IsNumber()
-  @IsNotEmpty()
-  est_time: number;
-
-  @IsNumber()
-  @IsNotEmpty()
-  real_time: number;
-
-  @IsNumber()
-  @Min(0)
-  @Max(100)
-  @IsNotEmpty()
-  percent: number;
-
   @IsString()
-  @IsNotEmpty()
-  comment: string;
-
-  @IsMongoId()
-  @IsNotEmpty()
-  @Validate(SkillIDExistenceValidator)
-  skill: string;
-
-  @IsMongoId({ each: true })
-  @IsArray()
-  @ArrayNotEmpty()
-  @Validate(LabelIDsExistenceValidator)
-  labels: string[];
+  @ValidateIf((object, value) => value !== null)
+  cover_background: string;
 
   @IsMongoId()
   @IsNotEmpty()
   @ValidateIf((object, value) => value !== null)
-  @Validate(TaskStatusIDExistenceValidator)
-  status: string;
+  @Validate(TaskGroupExistValidator)
+  task_group: string;
 
   @IsMongoId()
   @IsNotEmpty()
   @ValidateIf((object, value) => value !== null)
-  @Validate(ProductIDExistenceValidator)
-  product: string;
-
-  @IsMongoId()
-  @IsNotEmpty()
-  @ValidateIf((object, value) => value !== null)
-  @Validate(ProductWorkCenterIDExistenceValidator)
-  product_workcenter: string;
-
-  @IsMongoId({ each: true })
-  @IsArray()
-  @Validate(UserIDsExistenceValidator)
-  users: string[];
-
-  // null for Optional
-  @IsMongoId()
-  @ValidateIf((object, value) => value !== null)
-  @Validate(TaskIDExistenceValidator)
-  parent: string;
-
-  @IsMongoId()
-  @ValidateIf((object, value) => value !== null)
-  @Validate(TaskIDExistenceValidator)
-  pre_task: string;
-
-  @IsMongoId()
-  @ValidateIf((object, value) => value !== null)
-  @Validate(TaskIDExistenceValidator)
-  after_task: string;
+  @Validate(BoardExistValidator)
+  board: string;
 }

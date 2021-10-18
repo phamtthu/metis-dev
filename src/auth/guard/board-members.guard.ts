@@ -1,13 +1,8 @@
 import {
-  ArgumentsHost,
   CanActivate,
   ExecutionContext,
   ForbiddenException,
-  HttpException,
-  HttpStatus,
-  Inject,
   Injectable,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { messageError } from 'src/common/utils/error';
 import { AuthService } from '../auth.service';
@@ -19,7 +14,40 @@ export class BoardMemberGuard implements CanActivate {
   async canActivate(context: ExecutionContext) {
     try {
       const request = context.switchToHttp().getRequest();
-      const boardId = request.params.boardId;
+      let boardId;
+      let task;
+      let taskChecklist;
+      let taskGroup;
+      switch (true) {
+        case request.params.boardId != null:
+          boardId = request.params.boardId;
+          break;
+        case request.body.board != null:
+          boardId = request.body.board;
+          break;
+        case request.params.taskId != null:
+          task = await this.authService.findTaskById(request.params.taskId);
+          boardId = task.board;
+          break;
+        case request.body.task != null:
+          task = await this.authService.findTaskById(request.body.task);
+          boardId = task.board;
+          break;
+        case request.params.taskChecklistId != null:
+          taskChecklist = await this.authService.findTaskChecklistById(
+            request.params.taskChecklistId,
+          );
+          boardId = taskChecklist.task.board;
+          break;
+        case request.params.taskGroupId != null:
+          taskGroup = await this.authService.findTaskGroupById(
+            request.params.taskGroupId,
+          );
+          boardId = taskGroup.board;
+          break;
+        default:
+          throw new Error('Can not find Board');
+      }
       const user = request.user;
       const board = await this.authService.checkBoardMember(boardId, user._id);
       if (board) {

@@ -4,6 +4,9 @@ import { errorException } from 'src/common/utils/error';
 import { User } from 'src/model/user/user.shema';
 import { ProductWorkCenterService } from 'src/product-workcenter/product-workcenter.service';
 import { bcryptPassword } from 'src/shared/helper';
+import { TaskChecklistService } from 'src/task-checklist/task-checklist.service';
+import { TaskGroupService } from 'src/task-group/task-group.service';
+import { TaskService } from 'src/task/task.service';
 import { UserService } from '../user/user.service';
 
 const bcrypt = require('bcrypt');
@@ -15,6 +18,9 @@ export class AuthService {
     private userService: UserService,
     private jwtService: JwtService,
     private productWCService: ProductWorkCenterService,
+    private taskService: TaskService,
+    private taskChecklistService: TaskChecklistService,
+    private taskGroupService: TaskGroupService,
   ) {}
 
   async adminRegister(admin) {
@@ -66,6 +72,32 @@ export class AuthService {
       return await this.productWCService.checkBoardMember(boardId, userId);
     } catch (e) {
       errorException(e);
+    }
+  }
+
+  async findTaskById(taskId: string) {
+    try {
+      return await this.taskService.checkTaskExist(taskId);
+    } catch (e) {
+      errorException(e);
+    }
+  }
+
+  async findTaskChecklistById(taskChecklistId: string) {
+    try {
+      return await this.taskChecklistService.findTaskChecklistById(
+        taskChecklistId,
+      );
+    } catch (e) {
+      errorException(e);
+    }
+  }
+
+  async findTaskGroupById(taskGroupId: string) {
+    try {
+      return await this.taskGroupService.findTaskGroupById(taskGroupId);
+    } catch (error) {
+      errorException(error);
     }
   }
 }
