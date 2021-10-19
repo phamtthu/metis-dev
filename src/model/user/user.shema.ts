@@ -6,11 +6,14 @@ import * as mongoosePaginate from 'mongoose-paginate-v2';
 
 @Schema({ timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } })
 export class User extends mongoose.Document {
-  @Prop({ default: null })
+  @Prop({ default: null, required: true })
   name: string;
 
   @Prop({ required: true, unique: true })
   email: string;
+
+  @Prop({ required: true, unique: true })
+  tag_name: string;
 
   @Prop({ required: true })
   password: string;
