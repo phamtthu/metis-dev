@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { classToPlain } from 'class-transformer';
 import { Model, PaginateModel } from 'mongoose';
@@ -11,17 +11,18 @@ import { generateRandomCode, paginator, toJsObject } from 'src/shared/helper';
 import { UpdateBoardDTO } from './dto/update-board.dto';
 import { TaskUser } from 'src/model/task-user/taskuser.schema';
 import { User } from 'src/model/user/user.shema';
-import { Label } from 'src/model/label/label.schema';
 import { TaskChecklist } from 'src/model/task-checklist/task-checklist.schema';
 import { BoardDetailResponse } from './response/board-detail-response';
 import { BoardResponse } from './response/board-response';
 import { BoardsResponse } from './response/boards-response';
+import { SortQuery } from 'src/common/enum/filter.enum';
+import { SoftDeleteModel } from 'mongoose-delete';
 
 @Injectable()
 export class BoardService {
   constructor(
     @InjectModel('Board')
-    private boardModel: PaginateModel<Board>,
+    private boardModel: PaginateModel<Board> & SoftDeleteModel<Board>,
     @InjectModel('Product_WorkCenter')
     private productWorkCenterModel: PaginateModel<ProductWorkCenter>,
     @InjectModel('Task')
@@ -30,10 +31,10 @@ export class BoardService {
     private taskGroupModel: PaginateModel<TaskGroup>,
     @InjectModel('Task_User')
     private taskUserModel: Model<TaskUser>,
-    @InjectModel('Label')
-    private labelModel: Model<Label>,
     @InjectModel('Task_Checklist')
     private taskChecklistModel: Model<TaskChecklist>,
+    @InjectModel('Comment')
+    private commentModel: Model<Comment>
   ) {}
 
   async getList(userId: string) {
@@ -66,7 +67,6 @@ export class BoardService {
 
   async getDetail(board: Board) {
     try {
-      // TODO: is_active
       const taskGroups = await this.taskGroupModel
         .find({ board: board._id })
         .populate({
@@ -81,6 +81,7 @@ export class BoardService {
             task_group: taskGroup._id,
           })
           .populate([{ path: 'labels', select: '_id name', model: 'Label' }])
+          .sort({ index: SortQuery.Desc })
           .lean();
         for await (const task of tasks) {
           const taskUsers: any = await this.taskUserModel
@@ -100,11 +101,45 @@ export class BoardService {
             await checkLists.filter((checklist) => checklist.is_complete)
           ).length;
           task['task_checklist'] = `${numberOfUnFinished}/${checkLists.length}`;
+          const numberOfcomments = (
+            await this.commentModel.find({ task: task._id })
+          ).length;
+          task['comments'] = numberOfcomments;
         }
         taskGroup['tasks'] = tasks;
       }
       board['task_groups'] = taskGroups;
       return classToPlain(new BoardDetailResponse(toJsObject(board)));
+    } catch (error) {
+      errorException(error);
+    }
+  }
+
+  async softDelete(boardId: string) {
+    try {
+      const { n } = await this.boardModel.deleteById(boardId);
+      if (n === 1) {
+        await this.boardModel.findByIdAndUpdate(boardId, { index: null });
+      } else {
+        throw new Error('Can not soft delete Task');
+      }
+    } catch (error) {
+      errorException(error);
+    }
+  }
+
+  async restore(boardId: string) {
+    try {
+      const board: any = await this.boardModel.findById(boardId);
+      const { n } = await this.boardModel.restore({ _id: boardId });
+      if (!board.deleted)
+        throw new BadRequestException('Board is already restored');
+      if (n === 1) {
+        const board = await this.boardModel.findById(boardId);
+        return classToPlain(new BoardResponse(toJsObject(board)));
+      } else {
+        throw new Error('Can not restore Board');
+      }
     } catch (error) {
       errorException(error);
     }
