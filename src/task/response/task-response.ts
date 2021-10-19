@@ -2,6 +2,8 @@ import { ObjectId } from 'mongodb';
 import { Exclude, Transform, Expose, Type } from 'class-transformer';
 import { LabelResponse } from 'src/label/response/label-response';
 import { TaskGroupResponse } from 'src/task-group/response/task-group-response.dto';
+import { Moment } from 'moment';
+import { UsersResponse } from 'src/user/response/response/users-response';
 
 @Exclude()
 export class TaskResponse {
@@ -21,10 +23,10 @@ export class TaskResponse {
   description: string;
 
   @Expose()
-  plan_start_date: Date;
+  plan_start_date: Date | Moment;
 
   @Expose()
-  plan_end_date: Date;
+  plan_end_date: Date | Moment;
 
   @Expose()
   cover_background: string;
@@ -36,7 +38,8 @@ export class TaskResponse {
   status: string;
 
   @Expose()
-  created_by: string;
+  @Type(() => UsersResponse)
+  created_by: string | UsersResponse;
 
   @Expose()
   board: string;
@@ -50,10 +53,10 @@ export class TaskResponse {
   labels: string[] | LabelResponse[];
 
   @Expose()
-  created_at: Date;
+  created_at: Date | Moment;
 
   @Expose()
-  updated_at: Date;
+  updated_at: Date | Moment;
 
   __v: number;
 
