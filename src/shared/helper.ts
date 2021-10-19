@@ -3,6 +3,7 @@ import { errorException } from 'src/common/utils/error';
 const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcrypt');
+import * as moment from 'moment';
 
 export const moveTmpToMain = async (data = [], dir = '') => {
   return data.map((item) => {
@@ -161,6 +162,13 @@ export const bcryptPassword = async (password) => {
   } catch (e) {
     errorException(e);
   }
+};
+
+export const prettierDate = (value) => {
+  const year = new Date(value).getFullYear();
+  const currentYear = new Date().getFullYear();
+  if (year === currentYear) return moment(value).format('MMM Do');
+  else return moment(value).format('MMM Do YY');
 };
 
 export const overrideMethods = ['find', 'updateMany', 'aggregate'];

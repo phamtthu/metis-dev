@@ -36,9 +36,6 @@ export class Part extends mongoose.Document {
   @Prop({ default: 0, min: 0, require: true })
   unit_cost: number;
 
-  @Prop({ default: 0, min: 0, require: true })
-  unit_price: number;
-
   @Prop({ required: true, default: null })
   description: string;
 }

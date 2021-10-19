@@ -27,6 +27,10 @@ import { PartCategoryModule } from './part-category/part-category.module';
 import { TaskStatusModule } from './task-status/task-status.module';
 import { ProductWorkCenterModule } from './product-workcenter/product-workcenter.module';
 import { BoardModule } from './board/board.module';
+import { CommentModule } from './comment/comment.module';
+import { TaskChecklistModule } from './task-checklist/task-checklist.module';
+import { TaskGroupModule } from './task-group/task-group.module';
+import { AttachmentModule } from './attachment/attachment.module';
 
 @Module({
   imports: [
@@ -55,10 +59,14 @@ import { BoardModule } from './board/board.module';
     PartModule,
     PartCategoryModule,
     TaskStatusModule,
+    TaskGroupModule,
     LabelModule,
     ProductWorkCenterModule,
 
-    BoardModule
+    BoardModule,
+    AttachmentModule,
+    CommentModule,
+    TaskChecklistModule,
   ],
   controllers: [AppController],
   providers: [AppService, CronService],
