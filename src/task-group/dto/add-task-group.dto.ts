@@ -8,6 +8,7 @@ import {
 } from 'class-validator';
 import { BoardExistValidator } from 'src/board/custom-validator/board-id-existence.validator';
 import { TaskStatusExistValidator } from 'src/task-status/custom-validator/task-status-id-existence.validator';
+import { ImageLinkOrHexColor } from 'src/task/dto/add-task.dto';
 
 export class AddTaskGroupDto {
   @IsString()
@@ -19,6 +20,7 @@ export class AddTaskGroupDto {
   @IsString()
   @IsNotEmpty()
   @ValidateIf((object, value) => value !== null)
+  @Validate(ImageLinkOrHexColor)
   cover_background: string;
 
   @IsMongoId()
