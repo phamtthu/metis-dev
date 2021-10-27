@@ -8,7 +8,6 @@ export class ProductWorkCenter extends mongoose.Document {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Product',
     default: null,
-    unique: true,
   })
   product: string;
 
@@ -16,7 +15,6 @@ export class ProductWorkCenter extends mongoose.Document {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'WorkCenter',
     required: true,
-    default: null,
   })
   workcenter: string;
 
@@ -31,10 +29,20 @@ export class ProductWorkCenter extends mongoose.Document {
 
   @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }] })
   users: string[];
+
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'WorkCenter',
+    default: null,
+  })
+  board: string;
 }
 
 export const ProductWorkCenterSchema =
   SchemaFactory.createForClass(ProductWorkCenter);
 ProductWorkCenterSchema.plugin(mongoosePaginate);
 
-ProductWorkCenterSchema.index({ product: 1, workcenter: 1 }, { unique: true });
+ProductWorkCenterSchema.index(
+  { product: 1, workcenter: 1, board: 1 },
+  { unique: true },
+);

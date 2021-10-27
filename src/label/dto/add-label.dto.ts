@@ -1,4 +1,5 @@
 import {
+  IsHexColor,
   IsMongoId,
   IsNotEmpty,
   IsOptional,
@@ -15,8 +16,7 @@ export class AddLabelDTO {
   @MaxLength(50)
   name: string;
 
-  @IsOptional()
-  @IsString()
+  @IsHexColor()
   @IsNotEmpty()
   @ValidateIf((object, value) => value !== null)
   cover_background: string;

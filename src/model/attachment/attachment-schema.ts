@@ -31,14 +31,14 @@ export class Attachment extends mongoose.Document {
   @Prop({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Task',
-    required: true
+    required: true,
   })
   task: string;
 
   @Prop({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: true,
   })
   created_by: string;
 }

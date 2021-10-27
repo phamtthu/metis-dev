@@ -28,6 +28,13 @@ export class Comment extends mongoose.Document {
     required: true,
   })
   task: string;
+
+  @Prop({
+    type: [mongoose.Schema.Types.ObjectId],
+    ref: 'Attachment',
+    required: true,
+  })
+  attachments: string[];
 }
 
 export const CommentSchema = SchemaFactory.createForClass(Comment);
@@ -38,4 +45,3 @@ CommentSchema.plugin(mongoose_delete, {
   deletedBy: true,
   overrideMethods: overrideMethods,
 });
-

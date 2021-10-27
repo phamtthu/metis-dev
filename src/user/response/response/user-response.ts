@@ -10,6 +10,9 @@ export class UserResponse {
   name: string;
 
   @Expose()
+  tag_name: string;
+
+  @Expose()
   email: string;
 
   @Expose()

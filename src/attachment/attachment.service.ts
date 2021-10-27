@@ -44,6 +44,7 @@ export class AttachmentService {
     try {
       if (!attachmentDto.name) {
         if (attachmentDto.type === 0) {
+          this.checkValidLink(attachmentDto.link, originURL);
           attachmentDto.link = await getNewImgLink(
             attachmentDto.link,
             'attachments',
@@ -93,6 +94,17 @@ export class AttachmentService {
     }
   }
 
+  checkValidLink(attachmentLink, originURL) {
+    try {
+      const hostLink = new URL(attachmentLink).host;
+      const hostServer = new URL(originURL).host;
+      if (hostLink !== hostServer)
+        throw new BadRequestException('Attachment link is invalid');
+    } catch (error) {
+      errorException(error);
+    }
+  }
+
   async update(attachmentId: string, attachmentDto: UpdateAttachmentDto) {
     try {
       const newAttachment = await this.attachmentModel.findByIdAndUpdate(
@@ -135,6 +147,15 @@ export class AttachmentService {
       return classToPlain(new AttachmentResponse(toJsObject(attachment)));
     } catch (error) {
       errorException(error);
+    }
+  }
+
+  async findAllIds() {
+    try {
+      const attachments = await this.attachmentModel.find().lean();
+      return attachments.map((attachment) => String(attachment._id));
+    } catch (e) {
+      errorException(e);
     }
   }
 }

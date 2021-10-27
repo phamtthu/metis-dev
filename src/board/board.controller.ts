@@ -1,5 +1,6 @@
 import {
   Body,
+  Delete,
   Put,
   Request,
   UseGuards,
@@ -8,7 +9,6 @@ import {
 } from '@nestjs/common';
 import { Controller, Get, Param } from '@nestjs/common';
 import { messageError } from 'src/common/utils/error';
-import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { BoardService } from './board.service';
 import { BoardMemberGuard } from 'src/auth/guard/board-members.guard';
 import { UpdateBoardDTO } from './dto/update-board.dto';
@@ -38,7 +38,7 @@ export class BoardController {
 
   @Get('/:boardId')
   @UseGuards(BoardMemberGuard)
-  async getDetail(@Request() req, @Param('boardId') boardId: string) {
+  async getDetail(@Request() req) {
     try {
       const board = await this.boardService.getDetail(req.board);
       return { data: board };
@@ -54,6 +54,31 @@ export class BoardController {
       const result = await this.boardService.update(req.board, boardDTO);
       return {
         message: 'Update Board successfully',
+        data: result,
+      };
+    } catch (error) {
+      messageError(error);
+    }
+  }
+
+  @Delete('/:boardId')
+  async softDelete(@Request() req, @Param('boardId') boardId: string) {
+    try {
+      await this.boardService.softDelete(boardId);
+      return {
+        message: 'Soft Delete Board successfully',
+      };
+    } catch (error) {
+      messageError(error);
+    }
+  }
+
+  @Get('/restore/:boardId')
+  async restore(@Request() req, @Param('boardId') boardId: string) {
+    try {
+      const result = await this.boardService.restore(boardId);
+      return {
+        message: 'Restore Board successfully',
         data: result,
       };
     } catch (error) {

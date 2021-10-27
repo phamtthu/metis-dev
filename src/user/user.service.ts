@@ -114,10 +114,29 @@ export class UserService {
       userDTO.image = await getNewImgLink(userDTO.image, 'user', originURL);
       userDTO.password = await bcryptPassword(userDTO.password);
       const user = await new this.userModel({
+        tag_name: await this.getUserTagname(userDTO.email),
         user_no: generateRandomCode(codes),
         ...userDTO,
       }).save();
       return classToPlain(new UserResponse(toJsObject(user)));
+    } catch (e) {
+      errorException(e);
+    }
+  }
+
+  async getUserTagname(email) {
+    try {
+      const users = await this.userModel.find().lean();
+      const tagNames = users.map((user) => user.tag_name);
+      let tagName = email.split('@')[0];
+      while (tagNames.includes(tagName)) {
+        const numbers = '0123456789';
+        for (let i = 0; i < 3; i++) {
+          var rnd = Math.floor(Math.random() * numbers.length);
+          tagName = tagName + numbers.charAt(rnd);
+        }
+      }
+      return tagName;
     } catch (e) {
       errorException(e);
     }

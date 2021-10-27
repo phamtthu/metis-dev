@@ -25,17 +25,17 @@ export class CustomerService {
   ) {}
 
   async create(customerDTO: AddCustomerDTO) {
-    // try {
-    const customers = await this.customerModel.find();
-    const codes = customers.map((e) => e.customer_no);
-    const customer = await new this.customerModel({
-      customer_no: generateRandomCode(codes),
-      ...customerDTO,
-    }).save();
-    return classToPlain(new CustomerResponse(toJsObject(customer)));
-    // } catch (error) {
-    //   errorException(error);
-    // }
+    try {
+      const customers = await this.customerModel.find();
+      const codes = customers.map((e) => e.customer_no);
+      const customer = await new this.customerModel({
+        customer_no: generateRandomCode(codes),
+        ...customerDTO,
+      }).save();
+      return classToPlain(new CustomerResponse(toJsObject(customer)));
+    } catch (error) {
+      errorException(error);
+    }
   }
 
   async getList(queryDto: PaginationQueryDto) {
@@ -79,15 +79,14 @@ export class CustomerService {
   }
 
   async getDetail(customerId: string) {
-    // try {
-    const customer = await this.checkCustomerIsExist(customerId);
-    const orders = await this.orderModel.find({ customer: customerId });
-    customer['orders'] = orders;
-    //   throw new NotFoundException()
-    return classToPlain(new CustomerDetailResponse(toJsObject(customer)));
-    // } catch (error) {
-    //   errorException(error);
-    // }
+    try {
+      const customer = await this.checkCustomerIsExist(customerId);
+      const orders = await this.orderModel.find({ customer: customerId });
+      customer['orders'] = orders;
+      return classToPlain(new CustomerDetailResponse(toJsObject(customer)));
+    } catch (error) {
+      errorException(error);
+    }
   }
 
   async delete(customerId: string) {
@@ -122,12 +121,12 @@ export class CustomerService {
   }
 
   async checkCustomerIsExist(customerId: string) {
-    // try {
-    const customer = await this.customerModel.findById(customerId).lean();
-    if (!customer) throw new NotFoundException('User is not exist');
-    return customer;
-    // } catch (error) {
-    //   errorException(error);
-    // }
+    try {
+      const customer = await this.customerModel.findById(customerId).lean();
+      if (!customer) throw new NotFoundException('User is not exist');
+      return customer;
+    } catch (error) {
+      errorException(error);
+    }
   }
 }

@@ -9,6 +9,8 @@ import { TaskUserDatabaseModule } from 'src/model/task-user/taskuser-database.mo
 import { TaskGroupDatabaseModule } from 'src/model/task_group/task-group-database.module';
 import { TaskStatusDatabaseModule } from 'src/model/task-status/task-status-database.module';
 import { ProductWorkCenterDatabaseModule } from 'src/model/product-workcenter/product-workcenter-database.module';
+import { AttachmentDatabaseModule } from 'src/model/attachment/attachment-database.module';
+import { CommentDatabaseModule } from 'src/model/comment/comment-database.module';
 
 @Module({
   imports: [
@@ -19,6 +21,8 @@ import { ProductWorkCenterDatabaseModule } from 'src/model/product-workcenter/pr
     TaskGroupDatabaseModule,
     TaskStatusDatabaseModule,
     ProductWorkCenterDatabaseModule,
+    AttachmentDatabaseModule,
+    CommentDatabaseModule,
   ],
   controllers: [TaskController],
   providers: [TaskService, TaskExistValidator],

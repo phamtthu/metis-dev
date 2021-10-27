@@ -13,6 +13,9 @@ export class LabelResponse {
   code: string;
 
   @Expose()
+  cover_background: string;
+
+  @Expose()
   board: string;
 
   @Expose()

@@ -13,7 +13,10 @@ export class CommentResponse {
   created_by: string;
 
   @Expose()
-  mention_users: string;
+  mention_users: string[];
+
+  @Expose()
+  attachments: string[];
 
   @Expose()
   task: string;

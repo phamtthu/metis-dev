@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -9,16 +8,10 @@ import { Model, PaginateModel } from 'mongoose';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { SortQuery, Status } from 'src/common/enum/filter.enum';
 import { errorException } from 'src/common/utils/error';
-import { deleteImgPath, getNewImgLink } from 'src/common/utils/image-handler';
 import { User } from 'src/model/user/user.shema';
 import { Product } from 'src/model/product/product.schema';
 import { Task } from 'src/model/task/task.schema';
-import {
-  generateRandomCode,
-  getNestedList,
-  paginator,
-  toJsObject,
-} from 'src/shared/helper';
+import { generateRandomCode, paginator, toJsObject } from 'src/shared/helper';
 import { AddTaskDto } from './dto/add-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TaskUser } from 'src/model/task-user/taskuser.schema';
@@ -31,6 +24,7 @@ import { TaskStatus } from 'src/model/task-status/task-status.schema';
 import { ProductWorkCenter } from 'src/model/product-workcenter/product-workcenter.schema';
 import { SoftDeleteModel } from 'mongoose-delete';
 import { TaskUserResponse } from './response/task-user-response';
+import { Attachment } from 'src/model/attachment/attachment-schema';
 
 @Injectable()
 export class TaskService {
@@ -49,6 +43,10 @@ export class TaskService {
     private taskUserModel: Model<TaskUser>,
     @InjectModel('Product_WorkCenter')
     private productWorkCenterModel: Model<ProductWorkCenter>,
+    @InjectModel('Attachment')
+    private attachmentModel: Model<Attachment>,
+    @InjectModel('Comment')
+    private commentModel: Model<Comment>,
   ) {}
 
   async create(taskDto: AddTaskDto, userId: string) {
@@ -77,7 +75,43 @@ export class TaskService {
   async getDetail(taskId: string) {
     try {
       const task = await this.checkTaskExist(taskId);
-      return classToPlain(new TaskResponse(toJsObject(task)));
+      const taskUsers: any = await this.taskUserModel
+        .find({ task: taskId })
+        .populate('user');
+      const users = taskUsers.map((e) => e.user);
+      task['users'] = users.map((user) => ({
+        _id: user._id,
+        name: user.name,
+        image: user.image,
+      }));
+      const attachments = await this.attachmentModel
+        .find({ task: taskId })
+        .lean();
+      const comments: any = await this.commentModel
+        .find({ task: taskId })
+        .populate([
+          { path: 'attachments', select: '_id name', model: 'Attachment' },
+          { path: 'created_by', select: '_id name image', model: 'User' },
+        ])
+        .lean();
+      for await (const comment of comments) {
+        const regex = new RegExp(/(@+[a-zA-Z0-9(_)]{1,})/g);
+        const userIdTags = comment.content.match(regex);
+        for await (const userIdTag of userIdTags) {
+          const { tag_name } = await this.userModel.findById(
+            userIdTag.slice(1),
+          );
+          if (tag_name) {
+            comment.content = comment.content.replace(
+              userIdTag,
+              `@${tag_name}`,
+            );
+          }
+        }
+      }
+      task['attachments'] = attachments;
+      task['comments'] = comments;
+      return classToPlain(new TaskDetailResponse(toJsObject(task)));
     } catch (error) {
       errorException(error);
     }
@@ -109,7 +143,13 @@ export class TaskService {
     try {
       const { n } = await this.taskModel.deleteById(taskId);
       if (n === 1) {
-        await this.taskModel.findByIdAndUpdate(taskId, { index: null });
+        const task = await this.taskModel.findByIdAndUpdate(taskId, {
+          index: null,
+        });
+        await this.taskModel.updateMany(
+          { task_group: task.task_group, index: { $gt: task.index } },
+          { $inc: { index: -1 } },
+        );
       } else {
         throw new Error('Can not soft delete Task');
       }
@@ -337,7 +377,7 @@ export class TaskService {
             select: '_id name cover_background',
             model: 'Task_Group',
           },
-          { path: 'created_by', select: '_id name email', model: 'User' },
+          { path: 'created_by', select: '_id name email image', model: 'User' },
         ])
         .lean();
       if (!task) throw new NotFoundException('Task is not exist');
