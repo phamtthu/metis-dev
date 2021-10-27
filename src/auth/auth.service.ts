@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { AttachmentService } from 'src/attachment/attachment.service';
 import { errorException } from 'src/common/utils/error';
 import { LabelService } from 'src/label/label.service';
 import { User } from 'src/model/user/user.shema';
@@ -23,6 +24,7 @@ export class AuthService {
     private taskChecklistService: TaskChecklistService,
     private taskGroupService: TaskGroupService,
     private labelService: LabelService,
+    private attachmentService: AttachmentService,
   ) {}
 
   async adminRegister(admin) {
@@ -110,4 +112,13 @@ export class AuthService {
       errorException(error);
     }
   }
+
+  async findAttachmentById(labelId: string) {
+    try {
+      return await this.attachmentService.findAttachmentById(labelId);
+    } catch (error) {
+      errorException(error);
+    }
+  }
+
 }
