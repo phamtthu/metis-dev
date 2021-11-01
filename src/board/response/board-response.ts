@@ -18,6 +18,12 @@ export class BoardResponse {
   @Expose()
   updated_at: Date;
 
+  @Expose()
+  overTime: number;
+
+  @Expose()
+  workingTIme: number;
+
   __v: number;
 
   constructor(partial: Partial<BoardResponse>) {

@@ -3,6 +3,7 @@ import {
   IsEnum,
   IsMongoId,
   IsNotEmpty,
+  IsOptional,
   IsString,
   MaxLength,
   Validate,
@@ -52,12 +53,6 @@ export class AddTaskDto {
   @IsNotEmpty()
   @MaxLength(200)
   description: string;
-
-  @IsNotEmpty()
-  plan_start_date: Date;
-
-  @IsNotEmpty()
-  plan_end_date: Date;
 
   @IsNotEmpty()
   @IsString()

@@ -34,7 +34,7 @@ export class BoardService {
     @InjectModel('Task_Checklist')
     private taskChecklistModel: Model<TaskChecklist>,
     @InjectModel('Comment')
-    private commentModel: Model<Comment>
+    private commentModel: Model<Comment>,
   ) {}
 
   async getList(userId: string) {
@@ -148,6 +148,43 @@ export class BoardService {
   async findBoardById(boardId: string) {
     try {
       return await this.boardModel.findById(boardId);
+    } catch (error) {
+      errorException(error);
+    }
+  }
+
+  async getWorkingTimeStats() {
+    try {
+      const hour = 60 * 60 * 1000;
+      const boards = await this.boardModel.find().lean();
+      for await (const board of boards) {
+        const tasks: any = await this.taskModel
+          .find({ board: board._id })
+          .lean();
+        let totalCurrentWorkingMs = 0;
+        let totalCurrentOverWorkingMs = 0;
+        tasks.forEach((task) => {
+          if (task.actual_end_date) {
+            const startTime = task.plan_start_date ?? task.created_at;
+            totalCurrentWorkingMs =
+              totalCurrentWorkingMs +
+              new Date(task.actual_end_date).getTime() -
+              new Date(startTime).getTime();
+            if (
+              new Date(task.actual_end_date).getTime() >
+              new Date(task.plan_end_date).getTime()
+            ) {
+              totalCurrentOverWorkingMs =
+                totalCurrentOverWorkingMs +
+                new Date(task.actual_end_date).getTime() -
+                new Date(task.plan_end_date).getTime();
+            }
+          }
+        });
+        board['overTime'] = totalCurrentOverWorkingMs / hour;
+        board['workingTIme'] = totalCurrentWorkingMs / hour;
+      }
+      return classToPlain(new BoardResponse(toJsObject(boards)));
     } catch (error) {
       errorException(error);
     }
