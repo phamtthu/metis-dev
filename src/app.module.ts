@@ -31,6 +31,7 @@ import { CommentModule } from './comment/comment.module';
 import { TaskChecklistModule } from './task-checklist/task-checklist.module';
 import { TaskGroupModule } from './task-group/task-group.module';
 import { AttachmentModule } from './attachment/attachment.module';
+import { ItemModule } from './item/item.module';
 
 @Module({
   imports: [
@@ -62,7 +63,7 @@ import { AttachmentModule } from './attachment/attachment.module';
     TaskGroupModule,
     LabelModule,
     ProductWorkCenterModule,
-
+    ItemModule,
     BoardModule,
     AttachmentModule,
     CommentModule,

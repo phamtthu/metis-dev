@@ -26,6 +26,8 @@ import { SoftDeleteModel } from 'mongoose-delete';
 import { TaskUserResponse } from './response/task-user-response';
 import { Attachment } from 'src/model/attachment/attachment-schema';
 import { UserTasksQueryDto } from './dto/user-tasks-query.dto';
+import { TaskChecklist } from 'src/model/task-checklist/task-checklist.schema';
+import { Item } from 'src/model/item/item.schema';
 
 @Injectable()
 export class TaskService {
@@ -48,6 +50,10 @@ export class TaskService {
     private attachmentModel: Model<Attachment>,
     @InjectModel('Comment')
     private commentModel: Model<Comment>,
+    @InjectModel('Task_Checklist')
+    private taskChecklistModel: Model<TaskChecklist>,
+    @InjectModel('Item')
+    private itemModel: Model<Item>,
   ) {}
 
   async create(taskDto: AddTaskDto, userId: string) {
@@ -110,8 +116,19 @@ export class TaskService {
           }
         }
       }
+      const taskChecklists = await this.taskChecklistModel
+        .find()
+        .sort({ index: SortQuery.Desc })
+        .lean();
+      for await (const taskChecklist of taskChecklists) {
+        taskChecklist['items'] = await this.itemModel
+          .find()
+          .sort({ index: SortQuery.Desc })
+          .lean();
+      }
       task['attachments'] = attachments;
       task['comments'] = comments;
+      task['task_checklists'] = taskChecklists;
       return classToPlain(new TaskDetailResponse(toJsObject(task)));
     } catch (error) {
       errorException(error);

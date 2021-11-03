@@ -1,5 +1,6 @@
 import { ObjectId } from 'mongodb';
 import { Exclude, Transform, Expose, Type } from 'class-transformer';
+import { ItemResponse } from 'src/item/response/item-response';
 
 @Exclude()
 export class TaskChecklistResponse {
@@ -20,6 +21,10 @@ export class TaskChecklistResponse {
 
   @Expose()
   created_by: string;
+
+  @Expose()
+  @Type(() => ItemResponse)
+  items: ItemResponse[];
 
   @Expose()
   created_at: Date;
