@@ -5,6 +5,7 @@ import {
   Put,
   Query,
   Request,
+  UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -14,6 +15,10 @@ import { PartService } from './part.service';
 import { AddPartDTO } from './dto/add-part.dto';
 import { UpdatePartDTO } from './dto/update-part.dto';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
+import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
+import { Roles } from 'src/auth/roles.decorator';
+import { Role } from 'src/common/enum/filter.enum';
 
 @Controller('api/part')
 @UsePipes(
@@ -23,6 +28,8 @@ import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
     whitelist: true,
   }),
 )
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.Admin)
 export class PartController {
   constructor(private partService: PartService) {}
 

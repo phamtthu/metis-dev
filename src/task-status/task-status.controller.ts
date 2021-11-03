@@ -5,6 +5,7 @@ import {
   Put,
   Query,
   Request,
+  UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -14,6 +15,10 @@ import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { TaskStatusService } from './task-status.service';
 import { AddTaskStatusDTO } from './dto/add-task.dto';
 import { UpdateTaskStatusDTO } from './dto/update-task.dto';
+import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
+import { Roles } from 'src/auth/roles.decorator';
+import { Role } from 'src/common/enum/filter.enum';
 
 @Controller('api/task-status')
 @UsePipes(
@@ -23,6 +28,8 @@ import { UpdateTaskStatusDTO } from './dto/update-task.dto';
     whitelist: true,
   }),
 )
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.Admin)
 export class TaskStatusController {
   constructor(private taskStatusService: TaskStatusService) {}
 

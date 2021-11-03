@@ -13,6 +13,9 @@ import {
 } from '@nestjs/common';
 import { BoardMemberGuard } from 'src/auth/guard/board-members.guard';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
+import { Roles } from 'src/auth/roles.decorator';
+import { Role } from 'src/common/enum/filter.enum';
 import { messageError } from 'src/common/utils/error';
 import { getOriginURL } from 'src/shared/helper';
 import { AttachmentService } from './attachment.service';
@@ -27,7 +30,8 @@ import { UpdateAttachmentDto } from './dto/update-attachment.dto';
     whitelist: true,
   }),
 )
-@UseGuards(JwtAuthGuard, BoardMemberGuard)
+@UseGuards(JwtAuthGuard, BoardMemberGuard, RolesGuard)
+@Roles(Role.Employee)
 export class AttachmentController {
   constructor(private attachmentService: AttachmentService) {}
 
@@ -69,31 +73,31 @@ export class AttachmentController {
     }
   }
 
-    @Delete('/:attachmentId')
-    async softDelete(
-      @Request() req,
-      @Param('attachmentId') attachmentId: string,
-    ) {
-      try {
-        await this.attachmentService.softDelete(attachmentId);
-        return {
-          message: 'Soft Delete Attachment successfully',
-        };
-      } catch (error) {
-        messageError(error);
-      }
+  @Delete('/:attachmentId')
+  async softDelete(
+    @Request() req,
+    @Param('attachmentId') attachmentId: string,
+  ) {
+    try {
+      await this.attachmentService.softDelete(attachmentId);
+      return {
+        message: 'Soft Delete Attachment successfully',
+      };
+    } catch (error) {
+      messageError(error);
     }
+  }
 
-    @Get('/restore/:attachmentId')
-    async restore(@Request() req, @Param('attachmentId') attachmentId: string) {
-      try {
-        const result = await this.attachmentService.restore(attachmentId);
-        return {
-          message: 'Restore Attachment successfully',
-          data: result,
-        };
-      } catch (error) {
-        messageError(error);
-      }
+  @Get('/restore/:attachmentId')
+  async restore(@Request() req, @Param('attachmentId') attachmentId: string) {
+    try {
+      const result = await this.attachmentService.restore(attachmentId);
+      return {
+        message: 'Restore Attachment successfully',
+        data: result,
+      };
+    } catch (error) {
+      messageError(error);
     }
+  }
 }

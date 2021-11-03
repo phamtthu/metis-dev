@@ -5,6 +5,7 @@ import {
   Put,
   Query,
   Request,
+  UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -14,6 +15,10 @@ import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { CustomerService } from './customer.service';
 import { AddCustomerDTO } from './dto/add-customer.dto';
 import { UpdateCustomerDTO } from './dto/update-customer.dto';
+import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
+import { Role } from 'src/common/enum/filter.enum';
+import { Roles } from 'src/auth/roles.decorator';
 
 @Controller('api/customer')
 @UsePipes(
@@ -23,6 +28,8 @@ import { UpdateCustomerDTO } from './dto/update-customer.dto';
     whitelist: true,
   }),
 )
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.Admin)
 export class CustomerController {
   constructor(private customerService: CustomerService) {}
 

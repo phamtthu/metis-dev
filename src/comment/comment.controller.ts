@@ -13,6 +13,9 @@ import {
 } from '@nestjs/common';
 import { BoardMemberGuard } from 'src/auth/guard/board-members.guard';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
+import { Roles } from 'src/auth/roles.decorator';
+import { Role } from 'src/common/enum/filter.enum';
 import { messageError } from 'src/common/utils/error';
 import { CommentService } from './comment.service';
 import { AddCommentDto } from './dto/add-comment.dto';
@@ -26,12 +29,12 @@ import { UpdateCommentDto } from './dto/update-comment.dto';
     whitelist: true,
   }),
 )
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, BoardMemberGuard)
+@Roles(Role.Employee)
 export class CommentController {
   constructor(private commentService: CommentService) {}
 
   @Post()
-  @UseGuards(BoardMemberGuard)
   async create(@Request() req, @Body() commentDto: AddCommentDto) {
     try {
       const result = await this.commentService.create(commentDto, req.user._id);

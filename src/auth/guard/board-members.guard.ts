@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
+import { Role } from 'src/common/enum/filter.enum';
 import { messageError } from 'src/common/utils/error';
 import { AuthService } from '../auth.service';
 
@@ -14,6 +15,7 @@ export class BoardMemberGuard implements CanActivate {
   async canActivate(context: ExecutionContext) {
     try {
       const request = context.switchToHttp().getRequest();
+      // Ignore Admin
       let boardId;
       let task;
       let taskChecklist;
@@ -73,6 +75,10 @@ export class BoardMemberGuard implements CanActivate {
           throw new Error('Can not find Board');
       }
       const user = request.user;
+      if (request?.user?.roles.includes(Role.Admin)) {
+        request.board = await this.authService.findBoardById(boardId);
+        return true;
+      }
       const board = await this.authService.checkBoardMember(boardId, user._id);
       if (board) {
         request.board = board;

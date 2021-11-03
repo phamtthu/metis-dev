@@ -8,6 +8,7 @@ import {
   Query,
   Request,
   Response,
+  UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -19,6 +20,10 @@ import { UpdateResourceDTO } from './dto/update-resource.dto';
 import { ResourceService } from './resource.service';
 
 import { getOriginURL } from 'src/shared/helper';
+import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
+import { Roles } from 'src/auth/roles.decorator';
+import { Role } from 'src/common/enum/filter.enum';
 
 @Controller('api/resource')
 @UsePipes(
@@ -28,6 +33,8 @@ import { getOriginURL } from 'src/shared/helper';
     whitelist: true,
   }),
 )
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.Admin)
 export class ResourceController {
   constructor(private resoureService: ResourceService) {}
 

@@ -16,6 +16,9 @@ import { AddLabelDTO } from './dto/add-label.dto';
 import { UpdateLabelDTO } from './dto/update-label.dto';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
 import { BoardMemberGuard } from 'src/auth/guard/board-members.guard';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
+import { Roles } from 'src/auth/roles.decorator';
+import { Role } from 'src/common/enum/filter.enum';
 
 @Controller('api/label')
 @UsePipes(
@@ -25,7 +28,8 @@ import { BoardMemberGuard } from 'src/auth/guard/board-members.guard';
     whitelist: true,
   }),
 )
-@UseGuards(JwtAuthGuard, BoardMemberGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, BoardMemberGuard)
+@Roles(Role.Employee)
 export class LabelController {
   constructor(private labelService: LabelService) {}
 

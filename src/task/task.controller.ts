@@ -19,6 +19,9 @@ import { BoardMemberGuard } from 'src/auth/guard/board-members.guard';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { UserTasksQueryDto } from './dto/user-tasks-query.dto';
+import { Roles } from 'src/auth/roles.decorator';
+import { Role } from 'src/common/enum/filter.enum';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
 
 @Controller('api/task')
 @UsePipes(
@@ -32,7 +35,8 @@ export class TaskController {
   constructor(private taskService: TaskService) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard, BoardMemberGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, BoardMemberGuard)
+  @Roles(Role.Employee)
   async create(@Request() req, @Body() taskDto: AddTaskDto) {
     try {
       const result = await this.taskService.create(taskDto, req.user._id);
@@ -47,7 +51,8 @@ export class TaskController {
 
   // List Task Of User
   @Get('/user')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.Employee)
   async userTasksAssigned(
     @Request() req,
     @Query() userTasksDto: UserTasksQueryDto,
@@ -64,7 +69,8 @@ export class TaskController {
   }
 
   @Get('/mark-or-unmark-done/:taskId')
-  @UseGuards(JwtAuthGuard, BoardMemberGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, BoardMemberGuard)
+  @Roles(Role.Employee)
   async markOrUnmarkDone(@Request() req, @Param('taskId') taskId: string) {
     try {
       const result = await this.taskService.markOrUnmarkDone(taskId);
@@ -80,7 +86,8 @@ export class TaskController {
   }
 
   @Get('/:taskId')
-  @UseGuards(JwtAuthGuard, BoardMemberGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, BoardMemberGuard)
+  @Roles(Role.Employee)
   async getDetail(@Request() req, @Param('taskId') taskId: string) {
     try {
       const result = await this.taskService.getDetail(taskId);
@@ -91,7 +98,8 @@ export class TaskController {
   }
 
   @Get('/deleted/board/:boardId')
-  @UseGuards(JwtAuthGuard, BoardMemberGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, BoardMemberGuard)
+  @Roles(Role.Employee)
   async getList(@Request() req, @Param('boardId') boardId: string) {
     try {
       const result = await this.taskService.getDeletedList(boardId);
@@ -102,7 +110,8 @@ export class TaskController {
   }
 
   @Put('/:taskId')
-  @UseGuards(JwtAuthGuard, BoardMemberGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, BoardMemberGuard)
+  @Roles(Role.Employee)
   async update(
     @Request() req,
     @Body() taskDto: UpdateTaskDto,
@@ -120,7 +129,8 @@ export class TaskController {
   }
 
   @Delete('/:taskId')
-  @UseGuards(JwtAuthGuard, BoardMemberGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard, BoardMemberGuard)
+  @Roles(Role.Employee)
   async softDelete(@Request() req, @Param('taskId') taskId: string) {
     try {
       await this.taskService.softDelete(taskId);

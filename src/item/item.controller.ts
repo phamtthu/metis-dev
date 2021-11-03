@@ -15,6 +15,9 @@ import { AddItemDto } from './dto/add-item.dto';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
 import { BoardMemberGuard } from 'src/auth/guard/board-members.guard';
 import { UpdateItemDto } from './dto/update-item.dto';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
+import { Role } from 'src/common/enum/filter.enum';
+import { Roles } from 'src/auth/roles.decorator';
 
 @Controller('api/item')
 @UsePipes(
@@ -24,7 +27,8 @@ import { UpdateItemDto } from './dto/update-item.dto';
     whitelist: true,
   }),
 )
-@UseGuards(JwtAuthGuard, BoardMemberGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, BoardMemberGuard)
+@Roles(Role.Employee)
 export class ItemController {
   constructor(private itemService: ItemService) {}
 

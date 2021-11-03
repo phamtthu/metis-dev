@@ -1,12 +1,11 @@
 import {
   Body,
   Delete,
-  HttpStatus,
   Post,
   Put,
   Query,
   Request,
-  Response,
+  UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -16,6 +15,10 @@ import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { OrderService } from './order.service';
 import { AddOrderDTO } from './dto/add-order.dto';
 import { UpdateOrderDTO } from './dto/update-product.dto';
+import { Roles } from 'src/auth/roles.decorator';
+import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
+import { Role } from 'src/common/enum/filter.enum';
 
 @Controller('api/order')
 @UsePipes(
@@ -25,6 +28,8 @@ import { UpdateOrderDTO } from './dto/update-product.dto';
     whitelist: true,
   }),
 )
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.Admin)
 export class OrderController {
   constructor(private orderService: OrderService) {}
 

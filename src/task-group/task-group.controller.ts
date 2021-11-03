@@ -17,6 +17,9 @@ import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
 import { TaskGroupService } from './task-group.service';
 import { AddTaskGroupDto } from './dto/add-task-group.dto';
 import { UpdateTaskGroupDto } from './dto/update-task-group.dto';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
+import { Roles } from 'src/auth/roles.decorator';
+import { Role } from 'src/common/enum/filter.enum';
 
 @Controller('api/task-group')
 @UsePipes(
@@ -26,7 +29,8 @@ import { UpdateTaskGroupDto } from './dto/update-task-group.dto';
     whitelist: true,
   }),
 )
-@UseGuards(JwtAuthGuard, BoardMemberGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, BoardMemberGuard)
+@Roles(Role.Employee)
 export class TaskGroupController {
   constructor(private taskGroupService: TaskGroupService) {}
 

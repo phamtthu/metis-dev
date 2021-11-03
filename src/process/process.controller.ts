@@ -7,6 +7,7 @@ import {
   Query,
   Request,
   Response,
+  UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -16,6 +17,10 @@ import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { ProcessService } from './process.service';
 import { AddProcessDTO } from './dto/add-process.dto';
 import { UpdateProcessDTO } from './dto/update-process.dto';
+import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
+import { Role } from 'src/common/enum/filter.enum';
+import { Roles } from 'src/auth/roles.decorator';
 
 @Controller('api/process')
 @UsePipes(
@@ -25,6 +30,8 @@ import { UpdateProcessDTO } from './dto/update-process.dto';
     whitelist: true,
   }),
 )
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.Admin)
 export class ProcessController {
   constructor(private processService: ProcessService) {}
 

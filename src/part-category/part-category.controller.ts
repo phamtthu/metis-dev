@@ -7,6 +7,7 @@ import {
   Query,
   Request,
   Response,
+  UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -17,6 +18,10 @@ import { PartCategoryService } from './part-category.service';
 import { getOriginURL } from 'src/shared/helper';
 import { UpdatePCategoryRDTO } from './dto/update-part-category.dto';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
+import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
+import { Roles } from 'src/auth/roles.decorator';
+import { Role } from 'src/common/enum/filter.enum';
 
 @Controller('api/part-category')
 @UsePipes(
@@ -26,6 +31,8 @@ import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
     whitelist: true,
   }),
 )
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.Admin)
 export class PartCategoryController {
   constructor(private partCategoryService: PartCategoryService) {}
 
