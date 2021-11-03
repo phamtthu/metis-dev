@@ -18,9 +18,9 @@ import {
   editFileName,
   imageFileFilter,
   keepExtensionFileName,
+  getUniqueFolder,
 } from './utils/file-upload.utils';
 import { ImageDto } from './dto/image-dto';
-
 import { messageError } from 'src/common/utils/error';
 import * as fs from 'fs-extra';
 
@@ -30,7 +30,7 @@ export class UploadController {
   @UseInterceptors(
     FileInterceptor('image', {
       storage: diskStorage({
-        destination: './public/upload/tmp',
+        destination: getUniqueFolder,
         filename: editFileName,
       }),
       fileFilter: imageFileFilter,
@@ -42,32 +42,41 @@ export class UploadController {
     @UploadedFile() file,
   ) {
     const baseUrl = this.getBaseUrl(req);
-    console.log(baseUrl);
+    console.log(file);
     const response = {
       originalname: file.originalname,
       filename: file.filename,
-      path: baseUrl + '/upload/tmp/' + file.filename,
+      path:
+        baseUrl +
+        file.destination.slice('./public'.length) +
+        '/' +
+        file.filename,
     };
     return response;
   }
 
   @Post('/api/upload-multi-image')
   @UseInterceptors(
-    FilesInterceptor('image', 20, {
+    FilesInterceptor('images', 20, {
       storage: diskStorage({
-        destination: './public/upload/tmp',
+        destination: getUniqueFolder,
         filename: editFileName,
       }),
       fileFilter: imageFileFilter,
     }),
   )
-  async uploadMultipleFiles(@UploadedFiles() files) {
+  async uploadMultipleFiles(@Request() req, @UploadedFiles() files) {
     const response = [];
+    const baseUrl = this.getBaseUrl(req);
     files.forEach((file) => {
       const fileReponse = {
         originalname: file.originalname,
         filename: file.filename,
-        path: '/upload/tmp/' + file.filename,
+        path:
+          baseUrl +
+          file.destination.slice('./public'.length) +
+          '/' +
+          file.filename,
       };
       response.push(fileReponse);
     });
@@ -89,7 +98,7 @@ export class UploadController {
   @UseInterceptors(
     FilesInterceptor('files', 20, {
       storage: diskStorage({
-        destination: './public/upload/tmp',
+        destination: getUniqueFolder,
         filename: keepExtensionFileName,
       }),
     }),
@@ -101,7 +110,11 @@ export class UploadController {
       const fileReponse = {
         originalname: file.originalname,
         filename: file.filename,
-        path: baseUrl + '/upload/tmp/' + file.filename,
+        path:
+          baseUrl +
+          file.destination.slice('./public'.length) +
+          '/' +
+          file.filename,
       };
       response.push(fileReponse);
     });
@@ -112,7 +125,7 @@ export class UploadController {
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
-        destination: './public/upload/tmp',
+        destination: getUniqueFolder,
         filename: keepExtensionFileName,
       }),
     }),
@@ -122,7 +135,11 @@ export class UploadController {
     const fileReponse = {
       originalname: file.originalname,
       filename: file.filename,
-      path: baseUrl + '/upload/tmp/' + file.filename,
+      path:
+        baseUrl +
+        file.destination.slice('./public'.length) +
+        '/' +
+        file.filename,
     };
     return fileReponse;
   }
