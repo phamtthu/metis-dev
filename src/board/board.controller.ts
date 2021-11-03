@@ -36,6 +36,17 @@ export class BoardController {
     }
   }
 
+  // Boards - Working time statistics(h)
+  @Get('/working-time-stats')
+  async getWorkingTimeStats(@Request() req) {
+    try {
+      const result = await this.boardService.getWorkingTimeStats();
+      return result;
+    } catch (error) {
+      messageError(error);
+    }
+  }
+
   @Get('/:boardId')
   @UseGuards(BoardMemberGuard)
   async getDetail(@Request() req) {

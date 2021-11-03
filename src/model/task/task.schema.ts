@@ -25,11 +25,14 @@ export class Task extends mongoose.Document {
   @Prop({ required: true, default: null })
   description: string;
 
-  @Prop({ type: Date, required: true, default: null })
+  @Prop({ type: Date, default: null })
   plan_start_date: Date;
 
-  @Prop({ type: Date, required: true, default: null })
+  @Prop({ type: Date, default: null })
   plan_end_date: Date;
+
+  @Prop({ type: Date, default: null })
+  actual_end_date;
 
   @Prop({ default: null })
   cover_background: string;

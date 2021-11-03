@@ -25,6 +25,7 @@ import { ProductWorkCenter } from 'src/model/product-workcenter/product-workcent
 import { SoftDeleteModel } from 'mongoose-delete';
 import { TaskUserResponse } from './response/task-user-response';
 import { Attachment } from 'src/model/attachment/attachment-schema';
+import { UserTasksQueryDto } from './dto/user-tasks-query.dto';
 
 @Injectable()
 export class TaskService {
@@ -382,6 +383,68 @@ export class TaskService {
         .lean();
       if (!task) throw new NotFoundException('Task is not exist');
       return task;
+    } catch (error) {
+      errorException(error);
+    }
+  }
+
+  async userTasksAssigned(userId: string, userTasksDto: UserTasksQueryDto) {
+    try {
+      let userTasksAssigned: any = (
+        await this.taskUserModel
+          .find({ user: userId })
+          .populate('task')
+          .sort({ created_at: SortQuery.Desc })
+          .lean()
+      ).map((e: any) => e.task);
+      if (userTasksDto.workcenter) {
+        const { board } = await this.productWorkCenterModel
+          .findOne({
+            workcenter: userTasksDto.workcenter,
+          })
+          .lean();
+        userTasksAssigned = userTasksAssigned.filter(
+          (task) => String(task.board) === String(board),
+        );
+      }
+      return classToPlain(
+        new TasksResponse(
+          toJsObject(paginator(userTasksAssigned, 0, userTasksAssigned.length)),
+        ),
+      );
+    } catch (error) {
+      errorException(error);
+    }
+  }
+
+  async markOrUnmarkDone(taskId: string) {
+    try {
+      let task = await this.checkTaskExist(taskId);
+      if (task.actual_end_date == null) {
+        // Mark done
+        if (task.plan_end_date === null)
+          throw new BadRequestException(
+            'Set plan_start_date and plan_end_date before mark it done',
+          );
+        const now = new Date().toISOString();
+        task = await this.taskModel.findByIdAndUpdate(
+          task._id,
+          {
+            actual_end_date: now,
+          },
+          { new: true },
+        );
+      } // Unmark done
+      else {
+        task = await this.taskModel.findByIdAndUpdate(
+          task._id,
+          {
+            actual_end_date: null,
+          },
+          { new: true },
+        );
+      }
+      return classToPlain(new TaskResponse(toJsObject(task)));
     } catch (error) {
       errorException(error);
     }

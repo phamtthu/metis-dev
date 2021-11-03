@@ -29,6 +29,9 @@ export class TaskResponse {
   plan_end_date: Date | Moment;
 
   @Expose()
+  actual_end_date: Date;
+
+  @Expose()
   cover_background: string;
 
   @Expose()
