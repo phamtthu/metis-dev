@@ -20,6 +20,7 @@ export class BoardMemberGuard implements CanActivate {
       let taskGroup;
       let label;
       let attachment: any;
+      let item;
       switch (true) {
         case request.params.boardId != null:
           boardId = request.params.boardId;
@@ -56,6 +57,17 @@ export class BoardMemberGuard implements CanActivate {
             request.params.attachmentId,
           );
           boardId = attachment.task?.board;
+          break;
+        case request.body.task_checklist != null:
+          taskChecklist = await this.authService.findTaskChecklistById(
+            request.body.task_checklist,
+          );
+          boardId = taskChecklist.task.board;
+          break;
+        case request.params.itemId != null:
+          item = await this.authService.findItemById(request.params.itemId);
+          task = await this.authService.findTaskById(item.task_checklist.task);
+          boardId = task.board;
           break;
         default:
           throw new Error('Can not find Board');

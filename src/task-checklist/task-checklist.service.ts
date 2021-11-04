@@ -22,17 +22,17 @@ export class TaskChecklistService {
       SoftDeleteModel<TaskChecklist>,
   ) {}
 
-  async getIndex(taskChecklistId: string) {
+  async getIndex(taskId: string) {
     let index;
-    const taskCheclists = await this.taskChecklistModel.find({
-      task: taskChecklistId,
+    const taskChecklists = await this.taskChecklistModel.find({
+      task: taskId,
     });
-    if (taskCheclists.length === 0) {
+    if (taskChecklists.length === 0) {
       index = 0;
       return index;
     }
     const largestTaskIndex = Math.max(
-      ...taskCheclists.map((taskChecklist) => taskChecklist.index),
+      ...taskChecklists.map((taskChecklist) => taskChecklist.index),
     );
     index = largestTaskIndex + 1;
     return index;

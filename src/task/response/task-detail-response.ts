@@ -9,6 +9,7 @@ import { TaskGroupResponse } from 'src/task-group/response/task-group-response.d
 import { UsersResponse } from 'src/user/response/response/users-response';
 import { AttachmentResponse } from 'src/attachment/response/attachment-response';
 import { UserResponse } from 'src/user/response/response/user-response';
+import { TaskChecklistResponse } from 'src/task-checklist/response/task-checklist-response';
 
 const getFirstLetters = (value: string) => {
   const split = value.split(' ');
@@ -110,6 +111,10 @@ export class TaskDetailResponse extends TaskResponse {
   @Expose()
   @Type(() => Comment)
   comments: Comment[];
+
+  @Expose()
+  @Type(() => TaskChecklistResponse)
+  task_checklists: TaskChecklistResponse[];
 
   @Expose()
   @Transform(({ value }) => {

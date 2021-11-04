@@ -11,6 +11,8 @@ import { TaskStatusDatabaseModule } from 'src/model/task-status/task-status-data
 import { ProductWorkCenterDatabaseModule } from 'src/model/product-workcenter/product-workcenter-database.module';
 import { AttachmentDatabaseModule } from 'src/model/attachment/attachment-database.module';
 import { CommentDatabaseModule } from 'src/model/comment/comment-database.module';
+import { TaskChecklistDatabaseModule } from 'src/model/task-checklist/task-checklist-database.module';
+import { ItemDatabaseModule } from 'src/model/item/item-database.module';
 
 @Module({
   imports: [
@@ -23,6 +25,8 @@ import { CommentDatabaseModule } from 'src/model/comment/comment-database.module
     ProductWorkCenterDatabaseModule,
     AttachmentDatabaseModule,
     CommentDatabaseModule,
+    TaskChecklistDatabaseModule,
+    ItemDatabaseModule,
   ],
   controllers: [TaskController],
   providers: [TaskService, TaskExistValidator],

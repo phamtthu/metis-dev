@@ -1,9 +1,8 @@
 import { ObjectId } from 'mongodb';
-import { Exclude, Transform, Expose, Type } from 'class-transformer';
-import { ItemResponse } from 'src/item/response/item-response';
+import { Exclude, Expose } from 'class-transformer';
 
 @Exclude()
-export class TaskChecklistResponse {
+export class ItemResponse {
   @Expose()
   _id?: ObjectId;
 
@@ -17,14 +16,10 @@ export class TaskChecklistResponse {
   index: number;
 
   @Expose()
-  task: string;
+  task_checklist: string;
 
   @Expose()
   created_by: string;
-
-  @Expose()
-  @Type(() => ItemResponse)
-  items: ItemResponse[];
 
   @Expose()
   created_at: Date;
@@ -34,7 +29,7 @@ export class TaskChecklistResponse {
 
   __v: number;
 
-  constructor(partial: Partial<TaskChecklistResponse>) {
+  constructor(partial: Partial<ItemResponse>) {
     Object.assign(this, partial);
   }
 }

@@ -4,7 +4,6 @@ import {
   IsString,
   MaxLength,
   Validate,
-  ValidateIf,
 } from 'class-validator';
 import { TaskExistValidator } from 'src/task/custom-validator/task-id-existence.validator';
 
@@ -16,7 +15,6 @@ export class AddTaskChecklistDto {
 
   @IsMongoId()
   @IsNotEmpty()
-  @ValidateIf((object, value) => value !== null)
   @Validate(TaskExistValidator)
   task: string;
 }
