@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AttachmentService } from 'src/attachment/attachment.service';
+import { BoardService } from 'src/board/board.service';
 import { errorException } from 'src/common/utils/error';
 import { ItemService } from 'src/item/item.service';
 import { LabelService } from 'src/label/label.service';
@@ -27,6 +28,7 @@ export class AuthService {
     private labelService: LabelService,
     private attachmentService: AttachmentService,
     private itemService: ItemService,
+    private boardService: BoardService,
   ) {}
 
   async adminRegister(admin) {
@@ -126,6 +128,14 @@ export class AuthService {
   async findItemById(itemId: string) {
     try {
       return await this.itemService.findItemById(itemId);
+    } catch (error) {
+      errorException(error);
+    }
+  }
+
+  async findBoardById(boardId: string) {
+    try {
+      return await this.boardService.findBoardById(boardId);
     } catch (error) {
       errorException(error);
     }

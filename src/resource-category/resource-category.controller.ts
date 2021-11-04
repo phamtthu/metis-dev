@@ -8,6 +8,7 @@ import {
   Query,
   Request,
   Response,
+  UseGuards,
   UseInterceptors,
   UsePipes,
   ValidationPipe,
@@ -19,6 +20,10 @@ import { ResourceCategoryService } from './resource-category.service';
 import { getOriginURL } from 'src/shared/helper';
 import { UpdateRCategoryRDTO } from './dto/update-resource-category.dto';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
+import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
+import { Roles } from 'src/auth/roles.decorator';
+import { Role } from 'src/common/enum/filter.enum';
 
 @Controller('api/resource-category')
 @UsePipes(
@@ -28,6 +33,8 @@ import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
     whitelist: true,
   }),
 )
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.Admin)
 export class ResourceCategoryController {
   constructor(private rcategoryService: ResourceCategoryService) {}
 

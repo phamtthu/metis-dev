@@ -58,8 +58,9 @@ export class UserService {
   async adminRegister(admin) {
     try {
       const theAdmin = new this.userModel({
-        roles: [Role.Admin],
+        roles: [Role.Admin, Role.Employee],
         is_active: Status.Active,
+        tag_name: '@admin',
         ...admin,
       });
       await theAdmin.save();

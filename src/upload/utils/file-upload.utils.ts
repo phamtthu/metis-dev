@@ -28,10 +28,6 @@ export const editFileName = (req, file, callback) => {
   // remove white space
   fileName = fileName.split('.')[0].replace(/ /g, '');
   const fileExtName = extname(file.originalname);
-  const randomName = Array(4)
-    .fill(null)
-    .map(() => Math.round(Math.random() * 16).toString(16))
-    .join('');
   callback(null, `${fileName}${fileExtName}`);
 };
 

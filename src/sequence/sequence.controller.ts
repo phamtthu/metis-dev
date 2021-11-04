@@ -1,12 +1,11 @@
 import {
   Body,
   Delete,
-  HttpStatus,
   Post,
   Put,
   Query,
   Request,
-  Response,
+  UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -16,6 +15,10 @@ import { SequenceService } from './sequence.service';
 import { AddSequenceDTO } from './dto/add-sequence.dto';
 import { UpdateSequenceDTO } from './dto/update-sequence.dto';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
+import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
+import { Roles } from 'src/auth/roles.decorator';
+import { Role } from 'src/common/enum/filter.enum';
 
 @Controller('api/sequence')
 @UsePipes(
@@ -25,6 +28,8 @@ import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
     whitelist: true,
   }),
 )
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.Admin)
 export class SequenceController {
   constructor(private sequenceService: SequenceService) {}
 

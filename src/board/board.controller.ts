@@ -13,6 +13,9 @@ import { BoardService } from './board.service';
 import { BoardMemberGuard } from 'src/auth/guard/board-members.guard';
 import { UpdateBoardDTO } from './dto/update-board.dto';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { Roles } from 'src/auth/roles.decorator';
+import { Role } from 'src/common/enum/filter.enum';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
 
 @Controller('api/board')
 @UsePipes(
@@ -26,7 +29,10 @@ import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
 export class BoardController {
   constructor(private boardService: BoardService) {}
 
+  // List Board in which User is member
   @Get()
+  @UseGuards(RolesGuard)
+  @Roles(Role.Employee)
   async getList(@Request() req) {
     try {
       const result = await this.boardService.getList(req.user._id);
@@ -37,6 +43,8 @@ export class BoardController {
   }
 
   // Boards - Working time statistics(h)
+  @UseGuards(RolesGuard)
+  @Roles(Role.Admin)
   @Get('/working-time-stats')
   async getWorkingTimeStats(@Request() req) {
     try {
@@ -48,7 +56,8 @@ export class BoardController {
   }
 
   @Get('/:boardId')
-  @UseGuards(BoardMemberGuard)
+  @UseGuards(RolesGuard, BoardMemberGuard)
+  @Roles(Role.Employee)
   async getDetail(@Request() req) {
     try {
       const board = await this.boardService.getDetail(req.board);
@@ -59,6 +68,8 @@ export class BoardController {
   }
 
   @Put('/:boardId')
+  @UseGuards(RolesGuard, BoardMemberGuard)
+  @Roles(Role.Employee)
   @UseGuards(BoardMemberGuard)
   async update(@Request() req, @Body() boardDTO: UpdateBoardDTO) {
     try {
@@ -73,6 +84,8 @@ export class BoardController {
   }
 
   @Delete('/:boardId')
+  @UseGuards(RolesGuard, BoardMemberGuard)
+  @Roles(Role.Employee)
   async softDelete(@Request() req, @Param('boardId') boardId: string) {
     try {
       await this.boardService.softDelete(boardId);
@@ -85,6 +98,8 @@ export class BoardController {
   }
 
   @Get('/restore/:boardId')
+  @UseGuards(RolesGuard, BoardMemberGuard)
+  @Roles(Role.Employee)
   async restore(@Request() req, @Param('boardId') boardId: string) {
     try {
       const result = await this.boardService.restore(boardId);

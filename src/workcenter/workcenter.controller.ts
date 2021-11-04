@@ -7,6 +7,7 @@ import {
   Query,
   Request,
   Response,
+  UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -18,6 +19,10 @@ import { WorkCenterService } from './workcenter.service';
 import { AddWorkCenterDTO } from './dto/add-workcenter.dto';
 import { UpdateWorkCenterDTO } from './dto/update-workcenter.dto';
 import { UpdateProductWorkCenterDTO } from './dto/update-product-workcenter.dto';
+import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
+import { Roles } from 'src/auth/roles.decorator';
+import { Role } from 'src/common/enum/filter.enum';
 
 @Controller('api/workcenter')
 @UsePipes(
@@ -27,6 +32,8 @@ import { UpdateProductWorkCenterDTO } from './dto/update-product-workcenter.dto'
     whitelist: true,
   }),
 )
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.Admin)
 export class WorkCenterController {
   constructor(private workCenterService: WorkCenterService) {}
 

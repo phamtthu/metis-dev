@@ -14,6 +14,7 @@ import { TaskGroupModule } from 'src/task-group/task-group.module';
 import { LabelModule } from 'src/label/label.module';
 import { AttachmentModule } from 'src/attachment/attachment.module';
 import { ItemModule } from 'src/item/item.module';
+import { BoardModule } from 'src/board/board.module';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 require('dotenv').config();
@@ -34,7 +35,8 @@ require('dotenv').config();
     TaskGroupModule,
     LabelModule,
     AttachmentModule,
-    ItemModule
+    ItemModule,
+    BoardModule,
   ],
   providers: [AuthService, LocalStrategy, JwtStrategy],
   controllers: [AuthController],

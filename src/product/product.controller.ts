@@ -7,6 +7,7 @@ import {
   Query,
   Request,
   Response,
+  UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -17,6 +18,10 @@ import { ProductService } from './product.service';
 import { AddProductDTO } from './dto/add-product.dto';
 import { getOriginURL } from 'src/shared/helper';
 import { UpdateProductDTO } from './dto/update-product.dto';
+import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
+import { Roles } from 'src/auth/roles.decorator';
+import { Role } from 'src/common/enum/filter.enum';
 
 @Controller('api/product')
 @UsePipes(
@@ -26,6 +31,8 @@ import { UpdateProductDTO } from './dto/update-product.dto';
     whitelist: true,
   }),
 )
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.Admin)
 export class ProductController {
   constructor(private productService: ProductService) {}
 

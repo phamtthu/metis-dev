@@ -147,7 +147,7 @@ export class BoardService {
 
   async findBoardById(boardId: string) {
     try {
-      return await this.boardModel.findById(boardId);
+      return await this.boardModel.findById(boardId).lean();
     } catch (error) {
       errorException(error);
     }
@@ -181,10 +181,12 @@ export class BoardService {
             }
           }
         });
-        board['overTime'] = totalCurrentOverWorkingMs / hour;
-        board['workingTIme'] = totalCurrentWorkingMs / hour;
+        board['overTime'] = (totalCurrentOverWorkingMs / hour).toFixed(2);
+        board['workingTime'] = (totalCurrentWorkingMs / hour).toFixed(2);
       }
-      return classToPlain(new BoardResponse(toJsObject(boards)));
+      return classToPlain(
+        new BoardsResponse(toJsObject(paginator(boards, 0, boards.length))),
+      );
     } catch (error) {
       errorException(error);
     }

@@ -5,6 +5,7 @@ import {
   Put,
   Query,
   Request,
+  UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -12,9 +13,12 @@ import { Controller, Get, Param } from '@nestjs/common';
 import { messageError } from 'src/common/utils/error';
 import { AddSkillDTO } from './dto/add-skill.dto';
 import { SkillService } from './skill.service';
-
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { UpdateSkillDTO } from './dto/update-skill.dto';
+import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
+import { Role } from 'src/common/enum/filter.enum';
+import { Roles } from 'src/auth/roles.decorator';
 
 @Controller('api/skill')
 @UsePipes(
@@ -24,6 +28,8 @@ import { UpdateSkillDTO } from './dto/update-skill.dto';
     whitelist: true,
   }),
 )
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.Admin)
 export class SkillController {
   constructor(private skillService: SkillService) {}
 

@@ -22,6 +22,10 @@ import { UpdateUserDTO } from './dto/update-user';
 import { UserService } from './user.service';
 import { getOriginURL } from 'src/shared/helper';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
+import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
+import { Roles } from 'src/auth/roles.decorator';
+import { Role } from 'src/common/enum/filter.enum';
 
 @Controller('api/user')
 @UsePipes(
@@ -31,6 +35,8 @@ import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
     whitelist: true,
   }),
 )
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.Admin)
 export class UserController {
   constructor(private userService: UserService) {}
 
