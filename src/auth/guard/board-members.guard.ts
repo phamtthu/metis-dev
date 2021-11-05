@@ -71,6 +71,11 @@ export class BoardMemberGuard implements CanActivate {
           task = await this.authService.findTaskById(item.task_checklist.task);
           boardId = task.board;
           break;
+        case request.params.itemId != null:
+          item = await this.authService.findItemById(request.params.itemId);
+          task = await this.authService.findTaskById(item.task_checklist.task);
+          boardId = task.board;
+          break;
         default:
           throw new Error('Can not find Board');
       }
