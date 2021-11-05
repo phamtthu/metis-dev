@@ -1,5 +1,22 @@
 import { ObjectId } from 'mongodb';
-import { Exclude, Transform, Expose } from 'class-transformer';
+import { Exclude, Transform, Expose, Type } from 'class-transformer';
+import { PositionResponse } from 'src/position/response/position-response';
+
+@Exclude()
+class Skill {
+  @Expose()
+  _id?: ObjectId;
+
+  @Expose()
+  skill: string;
+
+  @Expose()
+  level: string;
+
+  constructor(partial: Partial<Skill>) {
+    Object.assign(this, partial);
+  }
+}
 
 @Exclude()
 export class UserResponse {
@@ -38,6 +55,26 @@ export class UserResponse {
 
   @Expose()
   is_parttime: Boolean;
+
+  @Expose()
+  status: number;
+
+  @Expose()
+  note: string;
+
+  @Expose()
+  output: number;
+
+  @Expose()
+  efficiency: number;
+
+  @Expose()
+  @Type(() => PositionResponse)
+  position: string | PositionResponse;
+
+  @Expose()
+  @Type(() => Skill)
+  skills: Skill[];
 
   @Expose()
   roles: string[];

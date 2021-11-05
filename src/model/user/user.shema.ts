@@ -3,11 +3,15 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import * as mongoose from 'mongoose';
 import { Role, Status } from 'src/common/enum/filter.enum';
 import * as mongoosePaginate from 'mongoose-paginate-v2';
+import { Skill } from 'src/user/dto/add-user.dto';
 
 @Schema({ timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } })
 export class User extends mongoose.Document {
   @Prop({ default: null })
   name: string;
+
+  @Prop({ default: null })
+  user_no: string;
 
   @Prop({ required: true, unique: true })
   email: string;
@@ -21,18 +25,6 @@ export class User extends mongoose.Document {
   @Prop({ type: Number, enum: Status, default: Status.Active })
   is_active: number;
 
-  @Prop({ default: null })
-  user_no: string;
-
-  @Prop({ default: null })
-  title: string;
-
-  @Prop({ default: null })
-  group_level: number;
-
-  @Prop({ default: null })
-  department: string;
-
   @Prop({ require: true, default: null })
   image: string;
 
@@ -41,6 +33,12 @@ export class User extends mongoose.Document {
 
   @Prop({ type: Boolean, default: false })
   is_parttime: Boolean;
+
+  @Prop({ require: true, default: null })
+  output: number;
+
+  @Prop({ require: true, default: null })
+  efficiency: number;
 
   @Prop({
     type: [String],
@@ -57,6 +55,32 @@ export class User extends mongoose.Document {
 
   @Prop({ type: Number, default: 0 })
   today_connect_count: Number;
+
+  @Prop({ type: Number, enum: Status })
+  status: number;
+
+  @Prop({ default: null })
+  note: string;
+
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Position',
+    default: null,
+    required: true,
+  })
+  position: string;
+
+  @Prop({
+    required: true,
+    type: [
+      {
+        _id: false,
+        skill: { type: mongoose.Schema.Types.ObjectId, ref: 'Skill' },
+        level: { type: Number, enum: [1, 2, 3, 4, 5] },
+      },
+    ],
+  })
+  skills: Skill[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
