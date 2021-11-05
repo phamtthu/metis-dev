@@ -6,9 +6,9 @@ import {
 } from 'class-validator';
 import { SkillService } from '../skill.service';
 
-@ValidatorConstraint({ name: 'SkillIDExistenceValidator', async: true })
+@ValidatorConstraint({ name: 'SkillExistValidator', async: true })
 @Injectable()
-export class SkillIDExistenceValidator implements ValidatorConstraintInterface {
+export class SkillExistValidator implements ValidatorConstraintInterface {
   constructor(private skillService: SkillService) {}
 
   async validate(id: string, args: ValidationArguments) {
