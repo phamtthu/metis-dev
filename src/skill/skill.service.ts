@@ -12,12 +12,14 @@ import { SkillResponse } from './response/skill-response';
 import { classToPlain } from 'class-transformer';
 import { paginator, toJsObject } from 'src/shared/helper';
 import { SkillsResponse } from './response/skills-response';
+import { User } from 'src/model/user/user.shema';
 
 @Injectable()
 export class SkillService {
   constructor(
     @InjectModel('Skill') private skillModel: PaginateModel<Skill>,
     @InjectModel('Task') private taskModel: Model<Task>,
+    @InjectModel('User') private userModel: Model<User>,
   ) {}
 
   async create(skillDTO: AddSkillDTO) {
@@ -76,6 +78,10 @@ export class SkillService {
       await this.checkIsSkillExist(skillId);
       const relatedTasks = await this.taskModel.find({ skill: skillId });
       if (relatedTasks.length > 0) throwCanNotDeleteErr('Skill', 'Task');
+      const relatedUsers = await this.userModel.find({
+        'skills.skill': skillId,
+      });
+      if (relatedTasks.length > 0) throwCanNotDeleteErr('Skill', 'User');
       await this.skillModel.findByIdAndDelete(skillId);
     } catch (error) {
       errorException(error);

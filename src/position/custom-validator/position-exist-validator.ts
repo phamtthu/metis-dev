@@ -4,16 +4,16 @@ import {
   ValidatorConstraintInterface,
   ValidationArguments,
 } from 'class-validator';
-import { SkillService } from '../skill.service';
+import { PositionService } from '../position.service';
 
-@ValidatorConstraint({ name: 'SkillExistValidator', async: true })
+@ValidatorConstraint({ name: 'PositionExistValidator', async: true })
 @Injectable()
-export class SkillExistValidator implements ValidatorConstraintInterface {
-  constructor(private skillService: SkillService) {}
+export class PositionExistValidator implements ValidatorConstraintInterface {
+  constructor(private positionService: PositionService) {}
 
   async validate(id: string, args: ValidationArguments) {
     try {
-      const result = await this.skillService.getDetail(id);
+      const result = await this.positionService.getDetail(id);
       if (result) return true;
       else return false;
     } catch (error) {
@@ -22,6 +22,6 @@ export class SkillExistValidator implements ValidatorConstraintInterface {
   }
 
   defaultMessage(args: ValidationArguments) {
-    return 'Skill ID is not exist.';
+    return 'Position ID is not exist.';
   }
 }

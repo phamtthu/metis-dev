@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   ConflictException,
   HttpException,
   HttpStatus,
@@ -154,11 +153,20 @@ export class UserService {
           { title: { $regex: searchRegex } },
         ],
       };
+      const populateOptions = [
+        {
+          path: 'position',
+          select: '_id name',
+          model: 'Position',
+        },
+      ];
+
       if (queryDto.offset >= 0 && queryDto.limit >= 0) {
         const options = {
           offset: queryDto.offset,
           limit: queryDto.limit,
           sort: { created_at: SortQuery.Desc },
+          populate: populateOptions,
           customLabels: {
             page: 'page',
             limit: 'per_page',
@@ -172,6 +180,7 @@ export class UserService {
       } else {
         const users = await this.userModel
           .find(query)
+          .populate(populateOptions)
           .sort({ created_at: SortQuery.Desc });
         return classToPlain(
           new UsersResponse(toJsObject(paginator(users, 0, users.length))),
