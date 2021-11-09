@@ -34,7 +34,6 @@ import { AttachmentModule } from './attachment/attachment.module';
 import { ItemModule } from './item/item.module';
 import { PositionModule } from './position/position.module';
 import { ReportModule } from './report/report.module';
-import { TestModule } from './test/test.module';
 
 @Module({
   imports: [
