@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { Exclude, Transform, Expose } from 'class-transformer';
+import { Exclude, Expose } from 'class-transformer';
 
 @Exclude()
 export class BoardResponse {
@@ -19,10 +19,10 @@ export class BoardResponse {
   updated_at: Date;
 
   @Expose()
-  overTime: number;
+  over_time: number;
 
   @Expose()
-  workingTIme: number;
+  working_time: number;
 
   __v: number;
 

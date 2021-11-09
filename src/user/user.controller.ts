@@ -1,17 +1,12 @@
 import {
   Body,
-  ClassSerializerInterceptor,
   Delete,
-  HttpException,
-  HttpStatus,
-  NotFoundException,
   Post,
   Put,
   Query,
   Request,
   Response,
   UseGuards,
-  UseInterceptors,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -35,12 +30,12 @@ import { Role } from 'src/common/enum/filter.enum';
     whitelist: true,
   }),
 )
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(Role.Admin)
 export class UserController {
   constructor(private userService: UserService) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.Admin)
   async create(@Request() req, @Body() userDTO: AddUserDTO) {
     try {
       const originURL = getOriginURL(req);
@@ -55,6 +50,8 @@ export class UserController {
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.Admin)
   async getList(@Request() req, @Query() queryDto: PaginationQueryDto) {
     try {
       const result = await this.userService.getList(queryDto);
@@ -64,7 +61,20 @@ export class UserController {
     }
   }
 
+  @Get('/auth/me')
+  @UseGuards(JwtAuthGuard)
+  async getMyDetail(@Request() req) {
+    try {
+      const result = await this.userService.getDetail(req.user._id);
+      return { data: result };
+    } catch (error) {
+      messageError(error);
+    }
+  }
+
   @Get('/:userId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.Admin)
   async getDetail(@Request() req, @Param('userId') userId: string) {
     try {
       const result = await this.userService.getDetail(userId);
@@ -75,6 +85,8 @@ export class UserController {
   }
 
   @Delete('/:userId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.Admin)
   async delete(
     @Request() req,
     @Response() res,
@@ -91,6 +103,8 @@ export class UserController {
   }
 
   @Put('/:userId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.Admin)
   async update(
     @Request() req,
     @Param('userId') userId: string,

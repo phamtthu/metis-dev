@@ -216,6 +216,31 @@ export class UserService {
     }
   }
 
+  async getMyDetail(userId: string) {
+    try {
+      const user = await this.checkIsUserExist(userId);
+      const resourceUsers = await this.resourceUserModel
+        .find({ user: userId })
+        .populate('resource');
+      user['resources'] = resourceUsers.map((e) => e.resource);
+      const wcUsers = await this.wcUserModel
+        .find({ user: userId })
+        .populate('workcenter');
+      user['workcenters'] = wcUsers.map((e) => e.workcenter);
+      const sequenceUsers = await this.sequenceUserModel
+        .find({ user: userId })
+        .populate('sequence');
+      user['sequences'] = sequenceUsers.map((e) => e.sequence);
+      const tasks = await this.taskUserModel
+        .find({ user: userId })
+        .populate('task');
+      user['tasks'] = tasks.map((e) => e.task);
+      return classToPlain(new UserDetailResponse(toJsObject(user)));
+    } catch (e) {
+      errorException(e);
+    }
+  }
+
   async delete(userId: string) {
     try {
       await this.checkIsUserExist(userId);

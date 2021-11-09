@@ -32,6 +32,9 @@ import { TaskChecklistModule } from './task-checklist/task-checklist.module';
 import { TaskGroupModule } from './task-group/task-group.module';
 import { AttachmentModule } from './attachment/attachment.module';
 import { ItemModule } from './item/item.module';
+import { PositionModule } from './position/position.module';
+import { ReportModule } from './report/report.module';
+import { TestModule } from './test/test.module';
 
 @Module({
   imports: [
@@ -68,6 +71,8 @@ import { ItemModule } from './item/item.module';
     AttachmentModule,
     CommentModule,
     TaskChecklistModule,
+    PositionModule,
+    ReportModule,
   ],
   controllers: [AppController],
   providers: [AppService, CronService],
