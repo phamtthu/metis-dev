@@ -181,8 +181,8 @@ export class BoardService {
             }
           }
         });
-        board['overTime'] = (totalCurrentOverWorkingMs / hour).toFixed(2);
-        board['workingTime'] = (totalCurrentWorkingMs / hour).toFixed(2);
+        board['over_time'] = (totalCurrentOverWorkingMs / hour).toFixed(2);
+        board['working_time'] = (totalCurrentWorkingMs / hour).toFixed(2);
       }
       return classToPlain(
         new BoardsResponse(toJsObject(paginator(boards, 0, boards.length))),
