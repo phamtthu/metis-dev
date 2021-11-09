@@ -69,6 +69,7 @@ export class AddUserDTO {
   @IsNotEmpty()
   efficiency: number;
 
+  @IsOptional()
   @IsBoolean()
   @IsNotEmpty()
   is_parttime: boolean;

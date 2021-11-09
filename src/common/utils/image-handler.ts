@@ -78,6 +78,7 @@ export const deleteImgPath = async (oldImgLink: string) => {
 
 const getFolderNamesAtGivenPath = async (path) => {
   try {
+    await fs.ensureDir(path);
     const result = await promises.readdir(path, { withFileTypes: true });
     return result.filter((item) => item.isDirectory()).map((item) => item.name);
   } catch (error) {
