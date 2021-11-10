@@ -56,7 +56,12 @@ export class AddUserDTO {
   @IsNumber()
   @Min(0)
   @IsNotEmpty()
-  cost_per_hour: number;
+  unit_labor_cost: number;
+
+  @IsNumber()
+  @Min(0)
+  @IsNotEmpty()
+  output_month: number;
 
   @IsNumber()
   @Min(0)

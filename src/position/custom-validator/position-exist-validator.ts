@@ -13,7 +13,7 @@ export class PositionExistValidator implements ValidatorConstraintInterface {
 
   async validate(id: string, args: ValidationArguments) {
     try {
-      const result = await this.positionService.getDetail(id);
+      const result = await this.positionService.checkIsPositionExist(id);
       if (result) return true;
       else return false;
     } catch (error) {

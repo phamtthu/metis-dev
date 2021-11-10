@@ -29,7 +29,10 @@ export class User extends mongoose.Document {
   image: string;
 
   @Prop({ default: null })
-  cost_per_hour: number;
+  unit_labor_cost: number;
+
+  @Prop({ default: null })
+  output_month: number;
 
   @Prop({ type: Boolean, default: false })
   is_parttime: Boolean;
