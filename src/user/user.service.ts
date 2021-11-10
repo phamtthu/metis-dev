@@ -159,6 +159,11 @@ export class UserService {
           select: '_id name',
           model: 'Position',
         },
+        {
+          path: 'skills.skill',
+          select: '_id name',
+          model: 'Skill',
+        },
       ];
 
       if (queryDto.offset >= 0 && queryDto.limit >= 0) {
